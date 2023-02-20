@@ -10,7 +10,7 @@
     },
     {
       "name": "virtio-4.4.180p.tgz",
-      "url": "https://github.com/jumkey/redpill-load/raw/develop/redpill-virtio/releases/v1.0.0/broadwellnk/virtio-4.4.180p.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/releases/v1.0.0/broadwellnk/virtio-4.4.180p.tgz",
       "sha256": "e4d0ee5ffea113ada7bf7df6d0dec5b671f87c72824e990cbec200daa06f04c3",
       "packed": true
     }
