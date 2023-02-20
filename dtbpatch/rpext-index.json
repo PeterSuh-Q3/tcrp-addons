@@ -1,0 +1,27 @@
+{
+  "id": "dtbpatch",
+  "info": {
+    "author_url": "https://github.com/jumkey/redpill-load/raw/develop/redpill-dtb",
+    "description": "Create your own device tree binary",
+    "help_url": "https://github.com/jumkey/redpill-load/raw/develop/redpill-dtb",
+    "name": "Device tree binary",
+    "packer_url": "https://github.com/jumkey/redpill-load/raw/develop/redpill-dtb"
+  },
+  "releases": {
+    "ds1520p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds1520p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds1621p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds1621p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds2422p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds2422p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds920p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds920p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "dva1622_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "fs2500_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "fs2500_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds923p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds723p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",    
+    "zendofmodel": "endofurls"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/rpext-index.json"
+}
