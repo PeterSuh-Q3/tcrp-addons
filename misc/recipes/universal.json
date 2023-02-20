@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install-all.sh",
-      "url": "https://github.com/PeterSuh-Q3/tcrp-addons/raw/master/misc/releases/install-all.sh",
+      "url": "https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/misc/releases/install-all.sh",
       "sha256": "16cc95b0ef375e797812e43873601610dced8b413222f68e6a4f649ca5327eee",
       "packed": false
     },
     {
       "name": "ttyd.tar.gz",
-      "url": "https://github.com/PeterSuh-Q3/tcrp-addons/raw/master/misc/releases/ttyd.tar.gz",
+      "url": "https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/misc/releases/ttyd.tar.gz",
       "sha256": "a92b8ee39fa047acdb54341137ed292b9356eebdc5664758e4d5730f74984e88",
       "packed": true
     },
