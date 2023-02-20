@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "cpuinfo.sh",
-      "url": "https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/cpuinfo/src/cpuinfo.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/cpuinfo.sh",
       "sha256": "fdabdbbdd50cc44c9254eeb448b83e0da833db21424c6ef25ada793ebd2b0ff6",
       "packed": false
     },
     {
       "name": "install.sh",
-      "url": "https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/cpuinfo/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/install.sh",
       "sha256": "f3733be24dd43c04c9dedf67fd52cdc8fae25737b7f5a1179f74f9527404ee65",
       "packed": false
     }
