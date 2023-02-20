@@ -10,7 +10,7 @@
     },
     {
       "name": "virtio-4.4.180p.tgz",
-      "url": "https://github.com/PeterSuh-Q3/redpill-load/raw/master/redpill-virtio/releases/v1.0.0/denverton/virtio-4.4.180p.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/releases/v1.0.0/denverton/virtio-4.4.180p.tgz",
       "sha256": "4526db988793ba9805c20ba9997f22757fb9e38bfc122be3eeb7d044ec8fdd8a",
       "packed": true
     }
