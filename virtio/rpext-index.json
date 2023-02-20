@@ -1,6 +1,6 @@
 {
   "id": "thethorgroup.virtio",
-  "url": "https://github.com/PeterSuh-Q3/tcrp-addons/raw/master/virtio/rpext-index.json",
+  "url": "https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/virtio/rpext-index.json",
   "info": {
     "name": "VirtIO",
     "description": "Adds VirtIO support for fast network/PCI/SCSI/network/console paravirtualization under QEmu (Proxmox, VirtualBox, virsh, and similar)",
