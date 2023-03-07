@@ -1,1 +1,37 @@
-#
+{
+  "id": "9p",
+  "info": {
+    "author_url": "https://github.com/PeterSuh-Q3",
+    "description": "Driver for virtio 9p",
+    "help_url": "<todo>",
+    "name": "9p",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/9p"
+  },
+  "releases": {
+    "ds918p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/apollolake.json",    
+    "ds1019p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/apollolake.json",
+    "ds920p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/geminilake.json",    
+    "ds1520p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/geminilake.json",    
+    "ds918p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/apollolake.json",    
+    "ds1019p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/apollolake.json",
+    "ds920p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/geminilake.json",    
+    "ds1520p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/geminilake.json",
+    "dva1622_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/geminilake.json",    
+    "ds1621p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/v1000.json",
+    "ds2422p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/v1000.json",
+    "fs2500_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/v1000.json",    
+    "ds3622xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/broadwellnk.json",    
+    "ds1621xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/broadwellnk.json",
+    "rs4021xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/broadwellnk.json",
+    "ds3615xs_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/bromolow.json",
+    "rs3413xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/bromolow.json",    
+    "ds3617xs_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/broadwell.json",
+    "rs3618xs_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/broadwell.json",
+    "dva3219_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/denverton.json",
+    "dva3221_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/denverton.json",
+    "ds923p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/r1000.json",
+    "ds723p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/r1000.json",    
+    "zendofmodel": "endofurls"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/rpext-index.json"
+}
