@@ -12,9 +12,9 @@ function install() {
 echo "Copying kmod to /bin/"
 /bin/cp -v kmod  /bin/       ; chmod 700 /bin/kmod
 echo "link depmod,modprobe to kmod"
-ln -s /bin/kmod /usr/sbin/depmod
-ln -s /bin/kmod /usr/sbin/modprobe
-tar xvfz /exts/9p/${TARGET_PLATFORM}-${LINUX_VER}.tgz -C /
+[ ! -f /usr/sbin/depmod ] && ln -s /bin/kmod /usr/sbin/depmod
+[ ! -f /usr/sbin/modprobe ] && ln -s /bin/kmod /usr/sbin/modprobe
+tar xvfz /exts/tcrp-9p/${TARGET_PLATFORM}-${LINUX_VER}.tgz -C /
 echo "Loading 9p module"
 /usr/sbin/depmod -a
 /usr/sbin/modprobe 9p
