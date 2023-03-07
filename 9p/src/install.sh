@@ -14,7 +14,7 @@ echo "Copying kmod to /bin/"
 echo "link depmod,modprobe to kmod"
 ln -s /bin/kmod /usr/sbin/depmod
 ln -s /bin/kmod /usr/sbin/modprobe
-#tar xvfz /exts/9p/${TARGET_PLATFORM}-${LINUX_VER}.tgz -C /lib/modules/
+tar xvfz /exts/9p/${TARGET_PLATFORM}-${LINUX_VER}.tgz -C /
 echo "Loading 9p module"
 /usr/sbin/depmod -a
 /usr/sbin/modprobe 9p
