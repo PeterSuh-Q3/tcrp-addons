@@ -1,0 +1,29 @@
+{
+  "mod_version": "v1",
+
+  "files": [
+    {
+      "name": "v1000-4.4.180.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/releases/v1000-4.4.180.tgz",
+      "sha256": "0459ab9842072c5c1cc6352fce6a66f4886a59e2f800641ef808cfbe999ed691",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/src/install.sh",
+      "sha256": "274bb7e35239c74bb4abf8ff27d028f871ded76c65fcac8972561d7226e38e1a",
+      "packed": false
+    },
+    {
+      "name": "kmod",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/9p/auxfiles/kmod",
+      "sha256": "c28321e57b8af57b04905a346b093182f74d2836ca188c5536b47e6459153938",
+      "packed": false
+    }
+  ],
+  
+  "scripts": {
+    "on_boot": "install.sh"
+  }
+
+}
