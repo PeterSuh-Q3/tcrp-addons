@@ -13,12 +13,14 @@
     "ds3615xs_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",        
     "ds3617xs_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",    
     "rs3618xs_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",        
-    "rs4021xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",    
+    "rs4021xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
+    "fs6400_42962":    "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
+    "sa3600_42962":    "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "ds918p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "ds1019p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "ds1621xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "dva3221_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
-    "dva3219_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",    
+    "dva3219_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "zendofmodel": "endofurls"
   },  
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/rpext-index.json"
