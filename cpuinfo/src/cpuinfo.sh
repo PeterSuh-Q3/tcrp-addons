@@ -560,15 +560,6 @@ EXEC_FN () {
 if [ -d $WORK_DIR ]
 then
     Y_N="y"
-    if [ "$LC_CHK" == "CUSTOMLANG" ]
-    then
-        READ_YN "$MSGECHO04 "
-    elif [ "$LC_CHK" == "Seoul" ]
-    then
-        READ_YN "자동으로 실행합니다. n 선택시 대화형모드로 진행합니다. (취소하려면 q) [y/n] : "
-    else
-        READ_YN "Auto Excute, If you select n, proceed interactively  (Cancel : q) [y/n] : "
-    fi
     if [ "$Y_N" == "y" ]
     then
         mkdir -p $BKUP_DIR/$TIME
