@@ -23,7 +23,7 @@
     {
       "name": "check-rtc-cmos.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/src/check-rtc-cmos.sh",
-      "sha256": "8b08a517490e0dd27ade1a8ba4930d19a94b525b44f150e7a8faf86e1015585f",
+      "sha256": "9fc34a733aeb65711a712c843f9783f9d6eefe8164051e9838b3a645caaf5905",
       "packed": false
     }
   ],
