@@ -2,9 +2,9 @@
 # Checking modules is loaded
 #
 
-echo -n "Loading module rtc-cmos -> "
+echo -n "Loading module rtc_cmos -> "
 
-if [ `/sbin/lsmod |grep -i rtc-cmos|wc -l` -gt 0 ]; then
-        echo "Module rtc-cmos loaded succesfully"
-        else echo "Module rtc-cmos is not loaded "
+if [ `/sbin/lsmod |grep -i rtc_cmos|wc -l` -gt 0 ]; then
+        echo "Module rtc_cmos loaded succesfully"
+        else echo "Module rtc_cmos is not loaded "
 fi
