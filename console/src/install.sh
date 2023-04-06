@@ -1,6 +1,6 @@
 #!/usr/bin/env ash
 
-SED_PATH='/tmpRoot/usr/bin/sed'
+SED_PATH='/tmpRoot/usr/sbin/sed'
 
 if [ "${1}" = "modules" ]; then
   echo "Loading FB and console modules..."
@@ -17,20 +17,20 @@ if [ "${1}" = "modules" ]; then
   # Workaround for DVA1622
   if [ "${MODEL}" = "DVA1622" ]; then
     echo > /dev/tty2
-    /usr/bin/ioctl /dev/tty0 22022 -v 2
-    /usr/bin/ioctl /dev/tty0 22022 -v 1
+    /usr/sbin/ioctl /dev/tty0 22022 -v 2
+    /usr/sbin/ioctl /dev/tty0 22022 -v 1
   fi
 elif [ "${1}" = "rcExit" ]; then
   # Run only in junior mode (DSM not installed)
   echo -e "Junior mode\n" > /etc/issue
   echo "Starting getty..."
   /usr/sbin/getty -L 0 tty1 &
-  /usr/bin/loadkeys /usr/share/keymaps/i386/${LAYOUT}/${KEYMAP}.map.gz
+  /usr/sbin/loadkeys /usr/share/keymaps/i386/${LAYOUT}/${KEYMAP}.map.gz
   # Workaround for DVA1622
   if [ "${MODEL}" = "DVA1622" ]; then
     echo > /dev/tty2
-    /usr/bin/ioctl /dev/tty0 22022 -v 2
-    /usr/bin/ioctl /dev/tty0 22022 -v 1
+    /usr/sbin/ioctl /dev/tty0 22022 -v 2
+    /usr/sbin/ioctl /dev/tty0 22022 -v 1
   fi
 elif [ "${1}" = "late" ]; then
   # run when boot installed DSM
@@ -40,8 +40,8 @@ elif [ "${1}" = "late" ]; then
   ln -sfv /lib/systemd/system/getty\@.service /tmpRoot/lib/systemd/system/getty.target.wants/getty\@tty1.service
   echo -e "DSM mode\n" > /tmpRoot/etc/issue
   cp -fRv /usr/share/keymaps /tmpRoot/usr/share/
-  cp -fv /usr/bin/loadkeys /tmpRoot/usr/bin/
-  cp -fv /usr/bin/setleds /tmpRoot/usr/bin/
+  cp -fv /usr/sbin/loadkeys /tmpRoot/usr/sbin/
+  cp -fv /usr/sbin/setleds /tmpRoot/usr/sbin/
   DEST="/tmpRoot/lib/systemd/system/keymap.service"
   echo "[Unit]"                                                               > ${DEST}
   echo "Description=Configure keymap"                                         >>${DEST}
@@ -50,7 +50,7 @@ elif [ "${1}" = "late" ]; then
   echo "[Service]"                                                            >>${DEST}
   echo "Type=oneshot"                                                         >>${DEST}
   echo "RemainAfterExit=true"                                                 >>${DEST}
-  echo "ExecStart=/usr/bin/loadkeys /usr/share/keymaps/i386/${LAYOUT}/${KEYMAP}.map.gz" >>${DEST}
+  echo "ExecStart=/usr/sbin/loadkeys /usr/share/keymaps/i386/${LAYOUT}/${KEYMAP}.map.gz" >>${DEST}
   echo                                                                        >>${DEST}
   echo "[Install]"                                                            >>${DEST}
   echo "WantedBy=multi-user.target"                                           >>${DEST}
@@ -60,7 +60,7 @@ elif [ "${1}" = "late" ]; then
   # Workaround for DVA1622
   if [ "${MODEL}" = "DVA1622" ]; then
     echo > /dev/tty2
-    /usr/bin/ioctl /dev/tty0 22022 -v 2
-    /usr/bin/ioctl /dev/tty0 22022 -v 1
+    /usr/sbin/ioctl /dev/tty0 22022 -v 2
+    /usr/sbin/ioctl /dev/tty0 22022 -v 1
   fi
 fi
