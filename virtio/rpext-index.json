@@ -38,7 +38,7 @@
     "rs4021xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/recipes/broadwellnk.json",
     "ds3615xs_42962" : "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/recipes/bromolow.json",
     "ds918p_42962"   : "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/recipes/apollolake.json",
-    "ds918p_64216"   : "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/recipes/apollolake.json",    
+    "ds918p_64551"   : "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/recipes/apollolake.json",    
     "ds920p_42962"   : "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/recipes/geminilake.json",
     "ds1621p_42962"  : "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/recipes/v1000.json",
     "ds2422p_42962"  : "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/recipes/v1000.json",
