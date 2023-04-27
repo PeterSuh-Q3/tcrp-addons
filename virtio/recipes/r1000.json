@@ -7,12 +7,6 @@
       "url": "https://raw.githubusercontent.com/RedPill-TTG/redpill-virtio/master/src/check-virtio.sh",
       "sha256": "cedced0bf29ff691ab6b4a7e2001efa40b2cc5fd31e3a9834d210a4b3408ded8",
       "packed": false
-    },
-    {
-      "name": "virtio-4.4.180p.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/virtio/releases/v1.0.0/r1000/virtio-4.4.180p.tgz",
-      "sha256": "f64592881244d924a25a44ab658503c7353cd1ef5286170b928691dc41b0bfd2",
-      "packed": true
     }
   ],
 
