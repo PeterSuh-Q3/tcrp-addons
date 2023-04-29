@@ -9,7 +9,7 @@
     {
       "name": "acpid.tgz",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/releases/acpid.tgz",
-      "sha256": "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed",
+      "sha256": "147eece62fc9a050abd8e0c824e9aab63d00da52eb704ccc272ec9d0650c36f2",
       "packed": false
     }
   ],
