@@ -33,6 +33,11 @@
     "dva3221_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
     "ds923p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
     "ds723p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "ds720p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "rs1221p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "rs1619xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "rs3621xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "sa3400_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
     "ds918p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
     "ds1019p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
     "ds920p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
@@ -54,6 +59,11 @@
     "dva3221_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
     "ds923p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
     "ds723p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "ds720p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "rs1221p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "rs1619xsp_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "rs3621xsp_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
+    "sa3400_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/recipes/universal.json",
     "zendofmodel": "endofurls"
   },
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/rpext-index.json"
