@@ -7,8 +7,18 @@
     "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/nvme-cache"
   },
   "releases": {
+    "ds3622xsp_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
+    "ds3615xs_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",        
+    "ds3617xs_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",    
+    "rs3618xs_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",        
+    "rs4021xsp_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
+    "sa6400_42218":    "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
+    "sa3600_42218":    "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "ds918p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "ds1019p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
+    "ds1621xsp_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
+    "dva3221_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
+    "dva3219_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "ds3622xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",
     "ds3615xs_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",        
     "ds3617xs_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/recipes/universal.json",    
