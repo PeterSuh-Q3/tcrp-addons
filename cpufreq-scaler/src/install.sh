@@ -27,7 +27,7 @@ WantedBy=multi-user.target
 EOF
   mkdir -p /tmpRoot/etc/systemd/system/multi-user.target.wants
   ln -sf /etc/systemd/system/cpufreq-userspace-scaler.service /tmpRoot/etc/systemd/system/multi-user.target.wants/cpufreq-userspace-scaler.service
-  systemctl daemon-reload
-  systemctl restart cpufreq-userspace-scaler.service
-  systemctl status cpufreq-userspace-scaler.service
+  /tmpRoot/bin/systemctl daemon-reload
+  /tmpRoot/bin/systemctl restart cpufreq-userspace-scaler.service
+  /tmpRoot/bin/systemctl status cpufreq-userspace-scaler.service
 fi
