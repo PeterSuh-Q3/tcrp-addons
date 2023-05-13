@@ -7,21 +7,27 @@ else
 fi
 
 if [ "$HASBOOTED" = "no" ]; then
-  echo "smb3-multi - early"
+  echo "cpufreq-userspace-scaler - early"
 elif [ "$HASBOOTED" = "yes" ]; then
-  echo "smb3-multi - late"
-  echo "Installing smb3 multi channel enabler tools"
-  cp -vf smb3-multi.sh /tmpRoot/usr/sbin/smb3-multi.sh
-  chmod 755 /tmpRoot/usr/sbin/smb3-multi.sh
-  cat > /tmpRoot/etc/systemd/system/smb3-multi.service <<'EOF'
+  echo "cpufreq-userspace-scaler - late"
+  echo "Installing ACPI cpufreq userspace scaler"
+  cp -vf scaler.sh /tmpRoot/usr/sbin/scaler.sh
+  chmod 755 /tmpRoot/usr/sbin/scaler.sh
+  cat > /tmpRoot/etc/systemd/system/cpufreq-userspace-scaler.service <<'EOF'
 [Unit]
-Description=smb3 multi channel enabler schedule
+Description=ACPI cpufreq userspace scaler
 [Service]
-Type=oneshot
-ExecStart=/usr/sbin/smb3-multi.sh
+User=root
+Restart=on-abnormal
+Environment=lowload=150
+Environment=midload=250
+ExecStart=/usr/sbin/scaler.sh
 [Install]
 WantedBy=multi-user.target
 EOF
   mkdir -p /tmpRoot/etc/systemd/system/multi-user.target.wants
-  ln -sf /etc/systemd/system/smb3-multi.service /tmpRoot/etc/systemd/system/multi-user.target.wants/smb3-multi.service
+  ln -sf /etc/systemd/system/cpufreq-userspace-scaler.service /tmpRoot/etc/systemd/system/multi-user.target.wants/cpufreq-userspace-scaler.service
+  systemctl daemon-reload
+  systemctl restart cpufreq-userspace-scaler.service
+  systemctl status cpufreq-userspace-scaler.service
 fi
