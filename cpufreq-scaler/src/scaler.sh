@@ -4,46 +4,40 @@
 set -euo pipefail
 
 # Ensure root user
-if [ "$EUID" -ne 0 ]; then
-  echo "Please run as root"
-  exit
-fi
-
-# Get cpu cores count minus 1, to allow maping from 0
-cpucorecount=$(grep cores /proc/cpuinfo | sort -u | awk '{ print $4 - 1 }')
+#if [ "$EUID" -ne 0 ]; then
+#  echo "Please run as root"
+#  exit
+#fi
 
 # Ensure acpi-cpufreq kernel module is loaded
-if ! modprobe acpi-cpufreq; then
-  pushd /lib/modules
-  insmod acpi-cpufreq.ko
-  popd
-fi
-
-# Set correct cpufreq governor to allow user defined frequency scaling
-governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
-if [ "$governor" != "userspace" ]; then
-  for i in $(seq 0 "${cpucorecount}"); do
-    echo userspace >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_governor
-  done
-fi
-
-# Rereive allowed cpu freq on the system
-IFS=" " read -r -a freqlist <<<"$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies)"
-
-# Set min and max frequencies, this user overidable
-scalingminfreq=${scalingminfreq:=${freqlist[-1]}}
-scalingmaxfreq=${scalingmaxfreq:=${freqlist[0]}}
-
-# This will set user defined min and max frequencies
-if [ "$governor" = "userspace" ]; then
-  for i in $(seq 0 "${cpucorecount}"); do
-    echo "$scalingminfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_min_freq
-    echo "$scalingmaxfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_max_freq
-  done
-fi
+#if ! modprobe acpi-cpufreq; then
+#  pushd /lib/modules
+#  insmod acpi-cpufreq.ko
+#  popd
+#fi
 
 # Frequency scaling function
 function main {
+
+  # Get cpu cores count minus 1, to allow maping from 0
+  cpucorecount=$(grep cores /proc/cpuinfo | sort -u | awk '{ print $4 - 1 }')
+  governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
+
+  # Rereive allowed cpu freq on the system
+  IFS=" " read -r -a freqlist <<<"$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies)"
+
+  # Set min and max frequencies, this user overidable
+  scalingminfreq=${scalingminfreq:=${freqlist[-1]}}
+  scalingmaxfreq=${scalingmaxfreq:=${freqlist[0]}}
+
+  # This will set user defined min and max frequencies
+  if [ "$governor" = "userspace" ]; then
+    for i in $(seq 0 "${cpucorecount}"); do
+      echo "$scalingminfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_min_freq
+      echo "$scalingmaxfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_max_freq
+    done
+  fi
+
   # Get current and max cpu temps
   currtemp=$(cat /sys/bus/platform/devices/coretemp.0/hwmon/hwmon0/temp1_input)
   maxtemp=$(cat /sys/bus/platform/devices/coretemp.0/hwmon/hwmon0/temp1_max)
@@ -81,6 +75,21 @@ function main {
 
 # Deamonize the main function...
 while true; do
-  main
+
+  # Get cpu cores count minus 1, to allow maping from 0
+  cpucorecount=$(grep cores /proc/cpuinfo | sort -u | awk '{ print $4 - 1 }')
+  governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
+
+  # Set correct cpufreq governor to allow user defined frequency scaling
+  if [ "$governor" != "userspace" ]; then
+    for i in $(seq 0 "${cpucorecount}"); do
+      echo "userspace" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_governor
+    done
+  fi
+  
+  governor=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
+  if [ "$governor" = "userspace" ]; then
+    main
+  fi
   sleep 0.5
 done
