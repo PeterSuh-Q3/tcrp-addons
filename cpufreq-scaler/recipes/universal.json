@@ -1,0 +1,21 @@
+{
+  "files": [
+    {
+      "name": "scaler.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/scaler.sh",
+      "sha256": "579ec6e1a74741c8a651a0d454a1d6675ca0bdb4672f2d74ed97c72b688f1ff3",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/install.sh",
+      "sha256": "6ad4ac1b1d9c26dbc8f1f5138944f62c68711304197cf2339efdb6e0ce41ac0b",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_boot": "install.sh",
+    "on_os_load": "install.sh"
+  }
+}
