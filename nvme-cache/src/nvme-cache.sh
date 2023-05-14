@@ -63,20 +63,20 @@ elif [ $(uname -a | grep '1621xs+' | wc -l) -gt 0 ]; then
     fi
 else
     if [ $(echo $nvmepath1 | wc -w) -gt 0 ]; then
-        sed -i "/pci1=\"*\"/cpci1=\"$nvmepath1\"" /etc.defaults/extensionPorts
-        cat /etc.defaults/extensionPorts
+        sed -i "/pci1=\"*\"/cpci1=\"$nvmepath1\"" /etc/extensionPorts
+        cat /etc/extensionPorts
     fi
 
     if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
-        sed -i '3d' /etc.defaults/extensionPorts
-        echo "pci2=\"$nvmepath2\"" >> /etc.defaults/extensionPorts
-        cat /etc.defaults/extensionPorts
+        sed -i '3d' /etc/extensionPorts
+        echo "pci2=\"$nvmepath2\"" >> /etc/extensionPorts
+        cat /etc/extensionPorts
     fi
-# add supportnvme="yes" to /etc.defaults/synoinfo.conf 2023.02.10
-    if [ $(cat /etc.defaults/synoinfo.conf | grep supportnvme | wc -l) -eq 0 ]; then
-        echo 'add supportnvme="yes" to /etc.defaults/synoinfo.conf'
-        echo 'supportnvme="yes"' >> /etc.defaults/synoinfo.conf
-        cat /etc.defaults/synoinfo.conf | grep supportnvme
+# add supportnvme="yes" to /etc/synoinfo.conf 2023.02.10
+    if [ $(cat /etc/synoinfo.conf | grep supportnvme | wc -l) -eq 0 ]; then
+        echo 'add supportnvme="yes" to /etc/synoinfo.conf'
+        echo 'supportnvme="yes"' >> /etc/synoinfo.conf
+        cat /etc/synoinfo.conf | grep supportnvme
     fi
 fi
 
