@@ -30,11 +30,8 @@ else
     nvme2hex=$(echo "$hex4$hex5 2e$hex6")
     echo $nvme2hex
 
-    nvme4hex=$(echo "3a$hex4" )
+    nvme4hex=$(echo "3a$hex4 $hex5/2e $hex6/00" | sed "s/\///g" )
     echo $nvme4hex
-
-    nvme6hex=$(echo "$hex5/2e $hex6/00" | sed "s/\///g" )
-    echo $nvme6hex
 fi
 
 if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
@@ -49,17 +46,17 @@ fi
 
 if [ $(uname -a | grep '918+' | wc -l) -gt 0 ]; then
     if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
-        xxd /root/libsynonvme.so | sed "s/3a31 332e 3100/$nvme1hex/" | sed "s/3133 2e32/$nvme2hex/" | xxd -r > /lib64/libsynonvme.so.1
+        xxd -c 256 /root/libsynonvme.so | sed "s/3a31 332e 3100/$nvme1hex/" | sed "s/3133 2e32/$nvme2hex/" | xxd -c 256 -r > /lib64/libsynonvme.so.1
     else
-        xxd /root/libsynonvme.so | sed "s/3a31 332e 3100/$nvme1hex/" | xxd -r > /lib64/libsynonvme.so.1
+        xxd -c 256 /root/libsynonvme.so | sed "s/3a31 332e 3100/$nvme1hex/" | xxd -c 256 -r > /lib64/libsynonvme.so.1
     fi
 elif [ $(uname -a | grep '1019+' | wc -l) -gt 0 ]; then
     xxd /root/libsynonvme.so | sed "s/3134 2e31/$nvme3hex/" | xxd -r > /lib64/libsynonvme.so.1
 elif [ $(uname -a | grep '1621xs+' | wc -l) -gt 0 ]; then
     if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
-        xxd /root/libsynonvme.so | sed "s/3031 2e31/$nvme3hex/" | sed "s/2e30 0030 3030 303a 3030 3a30/2e30 0030 3030 303a 3030 $nvme4hex/" | sed "s/312e 3000/$nvme6hex/" | xxd -r > /lib64/libsynonvme.so.1
+        xxd -c 256 /root/libsynonvme.so | sed "s/3031 2e31/$nvme3hex/" | sed "s/3a30 312e 3000/$nvme4hex/" | xxd -c 256 -r > /lib64/libsynonvme.so.1
     else
-        xxd /root/libsynonvme.so | sed "s/3031 2e31/$nvme3hex/" | xxd -r > /lib64/libsynonvme.so.1
+        xxd -c 256 /root/libsynonvme.so | sed "s/3031 2e31/$nvme3hex/" | xxd -c 256 -r > /lib64/libsynonvme.so.1
     fi
 else
     if [ $(echo $nvmepath1 | wc -w) -gt 0 ]; then
