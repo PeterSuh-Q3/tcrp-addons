@@ -3,7 +3,7 @@
     {
       "name": "nvme-cache.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/src/nvme-cache.sh",
-      "sha256": "18421f8a8ad18c2a88418660eef91bb574e25fb976c5fccd8c56410abb6e46ec",
+      "sha256": "40c7288fee4902216290cfbea83ac130300a2966641d77c45764163b64fd1f40",
       "packed": false
     },
     {
