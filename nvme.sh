@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 scriptver="v23.5.1"
 script=NVMeEnable
