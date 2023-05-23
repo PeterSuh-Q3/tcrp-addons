@@ -35,6 +35,17 @@
     "ds723p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
     "ds720p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
     "rs1221p_64551": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds920p_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",    
+    "ds1520p_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",    
+    "ds1621p_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",    
+    "ds2422p_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",    
+    "dva1622_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",    
+    "fs2500_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "sa6400_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",    
+    "ds923p_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds723p_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "ds720p_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
+    "rs1221p_64561": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/recipes/universal.json",
     "zendofmodel": "endofurls"
   },
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/rpext-index.json"
