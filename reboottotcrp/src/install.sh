@@ -8,10 +8,10 @@ fi
 
 if [ "$HASBOOTED" = "no" ]; then
   echo "reboottotcrp - early"
-  cp -vf tcrp-reboot.sh /tmpRoot/usr/sbin/tcrp-reboot.sh
-  chmod 755 /tmpRoot/usr/sbin/tcrp-reboot.sh
 elif [ "$HASBOOTED" = "yes" ]; then
   echo "reboottotcrp - late"
+  cp -vf tcrp-reboot.sh /tmpRoot/usr/sbin/tcrp-reboot.sh
+  chmod 755 /tmpRoot/usr/sbin/tcrp-reboot.sh
   if [ -f /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db ]; then
     echo "insert RebootToTcrp task"
     sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db <<EOF
