@@ -14,7 +14,7 @@ elif [ "$HASBOOTED" = "yes" ]; then
   chmod 755 /tmpRoot/usr/sbin/tcrp-reboot.sh
   if [ -f /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db ]; then
     echo "insert RebootToTcrp task"
-    sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db <<EOF
+    /tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db <<EOF
 INSERT INTO task VALUES('RebootToTcrp', '', 'shutdown', '', 0, 0, 0, 0, '', 0, '/usr/sbin/tcrp-reboot.sh "config"', 'script', '{}', '', '', '{}', '{}');
 EOF
   else
