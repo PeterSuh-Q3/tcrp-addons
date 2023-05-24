@@ -15,7 +15,7 @@
     {
       "name": "esynoscheduler.db",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/reboottotcrp/src/esynoscheduler.db",
-      "sha256": "7aacba1f3848b7de32ea0b3cd3046c3fff319f011479f2c22575324271aa25d6",
+      "sha256": "edfa17bf2b21e3126b9315a40cff4285c84722c32dddc12fc904b62d59cf077e",
       "packed": false
     }
   ],
