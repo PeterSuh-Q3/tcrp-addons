@@ -4,9 +4,7 @@ curl -kL https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/reboottotcrp/src/tc
 chmod 755 /usr/sbin/tcrp-reboot.sh
 if [ -f /usr/syno/etc/esynoscheduler/esynoscheduler.db ]; then
     echo "insert RebootToTcrp task"
-    /bin/sqlite3 /usr/syno/etc/esynoscheduler/esynoscheduler.db <<EOF
-INSERT INTO task VALUES('RebootToTcrp', '', '-', '', 0, 0, 0, 0, '', 0, '/usr/sbin/tcrp-reboot.sh "config"', 'script', '{}', '', '', '{}', '{}');
-EOF
+    /bin/sqlite3 /usr/syno/etc/esynoscheduler/esynoscheduler.db "INSERT INTO task VALUES('RebootToTcrp', '', '-', '', 0, 0, 0, 0, '', 0, '/usr/sbin/tcrp-reboot.sh', 'script', '{}', '', '', '{}', '{}');"
 else
     echo "copy RebootToTcrp task db"
     mkdir -p /usr/syno/etc/esynoscheduler
