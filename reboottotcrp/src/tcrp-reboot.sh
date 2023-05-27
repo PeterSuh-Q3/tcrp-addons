@@ -6,10 +6,10 @@ mount -t vfat synoboot1 /mnt/tcrp-p1
 cd /mnt/tcrp-p1
 if [ $(cat /mnt/tcrp-p1/boot/grub/grub.cfg | grep Verbose | wc -l ) -gt 0 ]; then
 echo "For Jot Mode"
-sed -i "/set default=\"*\"/cset default=\"3\"" /mnt/tcrp-p1/boot/grub/grub.cfg
+sed -i "s/set default=\"[0-9]\"/set default=\"3\"/g" /mnt/tcrp-p1/boot/grub/grub.cfg
 else
 echo "For Friend Mode"
-sed -i "/set default=\"*\"/cset default=\"1\"" /mnt/tcrp-p1/boot/grub/grub.cfg
+sed -i "s/set default=\"[0-9]\"/set default=\"1\"/g" /mnt/tcrp-p1/boot/grub/grub.cfg
 fi
 cd /mnt
 umount /mnt/tcrp-p1
