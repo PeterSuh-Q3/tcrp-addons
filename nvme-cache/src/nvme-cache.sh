@@ -95,7 +95,6 @@ if [ -f /etc/synoinfo.conf ]; then
     /usr/syno/bin/synosetkeyvalue /etc/synoinfo.conf support_m2_pool yes
     cat /etc/synoinfo.conf | grep support_m2_pool
 
-    fi
 fi
 if [ -f /etc.defaults/synoinfo.conf ]; then
 
