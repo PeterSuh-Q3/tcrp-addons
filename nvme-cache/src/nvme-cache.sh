@@ -82,21 +82,31 @@ else
             cat /etc.defaults/extensionPorts
         fi
     fi
-# add supportnvme="yes" to /etc.defaults/synoinfo.conf 2023.02.10
-    if [ -f /etc/synoinfo.conf ]; then
-        if [ $(cat /etc/synoinfo.conf | grep supportnvme | wc -l) -eq 0 ]; then
-            echo 'add supportnvme="yes" to /etc/synoinfo.conf'
-            echo 'supportnvme="yes"' >> /etc/synoinfo.conf
-            cat /etc/synoinfo.conf | grep supportnvme
-        fi
+fi
+
+# add supportnvme="yes" , support_m2_pool="yes" to /etc.defaults/synoinfo.conf 2023.02.10
+if [ -f /etc/synoinfo.conf ]; then
+
+    echo 'add supportnvme="yes" to /etc/synoinfo.conf'
+    /usr/syno/bin/synosetkeyvalue /etc/synoinfo.conf supportnvme yes
+    cat /etc/synoinfo.conf | grep supportnvme
+    
+    echo 'add support_m2_pool="yes" to /etc/synoinfo.conf'
+    /usr/syno/bin/synosetkeyvalue /etc/synoinfo.conf support_m2_pool yes
+    cat /etc/synoinfo.conf | grep support_m2_pool
+
     fi
-    if [ -f /etc.defaults/synoinfo.conf ]; then
-        if [ $(cat /etc.defaults/synoinfo.conf | grep supportnvme | wc -l) -eq 0 ]; then
-            echo 'add supportnvme="yes" to /etc.defaults/synoinfo.conf'
-            echo 'supportnvme="yes"' >> /etc.defaults/synoinfo.conf
-            cat /etc.defaults/synoinfo.conf | grep supportnvme
-        fi
-    fi
+fi
+if [ -f /etc.defaults/synoinfo.conf ]; then
+
+    echo 'add supportnvme="yes" to /etc.defaults/synoinfo.conf'
+    /usr/syno/bin/synosetkeyvalue /etc.defaults/synoinfo.conf supportnvme yes
+    cat /etc.defaults/synoinfo.conf | grep supportnvme
+
+    echo 'add support_m2_pool="yes" to /etc.defaults/synoinfo.conf'
+    /usr/syno/bin/synosetkeyvalue /etc.defaults/synoinfo.conf support_m2_pool yes
+    cat /etc.defaults/synoinfo.conf | grep support_m2_pool
+
 fi
 
 #DS918+�nvme_model_spec_get.c�%s:%d Bad paramter�0000:00:13.1�0000:00:13.2�RS1619xs+�0000:00:03.2�0000:00:03.3�DS419+�DS1019+�0000:00:14.1�DS719+�DS1621xs+�0000:00:1d.0�0000:00:01.0�04.0�05.0�08.0
