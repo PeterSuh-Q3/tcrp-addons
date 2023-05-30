@@ -1,3 +1,7 @@
+https://xpenology.com/forum/topic/63687-startup-not-working-issue-in-control-panel-power-schedule/
+
+This is the ADDON required for ApolloLake, GeminiLake, v1000 and r1000 platforms.
+
 The DSM GUI Power on/off settings are written on file #/etc/power_sched.conf
 
 The contents are : 
