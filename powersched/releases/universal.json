@@ -17,15 +17,10 @@
     {
       "name": "check-rtc-cmos.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/src/check-rtc-cmos.sh",
-      "sha256": "a5df9178aa2cafdd0094c21e7c28d4b366ea5adc9ae944e524e1c12b73627546",
+      "sha256": "2d0b8fda9439add7eb02a3d31d697b6b7a879973d84ea978254342e659e5fa09",
       "packed": false
     }
   ],
-
-  "kmods": {
-    "rtc-cmos.ko":""
-  },
-
     "scripts": {
     "on_boot": "check-rtc-cmos.sh",
     "on_os_load": "install-powersched.sh"
