@@ -1,6 +1,6 @@
 #!/bin/sh
 echo "Installing NVMe cache enabler service"
-cp -vf nvme-cache.sh /usr/sbin/nvme-cache.sh
+curl -kL https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/nvme-cache/src/nvme-cache.sh -o /usr/sbin/nvme-cache.sh
 chmod 755 /usr/sbin/nvme-cache.sh
 cat > /etc/systemd/system/nvme-cache.service <<'EOF'
 [Unit]
