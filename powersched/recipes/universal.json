@@ -1,0 +1,30 @@
+{
+  "mod_version": "v1",
+
+  "files": [
+    {
+      "name": "powersched",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/src/powersched",
+      "sha256": "7e1dc0c2228fd92cb5cd0f5eb9472e0696a79cfdf09f86cc96ab42ca58750e75",
+      "packed": false
+    },
+    {
+      "name": "install-powersched.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/src/install-powersched.sh",
+      "sha256": "faa3dab02f8cfb489b361382b8d1d869e976f32c585a68ca5718079b87201039",
+      "packed": false
+    },
+    {
+      "name": "check-rtc-cmos.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/src/check-rtc-cmos.sh",
+      "sha256": "2d0b8fda9439add7eb02a3d31d697b6b7a879973d84ea978254342e659e5fa09",
+      "packed": false
+    }
+  ],
+    "scripts": {
+    "on_boot": "check-rtc-cmos.sh",
+    "on_os_load": "install-powersched.sh"
+
+  }
+
+}
