@@ -1,10 +1,17 @@
 #!/bin/bash
 
-ls -d */ | grep -v -e "9p" -e "disks"
-for D in $(ls -d */ | grep -v -e "9p" -e "disks"); do
-  E=$(echo "${D}" | sed 's#/##')
-  echo "Add model ${1} for ${E} rpext-index.json"
-  jsonfile=$(jq --arg model "${1}" --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/${E}/recipes/universal.json" '.releases += { ($model_42218): $url }' "./${E}/rpext-index.json") && echo "$jsonfile" > "./${E}/rpext-index.json"
-  jsonfile=$(jq --arg model "${1}" --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/${E}/recipes/universal.json" '.releases += { ($model_42662): $url }' "./${E}/rpext-index.json") && echo "$jsonfile" > "./${E}/rpext-index.json"
-  jsonfile=$(jq --arg model "${1}" --arg url "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/${E}/recipes/universal.json" '.releases += { ($model_64570): $url }' "./${E}/rpext-index.json") && echo "$jsonfile" > "./${E}/rpext-index.json"  
+if [ -z "$1" ]; then
+  echo "Please provide a model as an argument."
+  exit 1
+fi
+
+model="$1"
+baseurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master"  # Base URL
+
+ls -d */ | grep -v -e "9p" -e "disks" | while IFS= read -r dir; do
+  echo "Adding model $model for ${dir} rpext-index.json"
+  jsonfile="./${dir}/rpext-index.json"
+
+  model_url="${baseurl}/${dir}/recipes/universal.json"
+  jq --arg model "$model" --argjson url "$model_url" '.releases += { ($model): $url }' "$jsonfile" > temp.json && mv temp.json "$jsonfile"
 done
