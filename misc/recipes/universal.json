@@ -23,7 +23,19 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/lrzsz.tar.gz",
       "sha256": "92917b39874f2a843b56549081332dbfc38607ce9d94f14bbff04aa9dda145cd",
       "packed": true
-    }
+    },
+    {
+      "name": "sed",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/sed",
+      "sha256": "be9c9394fca38bac3412a1a9da1452e4dedb415a168a0329d86a1548df8ced7c",
+      "packed": false 
+    },
+	  {
+      "name": "pciids",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/pciids",
+      "sha256": "a32808aca2edec084ba0bd6cab84a13591c91053c8b160d5d3279b2abca88199",
+      "packed": false
+    }    
   ],
   "scripts": {
     "on_boot": "install_rd.sh",
