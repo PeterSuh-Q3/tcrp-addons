@@ -3,6 +3,9 @@
 # Make things safer
 set -euo pipefail
 
+systemctl stop cpufreq-userspace-scaler.service
+systemctl disable cpufreq-userspace-scaler.service
+
 # Get cpu cores count minus 1, to allow maping from 0
 cpucorecount=$(cat /proc/cpuinfo | grep processor | wc -l)
 cpucorecount=$((cpucorecount - 1))
