@@ -12,7 +12,12 @@ elif [ "$HASBOOTED" = "yes" ]; then
   echo "cpufreq-userspace-scaler - late"
   echo "Installing ACPI cpufreq userspace scaler"
   cp -vf scaler.sh /tmpRoot/usr/sbin/scaler.sh
+  cp -vf unscaler.sh /tmpRoot/usr/sbin/unscaler.sh
+  cp -vf rescaler.sh /tmpRoot/usr/sbin/rescaler.sh
   chmod 755 /tmpRoot/usr/sbin/scaler.sh
+  chmod 755 /tmpRoot/usr/sbin/unscaler.sh
+  chmod 755 /tmpRoot/usr/sbin/rescaler.sh
+
   cat > /tmpRoot/etc/systemd/system/cpufreq-userspace-scaler.service <<'EOF'
 [Unit]
 Description=ACPI cpufreq userspace scaler
