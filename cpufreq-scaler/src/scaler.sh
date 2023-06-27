@@ -19,6 +19,12 @@ set -euo pipefail
 # Frequency scaling function
 function main {
 
+  if [ $(cat /proc/cpuinfo |grep Intel |wc -l) -gt 0 ]; then
+    CPU="INTEL"
+  else
+    CPU="AMD"
+  fi
+
   # Get cpu cores count minus 1, to allow maping from 0
   cpucorecount=$(cat /proc/cpuinfo | grep processor | wc -l)
   cpucorecount=$((cpucorecount - 1))
@@ -39,9 +45,11 @@ function main {
     done
   fi
 
-  # Get current and max cpu temps
-  currtemp=$(cat /sys/bus/platform/devices/coretemp.0/hwmon/hwmon0/temp1_input)
-  maxtemp=$(cat /sys/bus/platform/devices/coretemp.0/hwmon/hwmon0/temp1_max)
+  if [ "$CPU" = "INTEL" ]; then
+    # Get current and max cpu temps for Intel
+    currtemp=$(cat /sys/bus/platform/devices/coretemp.0/hwmon/hwmon0/temp1_input)
+    maxtemp=$(cat /sys/bus/platform/devices/coretemp.0/hwmon/hwmon0/temp1_max)
+  fi
 
   # Get average load over 5m in base10 integer format
   loadavg=$(awk -F . '{print $1 substr($2,1,2)}' </proc/loadavg)
@@ -56,21 +64,33 @@ function main {
   lowload=$(grep cores /proc/cpuinfo | sort -u | awk '{ print $4 * 0.3 * 100 }')
   midload=$(grep cores /proc/cpuinfo | sort -u | awk '{ print $4 * 0.6 * 100 }')
 
-  if [ "$currtemp" -lt "$maxtemp" ]; then
-    for i in $(seq 0 "${cpucorecount}"); do
-      if [ "$loadavg" -le $((10#$lowload)) ]; then
-        echo "$minfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
-      elif [ "$loadavg" -ge $((10#$lowload)) ] && [ "$loadavg" -le $((10#$midload)) ]; then
-        echo "$midfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
-      elif [ "$loadavg" -ge $((10#$midload)) ]; then
-        echo "$maxfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
-      fi
-    done
-  else
-    for i in $(seq 0 "${cpucorecount}"); do
-      echo "$coolfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
-    done
-    sleep 30
+  if [ "$CPU" = "INTEL" ]; then
+    if [ "$currtemp" -lt "$maxtemp" ]; then
+      for i in $(seq 0 "${cpucorecount}"); do
+        if [ "$loadavg" -le $((10#$lowload)) ]; then
+          echo "$minfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
+        elif [ "$loadavg" -ge $((10#$lowload)) ] && [ "$loadavg" -le $((10#$midload)) ]; then
+          echo "$midfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
+        elif [ "$loadavg" -ge $((10#$midload)) ]; then
+          echo "$maxfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
+        fi
+      done
+    else
+      for i in $(seq 0 "${cpucorecount}"); do
+        echo "$coolfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
+      done
+      sleep 30
+    fi
+  elif [ "$CPU" = "AMD" ]; then  
+      for i in $(seq 0 "${cpucorecount}"); do
+        if [ "$loadavg" -le $((10#$lowload)) ]; then
+          echo "$minfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
+        elif [ "$loadavg" -ge $((10#$lowload)) ] && [ "$loadavg" -le $((10#$midload)) ]; then
+          echo "$midfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
+        elif [ "$loadavg" -ge $((10#$midload)) ]; then
+          echo "$maxfreq" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_setspeed
+        fi
+      done
   fi
 }
 
