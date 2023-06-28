@@ -62,14 +62,16 @@ else
     if [ $(echo $nvmepath1 | wc -w) -gt 0 ]; then
         if [ -f /etc/extensionPorts ]; then
             sed -i "/pci1=\"*\"/cpci1=\"$nvmepath1\"" /etc/extensionPorts
-            cat /etc/extensionPorts
+        else
+            echo "pci1=\"$nvmepath1\"" > /etc/extensionPorts
         fi
+        cat /etc/extensionPorts
         if [ -f /etc.defaults/extensionPorts ]; then
             sed -i "/pci1=\"*\"/cpci1=\"$nvmepath1\"" /etc.defaults/extensionPorts
-            cat /etc.defaults/extensionPorts
         else
             cp -vf /etc/extensionPorts /etc.defaults/extensionPorts
         fi
+        cat /etc.defaults/extensionPorts
     fi
 
     if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
@@ -81,10 +83,10 @@ else
         if [ -f /etc.defaults/extensionPorts ]; then
             sed -i '3d' /etc.defaults/extensionPorts
             echo "pci2=\"$nvmepath2\"" >> /etc.defaults/extensionPorts
-            cat /etc.defaults/extensionPorts
         else
             cp -vf /etc/extensionPorts /etc.defaults/extensionPorts
         fi
+        cat /etc.defaults/extensionPorts
     fi
 fi
 
