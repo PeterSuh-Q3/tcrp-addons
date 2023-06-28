@@ -1,15 +1,15 @@
 #!/bin/sh
 
 echo "Collecting 1st nvme paths"
-nvmepath1=$(udevadm info --query path --name nvme0n1 | awk -F "/" '{print $4}' )
+nvmepath1=$(readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
 echo "Found local 1st nvme with path $nvmepath1"
 if [ $(echo $nvmepath1 | wc -w) -eq 0 ]; then
     echo "Not found local 1st nvme"
     exit 0
 else
-    hex1=$(udevadm info --query path --name nvme0n1 | awk -F "/" '{print $4}' | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
-    hex2=$(udevadm info --query path --name nvme0n1 | awk -F "/" '{print $4}' | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
-    hex3=$(udevadm info --query path --name nvme0n1 | awk -F "/" '{print $4}' | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
+    hex1=$(readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
+    hex2=$(readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
+    hex3=$(readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
     nvme1hex=$(echo "3a$hex1 $hex2/2e $hex3/00" | sed "s/\///g" )
     echo $nvme1hex
 
@@ -19,14 +19,14 @@ fi
 
 echo ""
 echo "Collecting 2nd nvme paths"
-nvmepath2=$(udevadm info --query path --name nvme1n1 | awk -F "/" '{print $4}' )
+nvmepath2=$(readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
 echo "Found local 2nd nvme with path $nvmepath2"
 if [ $(echo $nvmepath2 | wc -w) -eq 0 ]; then
     echo "Not found local 2nd nvme"
 else
-    hex4=$(udevadm info --query path --name nvme1n1 | awk -F "/" '{print $4}' | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
-    hex5=$(udevadm info --query path --name nvme1n1 | awk -F "/" '{print $4}' | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
-    hex6=$(udevadm info --query path --name nvme1n1 | awk -F "/" '{print $4}' | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
+    hex4=$(readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
+    hex5=$(readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
+    hex6=$(readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
     nvme2hex=$(echo "$hex4$hex5 2e$hex6")
     echo $nvme2hex
 
