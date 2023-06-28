@@ -67,6 +67,8 @@ else
         if [ -f /etc.defaults/extensionPorts ]; then
             sed -i "/pci1=\"*\"/cpci1=\"$nvmepath1\"" /etc.defaults/extensionPorts
             cat /etc.defaults/extensionPorts
+        else
+            cp -vf /etc/extensionPorts /etc.defaults/extensionPorts
         fi
     fi
 
@@ -80,6 +82,8 @@ else
             sed -i '3d' /etc.defaults/extensionPorts
             echo "pci2=\"$nvmepath2\"" >> /etc.defaults/extensionPorts
             cat /etc.defaults/extensionPorts
+        else
+            cp -vf /etc/extensionPorts /etc.defaults/extensionPorts
         fi
     fi
 fi
