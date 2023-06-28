@@ -65,11 +65,10 @@ else
         echo "pci1=\"$nvmepath1\"" >> /etc/extensionPorts
         chmod 755 /etc/extensionPorts
         cat /etc/extensionPorts
-        if [ -f /etc.defaults/extensionPorts ]; then
-            sed -i "/pci1=\"*\"/cpci1=\"$nvmepath1\"" /etc.defaults/extensionPorts
-        else
-            cp -vf /etc/extensionPorts /etc.defaults/extensionPorts
-        fi
+        
+        rm -f /etc.defaults/extensionPorts
+        cp -vf /etc/extensionPorts /etc.defaults/extensionPorts
+        chmod 755 /etc.defaults/extensionPorts
         cat /etc.defaults/extensionPorts
     fi
 
