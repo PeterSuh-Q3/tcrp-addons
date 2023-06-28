@@ -49,16 +49,18 @@ function main {
     # Get current and max cpu temps for Intel
     currtemp=$(cat /sys/bus/platform/devices/coretemp.0/hwmon/hwmon0/temp1_input)
     maxtemp=$(cat /sys/bus/platform/devices/coretemp.0/hwmon/hwmon0/temp1_max)
-  fi
 
-  # Get average load over 5m in base10 integer format
-  loadavg=$(awk -F . '{print $1 substr($2,1,2)}' </proc/loadavg)
+    # Frequencies steps definitions (only for Intel)
+    coolfreq=${freqlist[3]}
+  fi
 
   # Frequencies steps definitions
   minfreq=${freqlist[-1]}
   midfreq=${freqlist[$((${#freqlist[*]} / 2))]}
   maxfreq=${freqlist[0]}
-  coolfreq=${freqlist[3]}
+
+  # Get average load over 5m in base10 integer format
+  loadavg=$(awk -F . '{print $1 substr($2,1,2)}' </proc/loadavg)
 
   # Set load steps to trigger frequencies scaling, this user overidable
   lowload=$(grep cores /proc/cpuinfo | sort -u | awk '{ print $4 * 0.3 * 100 }')
