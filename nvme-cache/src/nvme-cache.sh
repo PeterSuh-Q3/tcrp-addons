@@ -60,11 +60,10 @@ elif [ $(uname -a | grep '1621xs+' | wc -l) -gt 0 ]; then
     fi
 else
     if [ $(echo $nvmepath1 | wc -w) -gt 0 ]; then
-        if [ -f /etc/extensionPorts ]; then
-            sed -i "/pci1=\"*\"/cpci1=\"$nvmepath1\"" /etc/extensionPorts
-        else
-            echo "pci1=\"$nvmepath1\"" > /etc/extensionPorts
-        fi
+        rm -f /etc/extensionPorts
+        echo "[pci]" > /etc/extensionPorts
+        echo "pci1=\"$nvmepath1\"" >> /etc/extensionPorts
+        chmod 755 /etc/extensionPorts
         cat /etc/extensionPorts
         if [ -f /etc.defaults/extensionPorts ]; then
             sed -i "/pci1=\"*\"/cpci1=\"$nvmepath1\"" /etc.defaults/extensionPorts
