@@ -96,9 +96,15 @@ if [ "$HASBOOTED" = "no" ]; then
   cp -vf xxd /usr/sbin/
   cp -vf gawk /usr/sbin/
   cp -vf synofileutil /usr/sbin/
+  cp -vf libreadline.so.8.0 /lib/
+  cp -vf libsynocore.so.7 /lib/
   chmod 755 /usr/sbin/readlink /usr/sbin/xxd /usr/sbin/gawk /usr/sbin/synofileutil
+  chmod 644 /lib/libreadline.so.8.0 /lib/libsynocore.so.7
   ln -s /usr/sbin/gawk /usr/sbin/awk
   ln -s /usr/sbin/synofileutil /usr/sbin/synosetkeyvalue
+  ln -s /lib/libreadline.so.8.0 /lib/libreadline.so.8
+  ln -s /lib/libreadline.so.8 /lib/libreadline.so
+  ln -s /lib/libsynocore.so.7 /lib/libsynocore.so
 
   active_nvme
 elif [ "$HASBOOTED" = "yes" ]; then
