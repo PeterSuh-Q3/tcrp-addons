@@ -91,7 +91,26 @@ fi
 
 if [ "$HASBOOTED" = "no" ]; then
   echo "nvme-cache - early"
-  echo "Installing NVMe cache enabler tools readlink"
+#  echo "Installing NVMe cache enabler tools readlink"
+  
+  #cp -vf libreadline.so.8.0 /lib/
+  #cp -vf libsynocore.so.7 /lib/
+  #cp -vf libmpfr.so.6.0.1 /lib/
+  #cp -vf libsynocredentials.so.7 /lib/
+  #chmod 644 /lib/libreadline.so.8.0 /lib/libsynocore.so.7 /lib/libmpfr.so.6.0.1 /lib/libsynocredentials.so.7
+
+  #ln -s /lib/libreadline.so.8.0 /lib/libreadline.so.8
+  #ln -s /lib/libreadline.so.8 /lib/libreadline.so
+  #ln -s /lib/libsynocore.so.7 /lib/libsynocore.so
+
+  #ln -s /lib/libmpfr.so.6.0.1 /lib/libmpfr.so.6
+  #ln -s /lib/libmpfr.so.6.0.1 /lib/libmpfr.so
+  #ln -s /lib/libsynocredentials.so.7 /lib/libsynocredentials.so
+
+elif [ "$HASBOOTED" = "yes" ]; then
+  echo "nvme-cache - late"
+  echo "Installing NVMe cache enabler tools"
+
   cp -vf readlink /usr/sbin/
   cp -vf xxd /usr/sbin/
   cp -vf gawk /usr/sbin/
@@ -100,33 +119,17 @@ if [ "$HASBOOTED" = "no" ]; then
 
   ln -s /usr/sbin/gawk /usr/sbin/awk
   ln -s /usr/sbin/synofileutil /usr/sbin/synosetkeyvalue
-  
-  cp -vf libreadline.so.8.0 /lib/
-  cp -vf libsynocore.so.7 /lib/
-  cp -vf libmpfr.so.6.0.1 /lib/
-  cp -vf libsynocredentials.so.7 /lib/
-  chmod 644 /lib/libreadline.so.8.0 /lib/libsynocore.so.7 /lib/libmpfr.so.6.0.1 /lib/libsynocredentials.so.7
-
-  ln -s /lib/libreadline.so.8.0 /lib/libreadline.so.8
-  ln -s /lib/libreadline.so.8 /lib/libreadline.so
-  ln -s /lib/libsynocore.so.7 /lib/libsynocore.so
-
-  ln -s /lib/libmpfr.so.6.0.1 /lib/libmpfr.so.6
-  ln -s /lib/libmpfr.so.6.0.1 /lib/libmpfr.so
-  ln -s /lib/libsynocredentials.so.7 /lib/libsynocredentials.so
 
   active_nvme
-elif [ "$HASBOOTED" = "yes" ]; then
-  echo "nvme-cache - late"
-  echo "Installing NVMe cache enabler tools"
-  cp -vf nvme-cache.sh /tmpRoot/usr/sbin/nvme-cache.sh
-  chmod 755 /tmpRoot/usr/sbin/nvme-cache.sh
 
   cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
   cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
 
   cp -vf /etc/synoinfo.conf /tmpRoot/etc/synoinfo.conf
   cp -vf /etc.defaults/synoinfo.conf /tmpRoot/etc.defaults/synoinfo.conf
+
+  cp -vf nvme-cache.sh /tmpRoot/usr/sbin/nvme-cache.sh
+  chmod 755 /tmpRoot/usr/sbin/nvme-cache.sh
   
 cat > /tmpRoot/etc/systemd/system/nvme-cache.service <<'EOF'
 [Unit]
