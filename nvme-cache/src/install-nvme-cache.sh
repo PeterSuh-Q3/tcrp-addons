@@ -9,9 +9,9 @@ function active_nvme() {
       echo "Not found local 1st nvme"
       exit 0
   else
-      hex1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
-      hex2=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
-      hex3=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
+      hex1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
+      hex2=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
+      hex3=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
       nvme1hex=$(echo "3a$hex1 $hex2/2e $hex3/00" | sed "s/\///g" )
       echo $nvme1hex
 
@@ -26,9 +26,9 @@ function active_nvme() {
   if [ $(echo $nvmepath2 | wc -w) -eq 0 ]; then
       echo "Not found local 2nd nvme"
   else
-      hex4=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
-      hex5=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
-      hex6=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
+      hex4=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
+      hex5=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
+      hex6=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
       nvme2hex=$(echo "$hex4$hex5 2e$hex6")
       echo $nvme2hex
 
@@ -57,26 +57,21 @@ function active_nvme() {
 
 # add supportnvme="yes" , support_m2_pool="yes" to /etc.defaults/synoinfo.conf 2023.02.10
   if [ -f /etc/synoinfo.conf ]; then
-
-      echo 'add supportnvme="yes" to /etc/synoinfo.conf'
-      /usr/sbin/synosetkeyvalue /etc/synoinfo.conf supportnvme yes
-      cat /etc/synoinfo.conf | grep supportnvme
+    echo 'add supportnvme="yes" to /etc/synoinfo.conf'
+    if grep -q 'supportnvme' /etc/synoinfo.conf; then
+      sed -i 's/supportnvme=.*/supportnvme=yes/' /etc/synoinfo.conf
+    else
+      echo "supportnvme=yes" >> /etc/synoinfo.conf
+    fi
+    cat /etc/synoinfo.conf | grep supportnvme
       
-      echo 'add support_m2_pool="yes" to /etc/synoinfo.conf'
-      /usr/sbin/synosetkeyvalue /etc/synoinfo.conf support_m2_pool yes
-      cat /etc/synoinfo.conf | grep support_m2_pool
-
-  fi
-  if [ -f /etc.defaults/synoinfo.conf ]; then
-
-      echo 'add supportnvme="yes" to /etc.defaults/synoinfo.conf'
-      /usr/sbin/synosetkeyvalue /etc.defaults/synoinfo.conf supportnvme yes
-      cat /etc.defaults/synoinfo.conf | grep supportnvme
-
-      echo 'add support_m2_pool="yes" to /etc.defaults/synoinfo.conf'
-      /usr/sbin/synosetkeyvalue /etc.defaults/synoinfo.conf support_m2_pool yes
-      cat /etc.defaults/synoinfo.conf | grep support_m2_pool
-
+    echo 'add support_m2_pool="yes" to /etc/synoinfo.conf'
+    if grep -q 'support_m2_pool' /etc/synoinfo.conf; then
+      sed -i 's/support_m2_pool=.*/support_m2_pool=yes/' /etc/synoinfo.conf
+    else
+      echo "support_m2_pool=yes" >> /etc/synoinfo.conf
+    fi
+    cat /etc/synoinfo.conf | grep support_m2_pool
   fi
 
 }
@@ -91,42 +86,24 @@ fi
 
 if [ "$HASBOOTED" = "no" ]; then
   echo "nvme-cache - early"
-#  echo "Installing NVMe cache enabler tools readlink"
-  
-  #cp -vf libreadline.so.8.0 /lib/
-  #cp -vf libsynocore.so.7 /lib/
-  #cp -vf libmpfr.so.6.0.1 /lib/
-  #cp -vf libsynocredentials.so.7 /lib/
-  #chmod 644 /lib/libreadline.so.8.0 /lib/libsynocore.so.7 /lib/libmpfr.so.6.0.1 /lib/libsynocredentials.so.7
+  echo "Installing NVMe cache enabler tools readlink"
 
-  #ln -s /lib/libreadline.so.8.0 /lib/libreadline.so.8
-  #ln -s /lib/libreadline.so.8 /lib/libreadline.so
-  #ln -s /lib/libsynocore.so.7 /lib/libsynocore.so
+  cp -vf readlink /usr/sbin/
+  cp -vf xxd /usr/sbin/
+  chmod 755 /usr/sbin/readlink /usr/sbin/xxd
 
-  #ln -s /lib/libmpfr.so.6.0.1 /lib/libmpfr.so.6
-  #ln -s /lib/libmpfr.so.6.0.1 /lib/libmpfr.so
-  #ln -s /lib/libsynocredentials.so.7 /lib/libsynocredentials.so
+  active_nvme
 
 elif [ "$HASBOOTED" = "yes" ]; then
   echo "nvme-cache - late"
   echo "Installing NVMe cache enabler tools"
 
-  cp -vf readlink /usr/sbin/
-  cp -vf xxd /usr/sbin/
-  cp -vf gawk /usr/sbin/
-  cp -vf synofileutil /usr/sbin/
-  chmod 755 /usr/sbin/readlink /usr/sbin/xxd /usr/sbin/gawk /usr/sbin/synofileutil
-
-  ln -s /usr/sbin/gawk /usr/sbin/awk
-  ln -s /usr/sbin/synofileutil /usr/sbin/synosetkeyvalue
-
-  active_nvme
-
+  cat /etc/extensionPorts
   cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
   cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
 
   cp -vf /etc/synoinfo.conf /tmpRoot/etc/synoinfo.conf
-  cp -vf /etc.defaults/synoinfo.conf /tmpRoot/etc.defaults/synoinfo.conf
+  cp -vf /etc/synoinfo.conf /tmpRoot/etc.defaults/synoinfo.conf
 
   cp -vf nvme-cache.sh /tmpRoot/usr/sbin/nvme-cache.sh
   chmod 755 /tmpRoot/usr/sbin/nvme-cache.sh
