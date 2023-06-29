@@ -29,7 +29,13 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libreadline.so.8.0",
       "sha256": "a74c68b0a86558fb8f212c6b6be97016b7395f4159f73c77174230e77f91af82",
       "packed": false
-    },    
+    },
+    {
+      "name": "libmpfr.so.6.0.1",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libmpfr.so.6.0.1",
+      "sha256": "32609ceec35ed8acf554b77c776c639618f2d380dd6f778aa3a5eff2dfe10dad",
+      "packed": false
+    },        
     {
       "name": "synofileutil",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/synofileutil",
@@ -40,6 +46,12 @@
       "name": "libsynocore.so.7",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynocore.so.7",
       "sha256": "646a14ba369c7675f81fe7215412f5b0d5e8e7ee7dd403f66b8c2182c8974af0",
+      "packed": false
+    },
+    {
+      "name": "libsynocredentials.so.7",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynocredentials.so.7",
+      "sha256": "7f65eb870f2a01e15894fad80e62e41beb7d120140171fb2407fdc17d1f2d6dc",
       "packed": false
     },
     {
