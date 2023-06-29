@@ -97,8 +97,8 @@ if [ "$HASBOOTED" = "no" ]; then
   cp -vf gawk /usr/sbin/
   cp -vf synofileutil /usr/sbin/
   chmod 755 /usr/sbin/readlink /usr/sbin/xxd /usr/sbin/gawk /usr/sbin/synofileutil
-  ln -s usr/sbin/gawk /usr/sbin/awk
-  ln -s usr/sbin/synofileutil /usr/sbin/synosetkeyvalue
+  ln -s /usr/sbin/gawk /usr/sbin/awk
+  ln -s /usr/sbin/synofileutil /usr/sbin/synosetkeyvalue
 
   active_nvme
 elif [ "$HASBOOTED" = "yes" ]; then
