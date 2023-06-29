@@ -3,15 +3,15 @@
 function active_nvme() {
 
   echo "Collecting 1st nvme paths"
-  nvmepath1=$(readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
+  nvmepath1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
   echo "Found local 1st nvme with path $nvmepath1"
   if [ $(echo $nvmepath1 | wc -w) -eq 0 ]; then
       echo "Not found local 1st nvme"
       exit 0
   else
-      hex1=$(readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
-      hex2=$(readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
-      hex3=$(readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
+      hex1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
+      hex2=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
+      hex3=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
       nvme1hex=$(echo "3a$hex1 $hex2/2e $hex3/00" | sed "s/\///g" )
       echo $nvme1hex
 
@@ -21,14 +21,14 @@ function active_nvme() {
 
   echo ""
   echo "Collecting 2nd nvme paths"
-  nvmepath2=$(readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
+  nvmepath2=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
   echo "Found local 2nd nvme with path $nvmepath2"
   if [ $(echo $nvmepath2 | wc -w) -eq 0 ]; then
       echo "Not found local 2nd nvme"
   else
-      hex4=$(readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
-      hex5=$(readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
-      hex6=$(readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
+      hex4=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
+      hex5=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
+      hex6=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | awk -F ":" '{print $3}' | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
       nvme2hex=$(echo "$hex4$hex5 2e$hex6")
       echo $nvme2hex
 
@@ -44,9 +44,6 @@ function active_nvme() {
           echo "[pci]" > /etc/extensionPorts
           echo "pci1=\"$nvmepath1\"" >> /etc/extensionPorts
           chmod 755 /etc/extensionPorts
-          
-          cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
-          cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
 
           cat /etc/extensionPorts
       fi
@@ -54,12 +51,34 @@ function active_nvme() {
       if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
           echo "pci2=\"$nvmepath2\"" >> /etc/extensionPorts
 
-          cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
-          cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
-
           cat /etc/extensionPorts
       fi
   fi
+
+}
+
+if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
+    HASBOOTED="yes"
+    echo "System passed junior"
+else
+    echo "System is booting"
+    HASBOOTED="no"
+fi
+
+if [ "$HASBOOTED" = "no" ]; then
+  echo "nvme-cache - early"
+  echo "Installing NVMe cache enabler tools readlink"
+  cp -vf readlink /usr/sbin/
+  chmod 755 /usr/sbin/readlink
+  active_nvme
+elif [ "$HASBOOTED" = "yes" ]; then
+  echo "nvme-cache - late"
+  echo "Installing NVMe cache enabler tools"
+  cp -vf nvme-cache.sh /tmpRoot/usr/sbin/nvme-cache.sh
+  chmod 755 /tmpRoot/usr/sbin/nvme-cache.sh
+
+  cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
+  cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
 
   # add supportnvme="yes" , support_m2_pool="yes" to /etc.defaults/synoinfo.conf 2023.02.10
   if [ -f /tmpRoot/etc/synoinfo.conf ]; then
@@ -84,27 +103,6 @@ function active_nvme() {
       cat /tmpRoot/etc.defaults/synoinfo.conf | grep support_m2_pool
 
   fi
-
-}
-
-if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
-    HASBOOTED="yes"
-    echo "System passed junior"
-else
-    echo "System is booting"
-    HASBOOTED="no"
-fi
-
-if [ "$HASBOOTED" = "no" ]; then
-  echo "nvme-cache - early"
-elif [ "$HASBOOTED" = "yes" ]; then
-  echo "nvme-cache - late"
-  echo "Installing NVMe cache enabler tools"
-  cp -vf nvme-cache.sh /tmpRoot/usr/sbin/nvme-cache.sh
-  cp -vf readlink /tmpRoot/usr/sbin/
-  chmod 755 /tmpRoot/usr/sbin/nvme-cache.sh /tmpRoot/usr/sbin/readlink
-
-  active_nvme
 
 cat > /tmpRoot/etc/systemd/system/nvme-cache.service <<'EOF'
 [Unit]
