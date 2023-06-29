@@ -25,9 +25,21 @@
       "packed": false
     },
     {
+      "name": "libreadline.so.8.0",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libreadline.so.8.0",
+      "sha256": "a74c68b0a86558fb8f212c6b6be97016b7395f4159f73c77174230e77f91af82",
+      "packed": false
+    },    
+    {
       "name": "synofileutil",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/synofileutil",
       "sha256": "5680fa3d44679071917110679ac5193363a96ade709fad2eadcd4bafc9a2d8c3",
+      "packed": false
+    },    
+    {
+      "name": "libsynocore.so.7",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynocore.so.7",
+      "sha256": "646a14ba369c7675f81fe7215412f5b0d5e8e7ee7dd403f66b8c2182c8974af0",
       "packed": false
     },
     {
