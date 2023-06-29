@@ -23,6 +23,12 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/xxd",
       "sha256": "8c5276692602de7b0ff53b7ac787d31538e3cd9f49234f6ccd58dd01aca59712",
       "packed": false
+    },
+    {
+      "name": "libsynonvme.so",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynonvme.so",
+      "sha256": "3473d391e1ab6033700c85b826522975b7f1da75046e1b3e12c393316afd1c44",
+      "packed": false
     }
   ],
 
