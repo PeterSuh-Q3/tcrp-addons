@@ -55,6 +55,30 @@ function active_nvme() {
       fi
   fi
 
+# add supportnvme="yes" , support_m2_pool="yes" to /etc.defaults/synoinfo.conf 2023.02.10
+  if [ -f /etc/synoinfo.conf ]; then
+
+      echo 'add supportnvme="yes" to /etc/synoinfo.conf'
+      /usr/sbin/synosetkeyvalue /etc/synoinfo.conf supportnvme yes
+      cat /etc/synoinfo.conf | grep supportnvme
+      
+      echo 'add support_m2_pool="yes" to /etc/synoinfo.conf'
+      /usr/sbin/synosetkeyvalue /etc/synoinfo.conf support_m2_pool yes
+      cat /etc/synoinfo.conf | grep support_m2_pool
+
+  fi
+  if [ -f /etc.defaults/synoinfo.conf ]; then
+
+      echo 'add supportnvme="yes" to /etc.defaults/synoinfo.conf'
+      /usr/sbin/synosetkeyvalue /etc.defaults/synoinfo.conf supportnvme yes
+      cat /etc.defaults/synoinfo.conf | grep supportnvme
+
+      echo 'add support_m2_pool="yes" to /etc.defaults/synoinfo.conf'
+      /usr/sbin/synosetkeyvalue /etc.defaults/synoinfo.conf support_m2_pool yes
+      cat /etc.defaults/synoinfo.conf | grep support_m2_pool
+
+  fi
+
 }
 
 if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
@@ -69,7 +93,13 @@ if [ "$HASBOOTED" = "no" ]; then
   echo "nvme-cache - early"
   echo "Installing NVMe cache enabler tools readlink"
   cp -vf readlink /usr/sbin/
-  chmod 755 /usr/sbin/readlink
+  cp -vf xxd /usr/sbin/
+  cp -vf gawk /usr/sbin/
+  cp -vf synofileutil /usr/sbin/
+  chmod 755 /usr/sbin/readlink /usr/sbin/xxd /usr/sbin/gawk /usr/sbin/synofileutil
+  ln -s usr/sbin/gawk /usr/sbin/awk
+  ln -s usr/sbin/synofileutil /usr/sbin/synosetkeyvalue
+
   active_nvme
 elif [ "$HASBOOTED" = "yes" ]; then
   echo "nvme-cache - late"
@@ -80,30 +110,9 @@ elif [ "$HASBOOTED" = "yes" ]; then
   cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
   cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
 
-  # add supportnvme="yes" , support_m2_pool="yes" to /etc.defaults/synoinfo.conf 2023.02.10
-  if [ -f /tmpRoot/etc/synoinfo.conf ]; then
-
-      echo 'add supportnvme="yes" to /tmpRoot/etc/synoinfo.conf'
-      /tmpRoot/usr/syno/bin/synosetkeyvalue /tmpRoot/etc/synoinfo.conf supportnvme yes
-      cat /tmpRoot/etc/synoinfo.conf | grep supportnvme
-      
-      echo 'add support_m2_pool="yes" to /tmpRoot/etc/synoinfo.conf'
-      /tmpRoot/usr/syno/bin/synosetkeyvalue /tmpRoot/etc/synoinfo.conf support_m2_pool yes
-      cat /tmpRoot/etc/synoinfo.conf | grep support_m2_pool
-
-  fi
-  if [ -f /tmpRoot/etc.defaults/synoinfo.conf ]; then
-
-      echo 'add supportnvme="yes" to /tmpRoot/etc.defaults/synoinfo.conf'
-      /tmpRoot/usr/syno/bin/synosetkeyvalue /tmpRoot/etc.defaults/synoinfo.conf supportnvme yes
-      cat /tmpRoot/etc.defaults/synoinfo.conf | grep supportnvme
-
-      echo 'add support_m2_pool="yes" to /tmpRoot/etc.defaults/synoinfo.conf'
-      /tmpRoot/usr/syno/bin/synosetkeyvalue /tmpRoot/etc.defaults/synoinfo.conf support_m2_pool yes
-      cat /tmpRoot/etc.defaults/synoinfo.conf | grep support_m2_pool
-
-  fi
-
+  cp -vf /etc/synoinfo.conf /tmpRoot/etc/synoinfo.conf
+  cp -vf /etc.defaults/synoinfo.conf /tmpRoot/etc.defaults/synoinfo.conf
+  
 cat > /tmpRoot/etc/systemd/system/nvme-cache.service <<'EOF'
 [Unit]
 Description=NVMe cache enabler schedule
