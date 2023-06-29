@@ -110,13 +110,13 @@ elif [ "$HASBOOTED" = "yes" ]; then
   echo "nvme-cache - late"
   echo "Installing NVMe cache enabler tools"
 
-  cat /etc/extensionPorts
-  cp -vf /etc/extensionPorts /tmpRoot/etc/
-  cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/
-
   if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
     echo "Copy libsynonvme.so.1 file to tmpRoot"
     cp -vf /etc/libsynonvme.so.1 /tmpRoot/lib64/
+  else
+    cat /etc/extensionPorts
+    cp -vf /etc/extensionPorts /tmpRoot/etc/
+    cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/
   fi
 
   cp -vf /etc/synoinfo.conf /tmpRoot/etc/
