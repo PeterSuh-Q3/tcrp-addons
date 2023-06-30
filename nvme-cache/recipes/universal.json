@@ -9,7 +9,7 @@
     {
       "name": "install-nvme-cache.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/src/install-nvme-cache.sh",
-      "sha256": "53d49c2b9d57344e1e7129961f5e6304d94d17ee1f7cd0ade5312975d25154d1",
+      "sha256": "36b25d663097139007511467a79e085a888fc786462c094467cf3f32c142bc09",
       "packed": false
     },
     {
@@ -25,9 +25,15 @@
       "packed": false
     },
     {
-      "name": "libsynonvme.so",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynonvme.so",
+      "name": "libsynonvme.so.7.1",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynonvme.so.7.1",
       "sha256": "3473d391e1ab6033700c85b826522975b7f1da75046e1b3e12c393316afd1c44",
+      "packed": false
+    },
+    {
+      "name": "libsynonvme.so.7.2",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynonvme.so.7.2",
+      "sha256": "12d73f119d816c71b04b34850e47d696076342316c037955dd7c58b96f90083c",
       "packed": false
     }
   ],
