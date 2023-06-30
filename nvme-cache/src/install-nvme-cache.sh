@@ -38,17 +38,17 @@ function active_nvme() {
 
   if [ $(uname -a | grep '918+' | wc -l) -gt 0 ]; then
     if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
-        xxd -c 256 ./libsynonvme.so | sed "s/3a31 332e 3100/$nvme1hex/" | sed "s/3133 2e32/$nvme2hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
+        xxd -c 256 ./libsynonvme.so | sed "s/3a31 332e 3100/$nvme1hex/" | sed "s/3133 2e32/$nvme2hex/" | xxd -c 256 -r #> /etc/libsynonvme.so.1
     else
-        xxd -c 256 ./libsynonvme.so | sed "s/3a31 332e 3100/$nvme1hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
+        xxd -c 256 ./libsynonvme.so | sed "s/3a31 332e 3100/$nvme1hex/" | xxd -c 256 -r #> /etc/libsynonvme.so.1
     fi
   elif [ $(uname -a | grep '1019+' | wc -l) -gt 0 ]; then
-    xxd ./libsynonvme.so | sed "s/3134 2e31/$nvme3hex/" | xxd -r > /etc/libsynonvme.so.1
+    xxd ./libsynonvme.so | sed "s/3134 2e31/$nvme3hex/" | xxd -r #> /etc/libsynonvme.so.1
   elif [ $(uname -a | grep '1621xs+' | wc -l) -gt 0 ]; then
     if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
-        xxd -c 256 ./libsynonvme.so | sed "s/3031 2e31/$nvme3hex/" | sed "s/3a30 312e 3000/$nvme4hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
+        xxd -c 256 ./libsynonvme.so | sed "s/3031 2e31/$nvme3hex/" | sed "s/3a30 312e 3000/$nvme4hex/" | xxd -c 256 -r #> /etc/libsynonvme.so.1
     else
-        xxd -c 256 ./libsynonvme.so | sed "s/3031 2e31/$nvme3hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
+        xxd -c 256 ./libsynonvme.so | sed "s/3031 2e31/$nvme3hex/" | xxd -c 256 -r #> /etc/libsynonvme.so.1
     fi
   else
       if [ $(echo $nvmepath1 | wc -w) -gt 0 ]; then
@@ -112,7 +112,7 @@ elif [ "$HASBOOTED" = "yes" ]; then
 
   if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
     echo "Copy libsynonvme.so.1 file to tmpRoot"
-    cp -vf /etc/libsynonvme.so.1 /tmpRoot/lib64/
+    #cp -vf /etc/libsynonvme.so.1 /tmpRoot/lib64/
   else
     cat /etc/extensionPorts
     cp -vf /etc/extensionPorts /tmpRoot/etc/
