@@ -73,7 +73,7 @@ function active_nvme() {
       fi
   fi
 
-# add supportnvme="yes" , support_m2_pool="yes" to /etc.defaults/synoinfo.conf 2023.02.10
+# add supportnvme="yes" , support_m2_pool="yes" to /etc/synoinfo.conf 2023.02.10
   if [ -f /etc/synoinfo.conf ]; then
     echo 'add supportnvme="yes" to /etc/synoinfo.conf'
     if grep -q 'supportnvme' /etc/synoinfo.conf; then
@@ -90,6 +90,23 @@ function active_nvme() {
       echo "support_m2_pool=yes" >> /etc/synoinfo.conf
     fi
     cat /etc/synoinfo.conf | grep support_m2_pool
+
+# add supportraidgroup="no" , support_syno_hybrid_raid="yes" to /etc/synoinfo.conf for avtive SHR 2023.07.10    
+    echo 'add supportraidgroup="no" to /etc/synoinfo.conf'
+    if grep -q 'supportraidgroup' /etc/synoinfo.conf; then
+      sed -i 's/supportraidgroup=.*/supportraidgroup=no/' /etc/synoinfo.conf
+    else
+      echo "supportraidgroup=no" >> /etc/synoinfo.conf
+    fi
+    cat /etc/synoinfo.conf | grep supportraidgroup
+
+    echo 'add support_syno_hybrid_raid="yes" to /etc/synoinfo.conf'
+    if grep -q 'support_syno_hybrid_raid' /etc/synoinfo.conf; then
+      sed -i 's/support_syno_hybrid_raid=.*/support_m2_pool=yes/' /etc/synoinfo.conf
+    else
+      echo "support_syno_hybrid_raid=yes" >> /etc/synoinfo.conf
+    fi
+    cat /etc/synoinfo.conf | grep support_syno_hybrid_raid
   fi
 
 }
