@@ -72,7 +72,7 @@ function active_nvme() {
           cat /etc/extensionPorts
       fi
   fi
-fi
+}
 
 function modify_synoinfo() {
 # add supportnvme="yes" , support_m2_pool="yes" to /etc/synoinfo.conf 2023.02.10
