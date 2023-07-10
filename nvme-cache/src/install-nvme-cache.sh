@@ -92,23 +92,6 @@ function modify_synoinfo() {
       echo 'support_m2_pool="yes"' >> /tmpRoot/etc/synoinfo.conf
     fi
     cat /tmpRoot/etc/synoinfo.conf | grep support_m2_pool
-
-# add supportraidgroup="no" , support_syno_hybrid_raid="yes" to /etc/synoinfo.conf for avtive SHR 2023.07.10    
-    echo 'add supportraidgroup="no" to /tmpRoot/etc/synoinfo.conf'
-    if grep -q 'supportraidgroup' /tmpRoot/etc/synoinfo.conf; then
-      sed -i 's#supportraidgroup=.*#supportraidgroup="no"#' /tmpRoot/etc/synoinfo.conf
-    else
-      echo 'supportraidgroup="no"' >> /tmpRoot/etc/synoinfo.conf
-    fi
-    cat /tmpRoot/etc/synoinfo.conf | grep supportraidgroup
-
-    echo 'add support_syno_hybrid_raid="yes" to /tmpRoot/etc/synoinfo.conf'
-    if grep -q 'support_syno_hybrid_raid' /tmpRoot/etc/synoinfo.conf; then
-      sed -i 's#support_syno_hybrid_raid=.*#support_syno_hybrid_raid="yes"#' /tmpRoot/etc/synoinfo.conf
-    else
-      echo 'support_syno_hybrid_raid="yes"' >> /tmpRoot/etc/synoinfo.conf
-    fi
-    cat /tmpRoot/etc/synoinfo.conf | grep support_syno_hybrid_raid
   fi
 
   if [ -f /tmpRoot/etc.defaults/synoinfo.conf ]; then
@@ -127,23 +110,6 @@ function modify_synoinfo() {
       echo 'support_m2_pool="yes"' >> /tmpRoot/etc.defaults/synoinfo.conf
     fi
     cat /tmpRoot/etc.defaults/synoinfo.conf | grep support_m2_pool
-
-# add supportraidgroup="no" , support_syno_hybrid_raid="yes" to /etc/synoinfo.conf for avtive SHR 2023.07.10
-    echo 'add supportraidgroup="no" to /tmpRoot/etc.defaults/synoinfo.conf'
-    if grep -q 'supportraidgroup' /tmpRoot/etc.defaults/synoinfo.conf; then
-      sed -i 's#supportraidgroup=.*#supportraidgroup="no"#' /tmpRoot/etc.defaults/synoinfo.conf
-    else
-      echo 'supportraidgroup="no"' >> /tmpRoot/etc.defaults/synoinfo.conf
-    fi
-    cat /tmpRoot/etc.defaults/synoinfo.conf | grep supportraidgroup
-
-    echo 'add support_syno_hybrid_raid="yes" to /tmpRoot/etc.defaults/synoinfo.conf'
-    if grep -q 'support_syno_hybrid_raid' /tmpRoot/etc.defaults/synoinfo.conf; then
-      sed -i 's#support_syno_hybrid_raid=.*#support_syno_hybrid_raid="yes"#' /tmpRoot/etc.defaults/synoinfo.conf
-    else
-      echo 'support_syno_hybrid_raid="yes"' >> /tmpRoot/etc.defaults/synoinfo.conf
-    fi
-    cat /tmpRoot/etc.defaults/synoinfo.conf | grep support_syno_hybrid_raid
   fi
 
 }
@@ -181,7 +147,4 @@ elif [ "$HASBOOTED" = "yes" ]; then
   
   modify_synoinfo
 
-  #cat /etc/synoinfo.conf | grep -e support_m2_pool -e supportnvme
-  #cp -vf /etc/synoinfo.conf /tmpRoot/etc/
-  #cp -vf /etc/synoinfo.conf /tmpRoot/etc.defaults/
 fi
