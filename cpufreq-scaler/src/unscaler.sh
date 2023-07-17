@@ -17,3 +17,5 @@ if [ "$governor" != "performance" ]; then
     echo "performance" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_governor
   done
 fi
+
+touch /usr/sbin/stopscale

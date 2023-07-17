@@ -17,3 +17,5 @@ if [ "$governor" != "userspace" ]; then
     echo "userspace" >/sys/devices/system/cpu/cpu"${i}"/cpufreq/scaling_governor
   done
 fi
+
+rm -f /usr/sbin/stopscale
