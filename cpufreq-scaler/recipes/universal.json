@@ -3,19 +3,19 @@
     {
       "name": "scaler.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/scaler.sh",
-      "sha256": "7a7cf9e0c43c240fda5821881aeb9303aa8ad921ee642473a0492fe655151d52",
+      "sha256": "31c5ab99b5dbf6f7f9de6b34e194c21eafcfd53e63b786d850308ae50c1ca83c",
       "packed": false
     },
     {
       "name": "unscaler.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/unscaler.sh",
-      "sha256": "68b41324d22f56b460cf27ff535a925aa8ee19e83b6ce12ca78043470ae6e245",
+      "sha256": "eacaa9e62291bad62903737e1fdb5d63dd018add9f6bb412cc52bd1708f45794",
       "packed": false
     },
     {
       "name": "rescaler.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/rescaler.sh",
-      "sha256": "9e1e249b618ab9bed1ec7cb72a0de3fec95bd8bac99a12310958aa6e093cc56a",
+      "sha256": "9227af1b99e620738b73acccd1658b8b7745482a1fd3f5a9a58982f0dc3b2b55",
       "packed": false
     },
     {
