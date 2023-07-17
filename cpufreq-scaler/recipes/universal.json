@@ -15,7 +15,7 @@
     {
       "name": "rescaler.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/rescaler.sh",
-      "sha256": "9227af1b99e620738b73acccd1658b8b7745482a1fd3f5a9a58982f0dc3b2b55",
+      "sha256": "495c8c9398466a3b947cad1491f821aa4b931da019b9d87399c9edc8019ec7a1",
       "packed": false
     },
     {
