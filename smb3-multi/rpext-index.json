@@ -51,16 +51,13 @@
     "rs1619xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "rs3621xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "sa3400_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
-    "zendofmodel": "endofurls",
     "ds620slim_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "ds620slim_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
-    "ds620slim_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "ds1819p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "ds1819p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
-    "ds1819p_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "ds1823xsp_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "ds1823xsp_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
-    "ds1823xsp_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json"
+    "zendofmodel": "endofurls"    
   },
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/rpext-index.json"
 }
