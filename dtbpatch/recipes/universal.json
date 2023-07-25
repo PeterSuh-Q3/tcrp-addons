@@ -15,7 +15,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/releases/install.sh",
-      "sha256": "5ad2089715790700e3017eb609f8d0b8a238877229fe6bd37a7c37476ecdd973",
+      "sha256": "3bdaced67ad5ff7ebd3ca894faea97fcef98a3330b07dcb5f4c839695c60367a",
       "packed": false
     }
   ],
