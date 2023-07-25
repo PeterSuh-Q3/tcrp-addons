@@ -49,20 +49,13 @@ function getUsbPorts() {
 # NVME ports
 function getNvmePorts() {
 
-  echo "Collecting 1st nvme paths"
   nvmepath1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
-  echo "Found local 1st nvme with path $nvmepath1"
   if [ $(echo $nvmepath1 | wc -w) -eq 0 ]; then
-      echo "Not found local 1st nvme"
       exit 0
   fi
   
-  echo ""
-  echo "Collecting 2nd nvme paths"
   nvmepath2=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
-  echo "Found local 2nd nvme with path $nvmepath2"
   if [ $(echo $nvmepath2 | wc -w) -eq 0 ]; then
-      echo "Not found local 2nd nvme"
       echo -n "${nvmepath1} "
   else
       echo -n "${nvmepath1},${nvmepath2} "
