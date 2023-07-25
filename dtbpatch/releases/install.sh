@@ -131,8 +131,10 @@ if [ "$HASBOOTED" = "no" ]; then
 
   echo "dtbpatch - early"
   # fix executable flag
-  cp dtc /usr/sbin/
+  cp -vf dtc /usr/sbin/
+  cp -vf readlink /usr/sbin/
   chmod +x /usr/sbin/dtc
+  chmod +x /usr/sbin/readlink
 
   echo "Patching /etc.defaults/${DTBFILE}"
   MODEL="$(uname -u)"
