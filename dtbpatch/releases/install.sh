@@ -1,14 +1,8 @@
 #!/usr/bin/env ash
 
-
 ### USUALLY SCEMD is the last process run in init, so when scemd is running we are most
 # probably certain that system has finish init process
 #
-
-# Detect correct file
-HW_REVISION=`cat /proc/sys/kernel/syno_hw_revision`
-[ -n "${HW_REVISION}" ] && DTBFILE="model_${HW_REVISION}.dtb" || DTBFILE="model.dtb"
-[ -e /etc.defaults/${DTBFILE} ] || DTBFILE="model.dtb"
 
 if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
   HASBOOTED="yes"
@@ -18,48 +12,80 @@ else
   HASBOOTED="no"
 fi
 
+function dtModel() {
+  DEST="/var/run/model.dts"
+  if [[ ! -f ${DEST} ]]; then  # Users can put their own dts.
+    echo "/dts-v1/;"                                                 >${DEST}
+    echo "/ {"                                                      >>${DEST}
+    echo "    compatible = \"Synology\";"                           >>${DEST}
+    echo "    model = \"${1}\";"                                    >>${DEST}
+    echo "    version = <0x01>;"                                    >>${DEST}
+    # SATA ports
+    I=1
+    while true; do
+      [[ ! -d /sys/block/sata${I} ]] && break
+      PCIEPATH=$(grep 'pciepath' /sys/block/sata${I}/device/syno_block_info | cut -d'=' -f2)
+      ATAPORT=$(grep 'ata_port_no' /sys/block/sata${I}/device/syno_block_info | cut -d'=' -f2)
+      echo "    internal_slot@${I} {"                               >>${DEST}
+      echo "        protocol_type = \"sata\";"                      >>${DEST}
+      echo "        ahci {"                                         >>${DEST}
+      echo "            pcie_root = \"${PCIEPATH}\";"               >>${DEST}
+      echo "            ata_port = <0x$(printf '%02X' ${ATAPORT})>;" >>${DEST}
+      echo "        };"                                             >>${DEST}
+      echo "    };"                                                 >>${DEST}
+      I=$((${I}+1))
+    done
+    
+    # NVME ports
+    COUNT=1
+    for P in $(nvmePorts true); do
+      echo "    nvme_slot@${COUNT} {"                               >>${DEST}
+      echo "        pcie_root = \"${P}\";"                          >>${DEST}
+      echo "        port_type = \"ssdcache\";"                      >>${DEST}
+      echo "    };"                                                 >>${DEST}
+      COUNT=$((${COUNT}+1))
+    done
+
+    # USB ports
+    COUNT=1
+    for I in $(getUsbPorts); do
+      echo "    usb_slot@${COUNT} {"                                >>${DEST}
+      echo "      usb2 {"                                           >>${DEST}
+      echo "        usb_port =\"${I}\";"                            >>${DEST}
+      echo "      };"                                               >>${DEST}
+      echo "      usb3 {"                                           >>${DEST}
+      echo "        usb_port =\"${I}\";"                            >>${DEST}
+      echo "      };"                                               >>${DEST}
+      echo "    };"                                                 >>${DEST}
+      COUNT=$((${COUNT}+1))
+    done
+    echo "};"                                                       >>${DEST}
+  fi
+  cat ${DEST}
+  /usr/sbin/dtc -I dts -O dtb ${DEST} >/etc.defaults/model.dtb
+  cp -fv /etc.defaults/model.dtb /run/model.dtb
+  /usr/syno/bin/syno_slot_mapping
+}
 
 if [ "$HASBOOTED" = "no" ]; then
 
   echo "dtbpatch - early"
   # fix executable flag
-  cp dtbpatch /usr/sbin/
   cp dtc /usr/sbin/
-  chmod +x /usr/sbin/dtbpatch
   chmod +x /usr/sbin/dtc
 
   echo "Patching /etc.defaults/${DTBFILE}"
-
-  # Dynamic generation fabio
-  if dtbpatch /etc.defaults/${DTBFILE} /var/run/model.dtb; then
-    cp -vf /var/run/model.dtb /etc.defaults/${DTBFILE}
-  else
-    echo "Error patching dtb"
-  fi
-
-  # Dynamic generation pocopico
-#  /usr/sbin/dtbpatch /etc.defaults/model.dtb output.dtb
-#  if [ $? -ne 0 ]; then
-#    echo "Error patching dtb"
-#  else
-#    cp -vf output.dtb /etc.defaults/model.dtb
-#    cp -vf output.dtb /var/run/model.dtb
-#    /usr/sbin/dtc -I dtb -O dts /etc.defaults/model.dtb > /etc.defaults/model.dts
-#  fi
+  MODEL="$(uname -u)"
+  # Dynamic generation arc
+  dtModel $MODEL
 
 elif [ "$HASBOOTED" = "yes" ]; then
   echo "dtbpatch - late"
   
   echo "Copying /etc.defaults/${DTBFILE}"
   
-  # copy utilities 
-  cp -f /usr/sbin/dtbpatch /tmpRoot/usr/sbin
-  cp -f /usr/sbin/dtc /tmpRoot/usr/bin
-  
-  # copy file fabio
-  cp -vf /etc.defaults/${DTBFILE} /tmpRoot/etc.defaults/model.dtb  
-  
-  # copy file pocopico
-  #cp -vf /etc.defaults/model.dtb /tmpRoot/etc.defaults/model.dtb
-  #cp -vf /etc.defaults/model.dtb /var/run/model.dtb
+  # copy dtb file
+  cp -vf /etc.defaults/model.dtb /tmpRoot/etc.defaults/model.dtb
+  cp -fv /etc.defaults/model.dtb /tmpRoot/run/model.dtb
+  /usr/syno/bin/syno_slot_mapping
 fi
