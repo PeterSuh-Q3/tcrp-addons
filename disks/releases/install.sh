@@ -302,3 +302,57 @@ elif [[ ${1} = late ]]; then
     cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
   fi
 fi
+
+if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
+  HASBOOTED="yes"
+  echo "System passed junior"
+else
+  echo "System is booting"
+  HASBOOTED="no"
+fi
+
+[ -f /etc/model.dtb ] || [ -f /etc.defaults/model.dtb ] && ISDTMODEL="true"
+
+#
+if [ "$HASBOOTED" = "no" ]; then
+
+  cp -vf  dtc /usr/sbin/
+  cp -vf  readlink /usr/sbin/
+  cp -vf  sed /usr/sbin/sed
+
+  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed
+
+  echo "Adjust disks related configs automatically - patches"
+  [[ ${2} = true ]] && dtModel ${3} || nondtModel
+
+elif [ "$HASBOOTED" = "yes" ]; then
+	
+  cp -vf  dtc /tmpRoot/usr/sbin/
+  cp -vf  readlink /tmpRoot/usr/sbin/
+  cp -vf  sed /tmpRoot/usr/sbin/sed
+
+  chmod 755 /tmpRoot/usr/sbin/dtc /tmpRoot/usr/sbin/readlink /tmpRoot/usr/sbin/sed
+
+  echo "Adjust disks related configs automatically - late"
+  if [[ ${2} = true ]]; then
+    echo "Copying /etc.defaults/model.dtb"
+    # copy file
+    cp -vf /etc/model.dtb /tmpRoot/etc/model.dtb
+    cp -vf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
+  else
+    echo "Adjust maxdisks and internalportcfg automatically"
+    # sysfs is unpopulated here, get the values from junior synoinfo.conf
+    NUMPORTS=$(_get_conf_kv maxdisks)
+    INTPORTCFG=$(_get_conf_kv internalportcfg)
+    USBPORTCFG=$(_get_conf_kv usbportcfg)
+    _set_conf_kv hd "maxdisks" "${NUMPORTS}"
+    _set_conf_kv hd "internalportcfg" "${INTPORTCFG}"
+    _set_conf_kv hd "usbportcfg" "${USBPORTCFG}"
+    # log
+    echo "maxdisks=${NUMPORTS}"
+    echo "internalportcfg=${INTPORTCFG}"
+    echo "usbportcfg=${USBPORTCFG}"
+    cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
+    cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
+  fi
+fi
