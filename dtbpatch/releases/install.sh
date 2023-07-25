@@ -21,7 +21,7 @@ function getUsbPorts() {
     DCLASS=$(cat ${I}/bDeviceClass)
     [[ ${DCLASS} != "09" ]] && continue
     SPEED=$(cat ${I}/speed)
-    [[ ${SPEED} < "480" ]] && continue
+    [[ ${SPEED} -lt "480" ]] && continue
     RBUS=$(cat ${I}/busnum)
     RCHILDS=$(cat ${I}/maxchild)
     HAVE_CHILD=0
@@ -31,7 +31,7 @@ function getUsbPorts() {
         DCLASS=$(cat ${I}/${SUB}/bDeviceClass)
         [[ ${DCLASS} != "09" ]] && continue
         SPEED=$(cat ${I}/${SUB}/speed)
-        [[ ${SPEED} < "480" ]] && continue
+        [[ ${SPEED} -lt "480" ]] && continue
         CHILDS=$(cat ${I}/${SUB}/maxchild)
         HAVE_CHILD=1
         for N in $(seq 1 ${CHILDS}); do
