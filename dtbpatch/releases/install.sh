@@ -12,6 +12,66 @@ else
   HASBOOTED="no"
 fi
 
+# USB ports
+function getUsbPorts() {
+  for I in $(ls -d /sys/bus/usb/devices/usb*); do
+    # ROOT
+    DCLASS=$(<${I}/bDeviceClass)
+    [[ ${DCLASS} != 09 ]] && continue
+    SPEED=$(<${I}/speed)
+    [[ ${SPEED} < 480 ]] && continue
+    RBUS=$(<${I}/busnum)
+    RCHILDS=$(<${I}/maxchild)
+    HAVE_CHILD=0
+    for C in $(seq 1 ${RCHILDS}); do
+      SUB="${RBUS}-${C}"
+      if [[ -d ${I}/${SUB} ]]; then
+        DCLASS=$(<${I}/${SUB}/bDeviceClass)
+        [[ ${DCLASS} != 09 ]] && continue
+        SPEED=$(<${I}/${SUB}/speed)
+        [[ ${SPEED} < 480 ]] && continue
+        CHILDS=$(<${I}/${SUB}/maxchild)
+        HAVE_CHILD=1
+        for N in $(seq 1 ${CHILDS}); do
+          echo -n "${RBUS}-${C}.${N} "
+        done
+      fi
+    done
+    if [[ ${HAVE_CHILD} = 0 ]]; then
+      for N in $(seq 1 ${RCHILDS}); do
+        echo -n "${RBUS}-${N} "
+      done
+    fi
+  done
+  echo
+}
+
+# NVME ports
+# 1 - is DT model
+function nvmePorts() {
+  local NVME_PORTS=$(ls /sys/class/nvme | wc -w)
+  for I in $(seq 0 $((${NVME_PORTS}-1))); do
+    _PATH=$(readlink /sys/class/nvme/nvme${I} | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2-)
+    if [[ ${1} = true ]]; then
+      # Device-tree: assemble complete path in DSM format
+      DSMPATH=""
+      while true; do
+        FIRST=$(echo "${_PATH}" | cut -d'/' -f1)
+        echo "${FIRST}" | grep -qE "${PCI_ER}" || break
+        [[ -z ${DSMPATH} ]] && \
+          DSMPATH="$(echo "${FIRST}" | cut -d':' -f2-)" || \
+          DSMPATH="${DSMPATH},$(echo "${FIRST}" | cut -d':' -f3)"
+        _PATH=$(echo ${_PATH} | cut -d'/' -f2-)
+      done
+    else
+      # Non-dt: just get PCI ID
+      DSMPATH=$(echo "${_PATH}" | cut -d'/' -f1)
+    fi
+    echo -n "${DSMPATH} "
+  done
+  echo
+}
+
 function dtModel() {
   DEST="/var/run/model.dts"
   if [[ ! -f ${DEST} ]]; then  # Users can put their own dts.
