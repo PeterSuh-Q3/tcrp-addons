@@ -18,21 +18,21 @@ fi
 function getUsbPorts() {
   for I in $(ls -d /sys/bus/usb/devices/usb*); do
     # ROOT
-    DCLASS=$(<${I}/bDeviceClass)
-    [[ ${DCLASS} != 09 ]] && continue
-    SPEED=$(<${I}/speed)
-    [[ ${SPEED} < 480 ]] && continue
-    RBUS=$(<${I}/busnum)
-    RCHILDS=$(<${I}/maxchild)
+    DCLASS=$(cat ${I}/bDeviceClass)
+    [[ ${DCLASS} != "09" ]] && continue
+    SPEED=$(cat ${I}/speed)
+    [[ ${SPEED} < "480" ]] && continue
+    RBUS=$(cat ${I}/busnum)
+    RCHILDS=$(cat ${I}/maxchild)
     HAVE_CHILD=0
     for C in $(seq 1 ${RCHILDS}); do
       SUB="${RBUS}-${C}"
       if [[ -d ${I}/${SUB} ]]; then
-        DCLASS=$(<${I}/${SUB}/bDeviceClass)
-        [[ ${DCLASS} != 09 ]] && continue
-        SPEED=$(<${I}/${SUB}/speed)
-        [[ ${SPEED} < 480 ]] && continue
-        CHILDS=$(<${I}/${SUB}/maxchild)
+        DCLASS=$(cat ${I}/${SUB}/bDeviceClass)
+        [[ ${DCLASS} != "09" ]] && continue
+        SPEED=$(cat ${I}/${SUB}/speed)
+        [[ ${SPEED} < "480" ]] && continue
+        CHILDS=$(cat ${I}/${SUB}/maxchild)
         HAVE_CHILD=1
         for N in $(seq 1 ${CHILDS}); do
           echo -n "${RBUS}-${C}.${N} "
