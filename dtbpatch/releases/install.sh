@@ -4,6 +4,8 @@
 # probably certain that system has finish init process
 #
 
+PCI_ER="^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F]{1}"
+
 if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
   HASBOOTED="yes"
   echo "System passed junior"
@@ -47,21 +49,29 @@ function getUsbPorts() {
 }
 
 # NVME ports
-function getNvmePorts() {
-
-  nvmepath1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
-  if [ $(echo $nvmepath1 | wc -w) -eq 0 ]; then
-      exit 0
-  fi
-  
-  nvmepath2=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
-  if [ $(echo $nvmepath2 | wc -w) -eq 0 ]; then
-      echo -n "${nvmepath1} "
-  else
-      echo -n "${nvmepath1},${nvmepath2} "
-  fi
+# 1 - is DT model
+function nvmePorts() {
+  local NVME_PORTS=$(ls /sys/class/nvme | wc -w)
+  for I in $(seq 0 $((${NVME_PORTS}-1))); do
+    _PATH=$(readlink /sys/class/nvme/nvme${I} | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2-)
+    if [[ ${1} = true ]]; then
+      # Device-tree: assemble complete path in DSM format
+      DSMPATH=""
+      while true; do
+        FIRST=$(echo "${_PATH}" | cut -d'/' -f1)
+        echo "${FIRST}" | grep -qE "${PCI_ER}" || break
+        [[ -z ${DSMPATH} ]] && \
+          DSMPATH="$(echo "${FIRST}" | cut -d':' -f2-)" || \
+          DSMPATH="${DSMPATH},$(echo "${FIRST}" | cut -d':' -f3)"
+        _PATH=$(echo ${_PATH} | cut -d'/' -f2-)
+      done
+    else
+      # Non-dt: just get PCI ID
+      DSMPATH=$(echo "${_PATH}" | cut -d'/' -f1)
+    fi
+    echo -n "${DSMPATH} "
+  done
   echo
-  
 }
 
 function dtModel() {
@@ -90,7 +100,7 @@ function dtModel() {
     
     # NVME ports
     COUNT=1
-    for P in $(getNvmePorts); do
+    for P in $(nvmePorts true); do
       echo "    nvme_slot@${COUNT} {"                               >>${DEST}
       echo "        pcie_root = \"${P}\";"                          >>${DEST}
       echo "        port_type = \"ssdcache\";"                      >>${DEST}
