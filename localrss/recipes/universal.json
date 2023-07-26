@@ -9,6 +9,6 @@
   ],
 
   "scripts": {
-    "on_os_load": "install.sh"
+    "on_boot": "install.sh"
   }
 }
