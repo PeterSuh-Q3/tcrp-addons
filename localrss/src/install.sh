@@ -3,11 +3,10 @@
 . /etc/VERSION
 
 # Assuming the JSON data is stored in a file called "rss.json"
-curl -kLO https://github.com/PeterSuh-Q3/redpill-load/raw/master/rss/${major}.${minor}.${micro}/rss.json
 
 # Using jq to filter and extract the values based on "mUnique" key
-MLINK=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mLink' rss.json)
-MCHECKSUM=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mCheckSum' rss.json)
+MLINK=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mLink' rss${major}.${minor}.${micro}.json)
+MCHECKSUM=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mCheckSum' rss${major}.${minor}.${micro}.json)
 
 echo "${MLINK}"
 echo "${MCHECKSUM}"
