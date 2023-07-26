@@ -1,0 +1,14 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/install.sh",
+      "sha256": "71e331f1100402f6ad18a52a89f230edf6140fba73b654d26806e8807e27d369",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
