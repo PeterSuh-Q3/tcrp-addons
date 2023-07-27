@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "Boot Wait Arg : ${1}"
+
 wait_time=10 # maximum wait time in seconds
 
 dump_all_partitions()
