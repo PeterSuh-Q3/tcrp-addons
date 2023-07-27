@@ -125,7 +125,7 @@ function dtModel() {
   fi
   cat ${DEST}
   /usr/sbin/dtc -I dts -O dtb ${DEST} >/etc.defaults/model.dtb
-  cp -fv /etc.defaults/model.dtb /run/model.dtb
+  cp -vf /etc.defaults/model.dtb /run/model.dtb
   /usr/syno/bin/syno_slot_mapping
 }
 
@@ -150,6 +150,7 @@ elif [ "$HASBOOTED" = "yes" ]; then
   
   # copy dtb file
   cp -vf /etc.defaults/model.dtb /tmpRoot/etc.defaults/model.dtb
-  cp -fv /etc.defaults/model.dtb /tmpRoot/run/model.dtb
-  /usr/syno/bin/syno_slot_mapping
+  cp -vf /etc.defaults/model.dtb /tmpRoot/etc/model.dtb
+  cp -vf /etc.defaults/model.dtb /tmpRoot/run/model.dtb
+
 fi
