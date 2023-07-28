@@ -303,18 +303,10 @@ elif [[ ${1} = late ]]; then
   fi
 fi
 
-if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
-  HASBOOTED="yes"
-  echo "System passed junior"
-else
-  echo "System is booting"
-  HASBOOTED="no"
-fi
-
 [ -f /etc/model.dtb ] || [ -f /etc.defaults/model.dtb ] && ISDTMODEL="true"
 
 #
-if [ "$HASBOOTED" = "no" ]; then
+if [ "${1}" = "modules" ]; then
 
   cp -vf  dtc /usr/sbin/
   cp -vf  readlink /usr/sbin/
@@ -325,7 +317,7 @@ if [ "$HASBOOTED" = "no" ]; then
   echo "Adjust disks related configs automatically - patches"
   [[ ${2} = true ]] && dtModel ${3} || nondtModel
 
-elif [ "$HASBOOTED" = "yes" ]; then
+elif [ "${1}" = "late" ]; then
 	
   cp -vf  dtc /tmpRoot/usr/sbin/
   cp -vf  readlink /tmpRoot/usr/sbin/

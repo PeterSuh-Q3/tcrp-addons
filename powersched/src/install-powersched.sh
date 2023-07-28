@@ -1,3 +1,6 @@
+#!/usr/bin/env ash
+
+if [ "${1}" = "late" ]; then
   echo "Installing powersched tools"
   cp -vf powersched /tmpRoot/usr/sbin/powersched
   chmod 755 /tmpRoot/usr/sbin/powersched
@@ -23,3 +26,4 @@ WantedBy=multi-user.target
 EOF
   mkdir -p /tmpRoot/etc/systemd/system/multi-user.target.wants
   ln -sf /etc/systemd/system/powersched.service /tmpRoot/etc/systemd/system/multi-user.target.wants/powersched.service
+fi

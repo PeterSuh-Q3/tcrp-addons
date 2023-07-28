@@ -40,17 +40,7 @@ function modify_synoinfo() {
 
 }
 
-if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
-    HASBOOTED="yes"
-    echo "System passed junior"
-else
-    echo "System is booting"
-    HASBOOTED="no"
-fi
-
-if [ "$HASBOOTED" = "no" ]; then
-  echo "shr - early"
-elif [ "$HASBOOTED" = "yes" ]; then
+if [ "${1}" = "late" ]; then
   echo "shr - late"
   echo "Installing shr enabler tools"
   modify_synoinfo

@@ -11,13 +11,13 @@
     {
       "name": "install-powersched.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/src/install-powersched.sh",
-      "sha256": "faa3dab02f8cfb489b361382b8d1d869e976f32c585a68ca5718079b87201039",
+      "sha256": "01a9e05b12c5e318430f0a235604a287d2993786dbe7087c72ecfe0369ab5c20",
       "packed": false
     },
     {
       "name": "check-rtc-cmos.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/src/check-rtc-cmos.sh",
-      "sha256": "2d0b8fda9439add7eb02a3d31d697b6b7a879973d84ea978254342e659e5fa09",
+      "sha256": "d45f941a357361247d502334edabfcb57a38cc989736cb6b21d2d5a01862d22e",
       "packed": false
     }
   ],

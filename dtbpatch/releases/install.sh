@@ -6,14 +6,6 @@
 
 PCI_ER="^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F]{1}"
 
-if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
-  HASBOOTED="yes"
-  echo "System passed junior"
-else
-  echo "System is booting"
-  HASBOOTED="no"
-fi
-
 # USB ports
 function getUsbPorts() {
   for I in $(ls -d /sys/bus/usb/devices/usb*); do
@@ -129,9 +121,9 @@ function dtModel() {
   /usr/syno/bin/syno_slot_mapping
 }
 
-if [ "$HASBOOTED" = "no" ]; then
+if [ "${1}" = "modules" ]; then
 
-  echo "dtbpatch - early"
+  echo "dtbpatch - modules"
   # fix executable flag
   cp -vf dtc /usr/sbin/
   cp -vf readlink /usr/sbin/
@@ -143,7 +135,7 @@ if [ "$HASBOOTED" = "no" ]; then
   # Dynamic generation arc
   dtModel $MODEL
 
-elif [ "$HASBOOTED" = "yes" ]; then
+elif [ "${1}" = "late" ]; then
   echo "dtbpatch - late"
   
   echo "Copying /etc.defaults/${DTBFILE}"

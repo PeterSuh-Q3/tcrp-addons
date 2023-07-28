@@ -21,13 +21,12 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/install.sh",
-      "sha256": "89f18f561fed9d5a4453ef172ac8cdeb1a5bb7d504df4e6dd83ded5ca4a5e126",
+      "sha256": "919e2ccc58290d8ebe9fafff0bb62fa3df3fbf0888a923d1941701e67a169385",
       "packed": false
     }
   ],
 
   "scripts": {
-    "on_boot": "install.sh",
     "on_os_load": "install.sh"
   }
 }

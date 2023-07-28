@@ -9,7 +9,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/reboottotcrp/src/install.sh",
-      "sha256": "adf7fe36c2b6ae0a2e806ef058d4e3e7124c77f02f9fb20b77556992b4987db8",
+      "sha256": "2a34f12edcdf1f5513b032aaa63d65cae041c45b6b0d16f370bcfa5f0a0ab030",
       "packed": false
     },
     {
@@ -21,7 +21,6 @@
   ],
 
   "scripts": {
-    "on_boot": "install.sh",
-    "on_os_load": "install.sh"
+     "on_os_load": "install.sh"
   }
 }

@@ -3,7 +3,7 @@
     {
       "name": "install-all.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install-all.sh",
-      "sha256": "59642d7a615cba49713ff18f3c736f75cacbca2e6335b292b7d6b15449d51b47",
+      "sha256": "47f4bf828923600b826c47b6af4b5928aa591249ede14e3f0286aab8ec6623ce",
       "packed": false
     },
     {
@@ -15,7 +15,7 @@
     {
       "name": "install_rd.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install_rd.sh",
-      "sha256": "2e28b7dfbf3420588fceef11cf7463c60db9c149ab330ef19c384c6b8c9a445e",
+      "sha256": "32603e42154ea0d2fe316f94f9f349cf62a05baf7ad900de6a7a879c8347abcd",
       "packed": false
     },
     {

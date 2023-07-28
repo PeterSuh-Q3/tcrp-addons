@@ -114,16 +114,8 @@ function modify_synoinfo() {
 
 }
 
-if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
-    HASBOOTED="yes"
-    echo "System passed junior"
-else
-    echo "System is booting"
-    HASBOOTED="no"
-fi
-
-if [ "$HASBOOTED" = "no" ]; then
-  echo "nvme-cache - early"
+if [ "${1}" = "modules" ]; then
+  echo "nvme-cache - modules"
   echo "Installing NVMe cache enabler tools readlink"
 
   cp -vf readlink /usr/sbin/
@@ -132,7 +124,7 @@ if [ "$HASBOOTED" = "no" ]; then
 
   active_nvme
 
-elif [ "$HASBOOTED" = "yes" ]; then
+elif [ "${1}" = "late" ]; then
   echo "nvme-cache - late"
   echo "Installing NVMe cache enabler tools"
 

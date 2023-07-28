@@ -3,21 +3,13 @@
 ### USUALLY SCEMD is the last process run in init, so when scemd is running we are most
 # probably certain that system has finish init process
 
-if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
-  HASBOOTED="yes"
-  echo "System passed junior"
-else
-  echo "System is booting"
-  HASBOOTED="no"
-fi
-
-if [ "$HASBOOTED" = "no" ]; then
-  echo "acpid - early"
+if [ "${1}" = "modules" ]; then
+  echo "acpid - modules"
   echo "extract cgetty.tgz to /usr/sbin/ "
   tar xfz /exts/acpid/acpid.tgz -C /
 
   #/usr/sbin/acpid
-elif [ "$HASBOOTED" = "yes" ]; then
+elif [ "${1}" = "late" ]; then
   echo "acpid - late"
   #/usr/bin/killall acpid
   echo "Installing daemon for ACPI button"

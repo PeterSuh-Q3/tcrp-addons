@@ -17,6 +17,7 @@ if [ -z "${MLINK}" -o -z "${MCHECKSUM}" ]; then
   return
 fi
 
+if [ "${1}" = "modules" ]; then
 echo "make localrss - modules"
 
 # MajorVersion=`/bin/get_key_value /etc.defaults/VERSION majorversion`
@@ -97,4 +98,5 @@ fi
 if [ -f /usr/syno/web/localrss.json ]; then 
   cat /usr/syno/web/localrss.json
   sed -i "s|rss_server_v2=.*$|rss_server_v2=\"http://localhost:5000/localrss.json\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
+fi
 fi

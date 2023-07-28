@@ -1,14 +1,6 @@
-if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
-    HASBOOTED="yes"
-    echo "System passed junior"
-else
-    echo "System is booting"
-    HASBOOTED="no"
-fi
+#!/usr/bin/env ash
 
-if [ "$HASBOOTED" = "no" ]; then
-  echo "smb3-multi - early"
-elif [ "$HASBOOTED" = "yes" ]; then
+if [ "${1}" = "late" ]; then
   echo "smb3-multi - late"
   echo "Installing smb3 multi channel enabler tools"
   cp -vf smb3-multi.sh /tmpRoot/usr/sbin/smb3-multi.sh

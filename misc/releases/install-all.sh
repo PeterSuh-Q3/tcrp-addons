@@ -1,7 +1,5 @@
 #!/bin/sh
 
-echo "Script for fixing missing HW features dependencies"
-
 PLATFORM="$(uname -u | cut -d '_' -f2)"
 
 cp /exts/misc/sed /tmpRoot/usr/bin/sed
@@ -93,47 +91,51 @@ fixacpibutton() {
 
 }
 
-case "${PLATFORM}" in
+if [ "${1}" = "late" ]; then
+    echo "Script for fixing missing HW features dependencies"
+    
+    case "${PLATFORM}" in
 
-bromolow)
-    fixcpufreq
-    fixcrypto
-    ;;
-apollolake)
-    fixcpufreq
-    fixcrypto
-    ;;
-broadwell)
-    fixcpufreq
-    fixcrypto
-    ;;
-broadwellnk)
-    fixcpufreq
-    fixcrypto
-    ;;
-v1000)
-    fixcpufreq
-    fixcrypto
-    ;;
-r1000)
-    fixcpufreq
-    fixcrypto
-    ;;
-denverton)
-    fixcpufreq
-    fixcrypto
-    fixnvidia
-    ;;
-geminilake)
-    fixcpufreq
-    fixcrypto
-    fixintelgpu
-    fixacpibutton
-    ;;
+    bromolow)
+        fixcpufreq
+        fixcrypto
+        ;;
+    apollolake)
+        fixcpufreq
+        fixcrypto
+        ;;
+    broadwell)
+        fixcpufreq
+        fixcrypto
+        ;;
+    broadwellnk)
+        fixcpufreq
+        fixcrypto
+        ;;
+    v1000)
+        fixcpufreq
+        fixcrypto
+        ;;
+    r1000)
+        fixcpufreq
+        fixcrypto
+        ;;
+    denverton)
+        fixcpufreq
+        fixcrypto
+        fixnvidia
+        ;;
+    geminilake)
+        fixcpufreq
+        fixcrypto
+        fixintelgpu
+        fixacpibutton
+        ;;
 
-*)
-    fixcpufreq
-    fixcrypto
-    ;;
+    *)
+        fixcpufreq
+        fixcrypto
+        ;;
 
-esac
+    esac
+fi
