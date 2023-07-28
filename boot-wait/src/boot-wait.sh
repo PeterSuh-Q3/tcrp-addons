@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ "${1}" = "modules" ]; then
+if [ "${1}" = "early" ]; then
     wait_time=10 # maximum wait time in seconds
 
     dump_all_partitions()
