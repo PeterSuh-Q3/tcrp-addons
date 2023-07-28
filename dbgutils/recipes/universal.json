@@ -3,7 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dbgutils/src/install.sh",
-      "sha256": "a62fb523cd2c780d334ea567865e786bf66033d9411d9ea7d60de93d69329f4a",
+      "sha256": "bc434049d2aca25231546c6856025330d9ab34e357edff95936bc7fc2d5e24b7",
       "packed": false
     },
     {
@@ -17,7 +17,6 @@
   "scripts": {
     "on_early": "install.sh",
     "on_jrExit": "install.sh",
-    "on_rcExit": "install.sh",
-    "on_os_load": "install.sh"
+    "on_rcExit": "install.sh"
   }
 }
