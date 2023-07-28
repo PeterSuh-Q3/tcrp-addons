@@ -15,8 +15,8 @@ if [ "${1}" = "early" ]; then
   echo "extract dbgutils.tgz to /usr/sbin/ "
   tar xfz /exts/dbgutils/dbgutils.tgz -C /
   
-  echo "Starting ttyd..."
-  /usr/sbin/ttyd /usr/bin/ash -l &
+  #echo "Starting ttyd..."
+  #/usr/sbin/ttyd /usr/bin/ash -l &
 elif [ "${1}" = "jrExit" ]; then
   saveLogs
 elif [ "${1}" = "rcExit" ]; then
