@@ -62,7 +62,7 @@
             "mCheckSum": "3e5e09f4d4b0f09ab03f28d12b76f03a"
           },
           {
-            "mUnique": "synology_broadwellnk_3617xs",
+            "mUnique": "synology_broadwell_3617xs",
             "mLink": "https://global.synologydownload.com/download/DSM/release/7.2/64570-1/DSM_DS3617xs_64570.pat",
             "mCheckSum": "4c6165e5c87d83d52a173679d320383f"
           },
@@ -87,7 +87,7 @@
             "mCheckSum": "302f4427cc76bc3830afc5cff1424298"
           },
           {
-            "mUnique": "synology_geminilake_918+",
+            "mUnique": "synology_apollolake_918+",
             "mLink": "https://global.synologydownload.com/download/DSM/release/7.2/64570-1/DSM_DS918%2B_64570.pat",
             "mCheckSum": "4fab55b87cb153239536cca3947f4513"
           },
