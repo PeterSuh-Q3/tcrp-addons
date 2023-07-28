@@ -38,6 +38,7 @@ function active_nvme() {
 
   if [ $(uname -a | grep '4.4.302+' | wc -l) -gt 0 ]; then
     nvmefile="./libsynonvme.so.7.2"
+    cp -vf ${nvmefile} /etc/libsynonvme.so.1
   elif [ $(uname -a | grep '4.4.108+' | wc -l) -gt 0 ]; then
     nvmefile="./libsynonvme.so.7.1"  
   fi  
@@ -132,6 +133,9 @@ elif [ "${1}" = "late" ]; then
     echo "Copy libsynonvme.so.1 file to tmpRoot"
     cp -vf /etc/libsynonvme.so.1 /tmpRoot/lib64/
   else
+    if [ $(uname -a | grep '4.4.302+' | wc -l) -gt 0 ]; then
+      cp -vf /etc/libsynonvme.so.1 /tmpRoot/lib64/
+    fi
     cat /etc/extensionPorts
     cp -vf /etc/extensionPorts /tmpRoot/etc/
     cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/
