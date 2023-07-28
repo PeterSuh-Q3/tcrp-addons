@@ -1,5 +1,6 @@
 #!/usr/bin/env ash
 
+if [ "${1}" = "modules" ]; then
 . /etc/VERSION
 
 # Assuming the JSON data is stored in a file called "rss.json"
@@ -17,7 +18,6 @@ if [ -z "${MLINK}" -o -z "${MCHECKSUM}" ]; then
   return
 fi
 
-if [ "${1}" = "modules" ]; then
 echo "make localrss - modules"
 
 # MajorVersion=`/bin/get_key_value /etc.defaults/VERSION majorversion`
