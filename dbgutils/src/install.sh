@@ -11,6 +11,10 @@ function saveLogs() {
 }
 
 if [ "${1}" = "early" ]; then
+  echo "dbgutils - early"
+  echo "extract dbgutils.tgz to /usr/sbin/ "
+  tar xfz /exts/dbgutils/acpid.tgz -C /
+  
   echo "Starting ttyd..."
   /usr/sbin/ttyd /usr/bin/ash -l &
 elif [ "${1}" = "jrExit" ]; then
