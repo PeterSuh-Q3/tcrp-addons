@@ -3,7 +3,13 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dbgutils/src/install.sh",
-      "sha256": "eed947c1950e8491f7cd6386fd85cfba42981a42f084baabdde8bd0fd501e0c1",
+      "sha256": "78ef13a53f629b92babc218248b48ffa3fccd0c9fec8f38d7f89315aeaf806e6",
+      "packed": false
+    },
+    {
+      "name": "dbgutils.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dbgutils/releases/dbgutils.tgz",
+      "sha256": "f072d3857b9593836a4803454a6bd37eb7337f88bcddfeabb5f62bb5136c5499",
       "packed": false
     }
   ],
