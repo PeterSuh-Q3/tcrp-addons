@@ -2,6 +2,8 @@
 echo "Installing NVMe cache enabler service"
 curl -kL https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/nvme-cache/nvme-service.sh -o /usr/sbin/nvme-service.sh
 chmod 755 /usr/sbin/nvme-service.sh
+curl -kL https://github.com/PeterSuh-Q3/tcrp-addons/raw/main/nvme-cache/releases/readlink -o /usr/sbin/readlink
+chmod 755 /usr/sbin/readlink
 cat > /etc/systemd/system/nvme-cache.service <<'EOF'
 [Unit]
 Description=NVMe cache enabler schedule
