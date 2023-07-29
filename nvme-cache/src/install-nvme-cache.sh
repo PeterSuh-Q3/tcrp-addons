@@ -3,9 +3,11 @@
 if [ $# -lt 1 ]; then
   tmpRoot=""
   libPath="/lib64"
+  dsmMode="ON"
 else
   tmpRoot="/tmpRoot"
   libPath="."
+  dsmMode="OFF"
 fi
 
 function prepare_nvme() {
@@ -131,7 +133,7 @@ function modify_synoinfo() {
 
 function run_modules() {
   echo "nvme-cache - modules"
-  if [ $# -lt 1 ]; then
+  if [ $dsmMode = "ON" ]; then
       echo "Nothing to install in DSM mode"
   else
       echo "Installing NVMe cache enabler tools readlink"
@@ -159,7 +161,7 @@ function run_late() {
   modify_synoinfo
 }
 
-if [ $# -lt 1 ]; then
+if [ $dsmMode = "ON" ]; then
   run_modules
   run_late
 else
