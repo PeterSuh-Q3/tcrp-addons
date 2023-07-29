@@ -131,9 +131,10 @@ function modify_synoinfo() {
 
 function run_modules() {
   echo "nvme-cache - modules"
-  if [ $# -eq 1 ]; then
+  if [ $# -lt 1 ]; then
+      echo "Nothing to install in DSM mode"
+  else
       echo "Installing NVMe cache enabler tools readlink"
-
       cp -vf readlink /usr/sbin/
       cp -vf xxd /usr/sbin/
       chmod 755 /usr/sbin/readlink /usr/sbin/xxd
