@@ -1,6 +1,14 @@
 #!/bin/bash
 
-function active_nvme() {
+if [ $# -lt 1 ]; then
+  tmpRoot=""
+  libPath="/lib64"
+else
+  tmpRoot="/tmpRoot"
+  libPath="."
+fi
+
+function prepare_nvme() {
 
   echo "Collecting 1st nvme paths"
   nvmepath1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
@@ -37,15 +45,15 @@ function active_nvme() {
   fi
 
   if [ $(uname -a | grep '4.4.302+' | wc -l) -gt 0 ]; then
-    nvmefile="./libsynonvme.so.7.2"
+    nvmefile="${libPath}/libsynonvme.so.7.2"
     if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
       cp -vf ${nvmefile} /etc/libsynonvme.so.1
     fi
     if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
-      nvmefile="./libsynonvme.so.7.2.xxd"
+      nvmefile="${libPath}/libsynonvme.so.7.2.xxd"
     fi
   elif [ $(uname -a | grep '4.4.108+' | wc -l) -gt 0 ]; then
-    nvmefile="./libsynonvme.so.7.1"  
+    nvmefile="${libPath}/libsynonvme.so.7.1"
   fi  
 
   if [ $(uname -a | grep '918+' | wc -l) -gt 0 ]; then
@@ -81,71 +89,83 @@ function active_nvme() {
 }
 
 function modify_synoinfo() {
+
 # add supportnvme="yes" , support_m2_pool="yes" to /etc/synoinfo.conf 2023.02.10
-  if [ -f /tmpRoot/etc/synoinfo.conf ]; then
-    echo 'add supportnvme="yes" to /tmpRoot/etc/synoinfo.conf'
-    if grep -q 'supportnvme' /tmpRoot/etc/synoinfo.conf; then
-      sed -i 's#supportnvme=.*#supportnvme="yes"#' /tmpRoot/etc/synoinfo.conf
+  if [ -f ${tmpRoot}/etc/synoinfo.conf ]; then
+    echo 'add supportnvme="yes" to ${tmpRoot}/etc/synoinfo.conf'
+    if grep -q 'supportnvme' ${tmpRoot}/etc/synoinfo.conf; then
+      sed -i 's#supportnvme=.*#supportnvme="yes"#' ${tmpRoot}/etc/synoinfo.conf
     else
-      echo 'supportnvme="yes"' >> /tmpRoot/etc/synoinfo.conf
+      echo 'supportnvme="yes"' >> ${tmpRoot}/etc/synoinfo.conf
     fi
-    cat /tmpRoot/etc/synoinfo.conf | grep supportnvme
+    cat ${tmpRoot}/etc/synoinfo.conf | grep supportnvme
       
-    echo 'add support_m2_pool="yes" to /tmpRoot/etc/synoinfo.conf'
-    if grep -q 'support_m2_pool' /tmpRoot/etc/synoinfo.conf; then
-      sed -i 's#support_m2_pool=.*#support_m2_pool="yes"#' /tmpRoot/etc/synoinfo.conf
+    echo 'add support_m2_pool="yes" to ${tmpRoot}/etc/synoinfo.conf'
+    if grep -q 'support_m2_pool' ${tmpRoot}/etc/synoinfo.conf; then
+      sed -i 's#support_m2_pool=.*#support_m2_pool="yes"#' ${tmpRoot}/etc/synoinfo.conf
     else
-      echo 'support_m2_pool="yes"' >> /tmpRoot/etc/synoinfo.conf
+      echo 'support_m2_pool="yes"' >> ${tmpRoot}/etc/synoinfo.conf
     fi
-    cat /tmpRoot/etc/synoinfo.conf | grep support_m2_pool
+    cat ${tmpRoot}/etc/synoinfo.conf | grep support_m2_pool
   fi
 
-  if [ -f /tmpRoot/etc.defaults/synoinfo.conf ]; then
-    echo 'add supportnvme="yes" to /tmpRoot/etc.defaults/synoinfo.conf'
-    if grep -q 'supportnvme' /tmpRoot/etc.defaults/synoinfo.conf; then
-      sed -i 's#supportnvme=.*#supportnvme="yes"#' /tmpRoot/etc.defaults/synoinfo.conf
+  if [ -f ${tmpRoot}/etc.defaults/synoinfo.conf ]; then
+    echo 'add supportnvme="yes" to ${tmpRoot}/etc.defaults/synoinfo.conf'
+    if grep -q 'supportnvme' ${tmpRoot}/etc.defaults/synoinfo.conf; then
+      sed -i 's#supportnvme=.*#supportnvme="yes"#' ${tmpRoot}/etc.defaults/synoinfo.conf
     else
-      echo 'supportnvme="yes"' >> /tmpRoot/etc.defaults/synoinfo.conf
+      echo 'supportnvme="yes"' >> ${tmpRoot}/etc.defaults/synoinfo.conf
     fi
-    cat /tmpRoot/etc.defaults/synoinfo.conf | grep supportnvme
+    cat ${tmpRoot}/etc.defaults/synoinfo.conf | grep supportnvme
       
-    echo 'add support_m2_pool="yes" to /tmpRoot/etc.defaults/synoinfo.conf'
-    if grep -q 'support_m2_pool' /tmpRoot/etc.defaults/synoinfo.conf; then
-      sed -i 's#support_m2_pool=.*#support_m2_pool="yes"#' /tmpRoot/etc.defaults/synoinfo.conf
+    echo 'add support_m2_pool="yes" to ${tmpRoot}/etc.defaults/synoinfo.conf'
+    if grep -q 'support_m2_pool' ${tmpRoot}/etc.defaults/synoinfo.conf; then
+      sed -i 's#support_m2_pool=.*#support_m2_pool="yes"#' ${tmpRoot}/etc.defaults/synoinfo.conf
     else
-      echo 'support_m2_pool="yes"' >> /tmpRoot/etc.defaults/synoinfo.conf
+      echo 'support_m2_pool="yes"' >> ${tmpRoot}/etc.defaults/synoinfo.conf
     fi
-    cat /tmpRoot/etc.defaults/synoinfo.conf | grep support_m2_pool
+    cat ${tmpRoot}/etc.defaults/synoinfo.conf | grep support_m2_pool
   fi
 
 }
 
-if [ "${1}" = "modules" ]; then
+function run_modules() {
   echo "nvme-cache - modules"
-  echo "Installing NVMe cache enabler tools readlink"
+  if [ $# -eq 1 ]; then
+      echo "Installing NVMe cache enabler tools readlink"
 
-  cp -vf readlink /usr/sbin/
-  cp -vf xxd /usr/sbin/
-  chmod 755 /usr/sbin/readlink /usr/sbin/xxd
+      cp -vf readlink /usr/sbin/
+      cp -vf xxd /usr/sbin/
+      chmod 755 /usr/sbin/readlink /usr/sbin/xxd
+  fi
+  prepare_nvme
+}
 
-  active_nvme
-
-elif [ "${1}" = "late" ]; then
+function run_late() {
   echo "nvme-cache - late"
-  echo "Installing NVMe cache enabler tools"
-
+  echo "Activate NVMe cache"
   if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
     echo "Copy libsynonvme.so.1 file to tmpRoot"
-    cp -vf /etc/libsynonvme.so.1 /tmpRoot/lib64/
+    cp -vf /etc/libsynonvme.so.1 ${tmpRoot}/lib64/
   else
     if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
-      cp -vf /etc/libsynonvme.so.1 /tmpRoot/lib64/
+      cp -vf /etc/libsynonvme.so.1 ${tmpRoot}/lib64/
     fi
     cat /etc/extensionPorts
-    cp -vf /etc/extensionPorts /tmpRoot/etc/
-    cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/
+    cp -vf /etc/extensionPorts ${tmpRoot}/etc/
+    cp -vf /etc/extensionPorts ${tmpRoot}/etc.defaults/
   fi
-  
   modify_synoinfo
+}
 
+if [ $# -lt 1 ]; then
+  run_modules
+  run_late
+else
+  if [ "${1}" = "modules" ]; then
+    run_modules
+  elif [ "${1}" = "late" ]; then
+    run_late
+  fi
 fi
+
