@@ -116,6 +116,10 @@ function dtModel() {
     echo "};"                                                       >>${DEST}
   fi
   cat ${DEST}
+  
+  echo "backup /etc.defaults/model.dtb to model_bak.dtb"
+  cp -vf /etc.defaults/model.dtb /etc.defaults/model_bak.dtb
+  
   /usr/sbin/dtc -I dts -O dtb ${DEST} >/etc.defaults/model.dtb
   cp -vf /etc.defaults/model.dtb /run/model.dtb
   /usr/syno/bin/syno_slot_mapping
