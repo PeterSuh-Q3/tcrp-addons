@@ -10,18 +10,9 @@ HW_REVISION=`cat /proc/sys/kernel/syno_hw_revision`
 [ -n "${HW_REVISION}" ] && DTBFILE="model_${HW_REVISION}.dtb" || DTBFILE="model.dtb"
 [ -e /etc.defaults/${DTBFILE} ] || DTBFILE="model.dtb"
 
-if [ `mount | grep tmpRoot | wc -l` -gt 0 ] ; then
-  HASBOOTED="yes"
-  echo "System passed junior"
-else
-  echo "System is booting"
-  HASBOOTED="no"
-fi
+if [ "${1}" = "modules" ]; then
 
-
-if [ "$HASBOOTED" = "no" ]; then
-
-  echo "dtbpatch - early"
+  echo "dtbpatch - modules"
   # fix executable flag
   cp dtbpatch /usr/sbin/
   cp dtc /usr/sbin/
@@ -47,7 +38,7 @@ if [ "$HASBOOTED" = "no" ]; then
 #    /usr/sbin/dtc -I dtb -O dts /etc.defaults/model.dtb > /etc.defaults/model.dts
 #  fi
 
-elif [ "$HASBOOTED" = "yes" ]; then
+elif [ "${1}" = "late" ]; then
   echo "dtbpatch - late"
   
   echo "Copying /etc.defaults/${DTBFILE}"
@@ -57,7 +48,7 @@ elif [ "$HASBOOTED" = "yes" ]; then
   cp -f /usr/sbin/dtc /tmpRoot/usr/bin
   
   # copy file fabio
-  cp -vf /etc.defaults/${DTBFILE} /tmpRoot/etc.defaults/model.dtb  
+  cp -vf /etc.defaults/${DTBFILE} /tmpRoot/etc.defaults/model.dtb
   
   # copy file pocopico
   #cp -vf /etc.defaults/model.dtb /tmpRoot/etc.defaults/model.dtb
