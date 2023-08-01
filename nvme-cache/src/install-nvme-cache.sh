@@ -47,13 +47,13 @@ function prepare_nvme() {
   fi
 
   if [ $(uname -a | grep '4.4.302+' | wc -l) -gt 0 ]; then
-    nvmefile="${libPath}/libsynonvme.so.7.2"
-    if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
-      cp -vf ${nvmefile} /etc/libsynonvme.so.1
-    fi
-    if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
+    #nvmefile="${libPath}/libsynonvme.so.7.2"
+    #if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
+    #  cp -vf ${nvmefile} /etc/libsynonvme.so.1
+    #fi
+    #if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
       nvmefile="${libPath}/libsynonvme.so.7.2.xxd"
-    fi
+    #fi
   elif [ $(uname -a | grep '4.4.108+' | wc -l) -gt 0 ]; then
     nvmefile="${libPath}/libsynonvme.so.7.1"
   fi  
@@ -151,9 +151,9 @@ function run_late() {
     echo "Copy libsynonvme.so.1 file to tmpRoot"
     cp -vf /etc/libsynonvme.so.1 ${tmpRoot}/lib64/
   else
-    if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
-      cp -vf /etc/libsynonvme.so.1 ${tmpRoot}/lib64/
-    fi
+    #if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
+    #  cp -vf /etc/libsynonvme.so.1 ${tmpRoot}/lib64/
+    #fi
     cat /etc/extensionPorts
     cp -vf /etc/extensionPorts ${tmpRoot}/etc/
     cp -vf /etc/extensionPorts ${tmpRoot}/etc.defaults/
