@@ -74,6 +74,17 @@ function dtModel() {
     echo "    compatible = \"Synology\";"                           >>${DEST}
     echo "    model = \"${1}\";"                                    >>${DEST}
     echo "    version = <0x01>;"                                    >>${DEST}
+
+    # NVME power_limit
+    POWER_LIMIT=""
+    NVME_PORTS=`ls /sys/class/nvme | wc -w`
+    for I in `seq 0 $((${NVME_PORTS}-1))`; do 
+      [ ${I} -eq 0 ] && POWER_LIMIT="100" || POWER_LIMIT="${POWER_LIMIT},100"
+    done
+    if [ -n "${POWER_LIMIT}" ]; then
+      echo "    power_limit = \"${POWER_LIMIT}\";"                  >> ${DEST}
+    fi
+        
     # SATA ports
     I=1
     while true; do
