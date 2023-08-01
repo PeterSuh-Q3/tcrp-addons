@@ -1,21 +1,21 @@
 {
 "files": [
     {
-      "name": "dtbpatch",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/releases/dtbpatch",
-      "sha256": "4014122f114a842186235743643cfa4cd98f09b686583266b2eaa213bd16589b",
-      "packed": false
-    },
-    {
       "name": "dtc",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/releases/dtc",
       "sha256": "14f7f87a5822050eab7c30a064912a6efe99f49bf6b896bbb38c2ba003803e78",
       "packed": false
     },
     {
+      "name": "readlink",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/releases/readlink",
+      "sha256": "5498cc736ad654b3c4828002a7067a8ad4e375409350666ca59f6c0547fc2afa",
+      "packed": false
+    },    
+    {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/releases/install.sh",
-      "sha256": "4ff641bbd0b90edaa47887f4a763f6fe070f6bafd6dc09a6d3d8bb60f0b7238b",
+      "sha256": "e4948120081d87fe72f0d1762b694e1faa32763ad8df4639ea74d0361d964fcc",
       "packed": false
     }
   ],
@@ -24,4 +24,3 @@
     "on_os_load": "install.sh"
   }
 }
-
