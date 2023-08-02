@@ -5,12 +5,6 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dbgutils/src/install.sh",
       "sha256": "d239533355d9fbd811f536d77b4d46c8093187d8e6e998f9af192f893392871b",
       "packed": false
-    },
-    {
-      "name": "dbgutils.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dbgutils/releases/dbgutils.tgz",
-      "sha256": "b42f481c564a6f6ed094f9a315db1b2de091afacdb1a77f639441aae28577fa2",
-      "packed": false
     }
   ],
 
