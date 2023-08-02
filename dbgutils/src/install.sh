@@ -1,7 +1,7 @@
 #!/usr/bin/env ash
 
 function saveLogs() {
-  modprobe vfat
+  #modprobe vfat
   echo 1 > /proc/sys/kernel/syno_install_flag
   mount /dev/synoboot1 /mnt
   mkdir -p /mnt/logs/jr
