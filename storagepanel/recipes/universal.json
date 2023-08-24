@@ -9,7 +9,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/src/install.sh",
-      "sha256": "45d05b576dfb614798291e1cec97d1795814de536fcc4c3ea7e854b37d7bf7be",
+      "sha256": "532feb3653331c2a56a055de4264e0f319040fb2486f323ca761a4d169a44e8b",
       "packed": false
     },
     {
@@ -17,17 +17,10 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/src/runonce.sh",
       "sha256": "c157ffa396149fcf000fbf98fc68ae070995ee7d41e8deeb1d4e4fb462f07659",
       "packed": false
-    },
-    {
-      "name": "installsvc.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/src/installsvc.sh",
-      "sha256": "9ba8451c5f876aa521f93883bde2b96ed75ae5b45171581c6d38a9485ce4a968",
-      "packed": false
     }
   ],
 
   "scripts": {
-    "on_os_load": "install.sh",
-    "on_os_load": "installsvc.sh"
+    "on_os_load": "install.sh"
   }
 }
