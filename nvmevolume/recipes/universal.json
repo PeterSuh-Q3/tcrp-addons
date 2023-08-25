@@ -1,0 +1,27 @@
+{
+  "files": [
+    {
+      "name": "nvmevolume.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/nvmevolume.sh",
+      "sha256": "8cf856d2d00826aa430b1402b5a3f8b3555fda97da004d56773dd7c371ec4de4",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/install.sh",
+      "sha256": "07eeecd9c990bdf9049de4cd0e79789008d3979556e40e6108198b66b003a5ea",
+      "packed": false
+    },
+    {
+      "name": "bc",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/bc",
+      "sha256": "2c999820e84386d83e3819588f8c69cb15923ea8afeb9f34377bb5c7c3a9bd3c",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh",
+    "on_os_load": "installsvc.sh"
+  }
+}
