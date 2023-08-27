@@ -3,13 +3,13 @@
     {
       "name": "nvmevolume.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/nvmevolume.sh",
-      "sha256": "8cf856d2d00826aa430b1402b5a3f8b3555fda97da004d56773dd7c371ec4de4",
+      "sha256": "0d2347ff754bdc60236c177f63df46877c71e2dbcfec21cc202e67a41d542604",
       "packed": false
     },
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/install.sh",
-      "sha256": "f4aecd0853fb746a74673d632533e18ff955099501215f84713e9b4416b56665",
+      "sha256": "6226139b8740062c555d8a61dec2071c68c3f8959375bf39aa3af3c104179fc1",
       "packed": false
     },
     {

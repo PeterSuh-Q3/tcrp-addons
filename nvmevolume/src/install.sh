@@ -3,6 +3,7 @@
 if [ "${1}" = "late" ]; then
   echo "Installing daemon for nvmevolume"
   cp -fv ./bc /tmpRoot/usr/sbin/bc
+  chmod +x /tmpRoot/usr/sbin/bc
   cp -v  ./nvmevolume.sh /tmpRoot/usr/sbin/nvmevolume.sh
 
   DEST="/tmpRoot/etc/systemd/system/nvmevolume.service"
@@ -13,7 +14,7 @@ if [ "${1}" = "late" ]; then
   echo "[Service]"                                >>${DEST}
   echo "Type=oneshot"                             >>${DEST}
   echo "RemainAfterExit=true"                     >>${DEST}
-  echo "ExecStart=echo 'n' |/usr/sbin/nvmevolume.sh"   >>${DEST}
+  echo "ExecStart=/usr/sbin/nvmevolume.sh"        >>${DEST}
   echo                                            >>${DEST}
   echo "[Install]"                                >>${DEST}
   echo "WantedBy=multi-user.target"               >>${DEST}
