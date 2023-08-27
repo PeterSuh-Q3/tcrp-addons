@@ -21,7 +21,6 @@
   ],
 
   "scripts": {
-    "on_os_load": "install.sh",
-    "on_os_load": "installsvc.sh"
+    "on_os_load": "install.sh"
   }
 }
