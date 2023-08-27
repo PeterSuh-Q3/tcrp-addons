@@ -3,6 +3,7 @@
 if [ "${1}" = "late" ]; then
   echo "Installing daemon for storagepanel"
   cp -v ./runonce.sh /tmpRoot/usr/sbin/runonce.sh
+  chmod +x /tmpRoot/usr/sbin/runonce.sh
   shift
   DEST="/tmpRoot/etc/systemd/system/storagepanel.service"
   echo "[Unit]"                                          >${DEST}
@@ -21,6 +22,7 @@ if [ "${1}" = "late" ]; then
 
   echo "Installing manual schedule for storagepanel"
   cp -v ./storagepanel.sh /tmpRoot/usr/sbin/storagepanel.sh
+  chmod +x /tmpRoot/usr/sbin/storagepanel.sh
   if [ -f /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db ]; then
     if [ $(/tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db "select count(*) as cnt from task a where task_name = 'Change Storage Panel';") -gt "0" ]; then
       echo "A Change Storage Panel task already exists at task_name. skipped!!!"
