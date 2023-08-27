@@ -5,6 +5,7 @@ if [ "${1}" = "late" ]; then
   cp -fv ./bc /tmpRoot/usr/sbin/bc
   chmod +x /tmpRoot/usr/sbin/bc
   cp -v  ./nvmevolume.sh /tmpRoot/usr/sbin/nvmevolume.sh
+  chmod +x /tmpRoot/usr/sbin/nvmevolume.sh
 
   DEST="/tmpRoot/etc/systemd/system/nvmevolume.service"
   echo "[Unit]"                                    >${DEST}
