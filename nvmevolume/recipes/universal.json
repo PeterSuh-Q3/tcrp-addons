@@ -9,7 +9,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/install.sh",
-      "sha256": "07eeecd9c990bdf9049de4cd0e79789008d3979556e40e6108198b66b003a5ea",
+      "sha256": "f4aecd0853fb746a74673d632533e18ff955099501215f84713e9b4416b56665",
       "packed": false
     },
     {
@@ -21,6 +21,7 @@
   ],
 
   "scripts": {
-    "on_os_load": "install.sh"
+    "on_os_load": "install.sh",
+    "on_os_load": "installsvc.sh"
   }
 }
