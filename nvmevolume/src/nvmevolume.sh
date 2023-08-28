@@ -5,22 +5,22 @@
 #
 # Github: https://github.com/007revad/Synology_enable_M2_volume
 # Script verified at https://www.shellcheck.net/
-# Tested on DSM 7.2 beta
+# Tested on DSM 7.2
 #
 # To run in a shell (replace /volume1/scripts/ with path to script):
 # sudo /volume1/scripts/syno_enable_m2_volume.sh
 #------------------------------------------------------------------------------
 
-scriptver="v1.0.7"
+scriptver="v1.0.8"
 script=Synology_enable_M2_volume
 repo="007revad/Synology_enable_M2_volume"
 
-# Check BASH variable is is non-empty and posix mode is off, else abort with error.
-[ "$BASH" ] && ! shopt -qo posix || {
+# Check BASH variable is bash
+if [ ! "$(basename "$BASH")" = bash ]; then
+    echo "This is a bash script. Do not run it with $(basename "$BASH")"
     printf \\a
-    printf >&2 "This is a bash script, don't run it with sh\n"
     exit 1
-}
+fi
 
 #echo -e "bash version: $(bash --version | head -1 | cut -d' ' -f4)\n"  # debug
 
@@ -458,7 +458,9 @@ fi
 # Enable creating M.2 storage pool and volume in Storage Manager
 # for currently installed NVMe drives
 for nvme in /run/synostorage/disks/nvme*; do
-    echo 1 > /run/synostorage/disks/"$(basename -- "$nvme")"/m2_pool_support
+    if [[ -f /run/synostorage/disks/"$(basename -- "$1")"/m2_pool_support ]]; then
+        echo 1 > /run/synostorage/disks/"$(basename -- "$nvme")"/m2_pool_support
+    fi
 done
 
 
