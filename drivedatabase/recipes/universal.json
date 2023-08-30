@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "name": "drivedatabase.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/drivedatabase/src/drivedatabase.sh",
+      "sha256": "fcd27fb5f13475b2580db3aaaf640c5a2b0f648e9c41ce2a3637dee193785a22",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/drivedatabase/src/install.sh",
+      "sha256": "a6701ae1f641a48347e59ccee96161882f05e18da0fd9d305d161139642303ad",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
