@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "name": "i915ids",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/src/i915ids",
+      "sha256": "5dc5c546e94664370d4b927a6a324430dc43de6fe07892890034b1fea557edfb",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/src/install.sh",
+      "sha256": "6c151a2ac5b330e360110243d3e1be89ce2fe2c4f65ec8205ab07874bba747d4",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}

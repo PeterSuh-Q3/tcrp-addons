@@ -1,0 +1,36 @@
+{
+  "id": "i915le10th",
+  "info": {
+    "description": "wjz304's i915le10th",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/i915le10th",
+    "name": "wjz304's i915le10th",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/i915le10th"
+  },
+  "releases": {
+    "ds1019p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds1019p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds1019p_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds1520p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds1520p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds1520p_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds620slim_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds620slim_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds620slim_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds720p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds720p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds720p_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds918p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds918p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds918p_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds920p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds920p_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "ds920p_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "dva1622_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "dva1622_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "sa6400_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "sa6400_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "sa6400_64570": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/recipes/universal.json",
+    "zendofmodel": "endofurls"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/i915le10th/rpext-index.json"
+}
