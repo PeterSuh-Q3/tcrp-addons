@@ -292,6 +292,9 @@ function nondtModel() {
   fi
 }
 
+
+MODEL="$(uname -u)"
+[ -f /etc/model.dtb ] || [ -f /etc.defaults/model.dtb ] && ISDTMODEL="true"
 #
 if [ "${1}" = "modules" ]; then
 
@@ -301,16 +304,16 @@ if [ "${1}" = "modules" ]; then
 
   chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed
 
-  echo "Adjust disks related configs automatically - patches"
-  [[ ${2} = true ]] && dtModel ${3} || nondtModel
+  echo "Adjust disks related configs automatically - modules"
+  [[ ${ISDTMODEL} = true ]] && dtModel $MODEL || nondtModel
   
 elif [ "${1}" = "patches" ]; then
   echo "Adjust disks related configs automatically - patches"
-  [ "${2}" = "true" ] && dtModel ${3} || nondtModel
+  [[ ${ISDTMODEL} = true ]] && dtModel $MODEL || nondtModel
 
 elif [ "${1}" = "late" ]; then
   echo "Adjust disks related configs automatically - late"
-  if [ "${2}" = "true" ]; then
+  if [ "${ISDTMODEL}" = "true" ]; then
     echo "Copying /etc.defaults/model.dtb"
     # copy file
     cp -vf /etc/model.dtb /tmpRoot/etc/model.dtb
