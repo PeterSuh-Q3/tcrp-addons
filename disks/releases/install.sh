@@ -159,7 +159,7 @@ function nvmePorts() {
 
 #
 function dtModel() {
-  DEST="/addons/model.dts"
+  DEST="/etc/model.dts"
   if [ ! -f "${DEST}" ]; then # Users can put their own dts.
     echo "/dts-v1/;"                                                   >${DEST}
     echo "/ {"                                                        >>${DEST}
