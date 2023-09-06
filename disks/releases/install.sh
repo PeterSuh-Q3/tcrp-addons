@@ -293,7 +293,18 @@ function nondtModel() {
 }
 
 #
-if [ "${1}" = "patches" ]; then
+if [ "${1}" = "modules" ]; then
+
+  cp -vf  dtc /usr/sbin/
+  cp -vf  readlink /usr/sbin/
+  cp -vf  sed /usr/sbin/sed
+
+  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed
+
+  echo "Adjust disks related configs automatically - patches"
+  [[ ${2} = true ]] && dtModel ${3} || nondtModel
+  
+elif [ "${1}" = "patches" ]; then
   echo "Adjust disks related configs automatically - patches"
   [ "${2}" = "true" ] && dtModel ${3} || nondtModel
 
