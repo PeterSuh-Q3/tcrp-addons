@@ -9,6 +9,6 @@
   ],
 
   "scripts": {
-    "on_rcExit": "boot-wait.sh"
+    "on_boot": "boot-wait.sh"
   }
 }
