@@ -9,6 +9,6 @@
   ],
 
   "scripts": {
-    "on_early": "boot-wait.sh"
+    "on_boot": "boot-wait.sh"
   }
 }
