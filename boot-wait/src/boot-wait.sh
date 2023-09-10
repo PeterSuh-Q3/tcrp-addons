@@ -1,15 +1,15 @@
 #!/bin/sh
 
+dump_all_partitions()
+{
+  echo ""
+  echo "========== BEGIN DUMP OF ALL PARTITIONS DETECTED ==========="
+  /usr/sbin/sfdisk -l
+  echo "========== END OF DUMP OF ALL PARTITIONS DETECTED =========="
+}
+
 if [ "${1}" = "modules" ]; then
     wait_time=10 # maximum wait time in seconds
-
-    dump_all_partitions()
-    {
-      echo ""
-      echo "========== BEGIN DUMP OF ALL PARTITIONS DETECTED ==========="
-      /usr/sbin/sfdisk -l
-      echo "========== END OF DUMP OF ALL PARTITIONS DETECTED =========="
-    }
 
     time_counter=0
     while [ ! -b /dev/synoboot ] && [ $time_counter -lt $wait_time ]; do
