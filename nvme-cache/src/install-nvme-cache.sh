@@ -73,20 +73,17 @@ function prepare_nvme() {
         xxd -c 256 ${nvmefile} | sed "s/3031 2e31/$nvme3hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
     fi
   else
-      if [ $(echo $nvmepath1 | wc -w) -gt 0 ]; then
-          rm -f /etc/extensionPorts
-          echo "[pci]" > /etc/extensionPorts
-          echo "pci1=\"$nvmepath1\"" >> /etc/extensionPorts
-          chmod 755 /etc/extensionPorts
+    rm -f /etc/extensionPorts
+    echo "[pci]" >/etc/extensionPorts
+    chmod 755 /etc/extensionPorts
 
-          cat /etc/extensionPorts
-      fi
-
-      if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
-          echo "pci2=\"$nvmepath2\"" >> /etc/extensionPorts
-
-          cat /etc/extensionPorts
-      fi
+    COUNT=1
+    NVME_PORTS=$(ls /sys/class/nvme | wc -w)
+    for I in $(seq 0 $((${NVME_PORTS} - 1))); do  
+      _PATH=$(readlink /sys/class/nvme/nvme${I} | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1) 
+      echo "pci${COUNT}=\"${_PATH}\"" >>/etc/extensionPorts ;   COUNT=$((${COUNT} + 1))
+    done
+    cat /etc/extensionPorts
   fi
 }
 
