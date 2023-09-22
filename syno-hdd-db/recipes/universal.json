@@ -1,0 +1,14 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/drivedatabase/src/install.sh",
+      "sha256": "6445dd28a231c7aab32835829fc6d937f9b2ab7bd27b338a88cda33d201e1462",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
