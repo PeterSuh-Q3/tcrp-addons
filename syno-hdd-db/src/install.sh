@@ -225,71 +225,9 @@ ding(){
     printf \\a
 }
 
-if [ "${1}" = "late" ]; then
-
-# Get DSM major version
-dsm=$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/VERSION majorversion)
-if [[ $dsm -gt "6" ]]; then
-    version="_v$dsm"
-fi
-
-# Get Synology model
-
-# This doesn't work for drives migrated from different model
-#model=$(find /tmpRoot/var/lib/disk-compatibility -regextype egrep -regex ".*host(_v7)?\.db$" |\
-#    cut -d"/" -f5 | cut -d"_" -f1 | uniq)
-
-model=$(cat /tmpRoot/proc/sys/kernel/syno_hw_version)
-modelname="$model"
-
-
 # Show script version
 #echo -e "$script $scriptver\ngithub.com/$repo\n"
 echo "$script $scriptver"
-
-# Get DSM full version
-productversion=$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/VERSION productversion)
-buildphase=$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/VERSION buildphase)
-buildnumber=$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/VERSION buildnumber)
-smallfixnumber=$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/VERSION smallfixnumber)
-
-# Show DSM full version and model
-if [[ $buildphase == GM ]]; then buildphase=""; fi
-if [[ $smallfixnumber -gt "0" ]]; then smallfix="-$smallfixnumber"; fi
-echo "$model DSM $productversion-$buildnumber$smallfix $buildphase"
-
-
-# Convert model to lower case
-model=${model,,}
-
-# Check for dodgy characters after model number
-if [[ $model =~ 'pv10-j'$ ]]; then  # GitHub issue #10
-    modelname=${modelname%??????}+  # replace last 6 chars with +
-    model=${model%??????}+          # replace last 6 chars with +
-    echo -e "\nUsing model: $model"
-elif [[ $model =~ '-j'$ ]]; then  # GitHub issue #2
-    modelname=${modelname%??}     # remove last 2 chars
-    model=${model%??}             # remove last 2 chars
-    echo -e "\nUsing model: $model"
-fi
-
-# Show options used
-echo "Using options: ${args[*]}"
-
-#echo ""  # To keep output readable
-fi
-
-#------------------------------------------------------------------------------
-# Check latest release with GitHub API
-
-syslog_set(){
-    if [[ ${1,,} == "info" ]] || [[ ${1,,} == "warn" ]] || [[ ${1,,} == "err" ]]; then
-        if [[ $autoupdate == "yes" ]]; then
-            # Add entry to Synology system log
-            /tmpRoot/usr/syno/bin/synologset1 sys "$1" 0x11100000 "$2"
-        fi
-    fi
-}
 
 #------------------------------------------------------------------------------
 # Restore changes from backups
@@ -817,12 +755,12 @@ backupdb "$synoinfo" ||{
 
 # Optionally disable "support_disk_compatibility"
 sdc=support_disk_compatibility
-setting="$(/tmpRoot/bin/get_key_value $synoinfo $sdc)"
+setting="$(/bin/get_key_value $synoinfo $sdc)"
 if [[ $force == "yes" ]]; then
     if [[ $setting == "yes" ]]; then
         # Disable support_disk_compatibility
         /tmpRoot/usr/syno/bin/synosetkeyvalue "$synoinfo" "$sdc" "no"
-        setting="$(/tmpRoot/bin/get_key_value "$synoinfo" $sdc)"
+        setting="$(/bin/get_key_value "$synoinfo" $sdc)"
         if [[ $setting == "no" ]]; then
             echo -e "\nDisabled support disk compatibility."
         fi
@@ -833,7 +771,7 @@ else
     if [[ $setting == "no" ]]; then
         # Enable support_disk_compatibility
         /tmpRoot/usr/syno/bin/synosetkeyvalue "$synoinfo" "$sdc" "yes"
-        setting="$(/tmpRoot/bin/get_key_value "$synoinfo" $sdc)"
+        setting="$(/bin/get_key_value "$synoinfo" $sdc)"
         if [[ $setting == "yes" ]]; then
             echo -e "\nRe-enabled support disk compatibility."
         fi
@@ -846,12 +784,12 @@ fi
 # Optionally disable "support_memory_compatibility" (not for DVA models)
 if [[ ${model:0:3} != "dva" ]]; then
     smc=support_memory_compatibility
-    setting="$(/tmpRoot/bin/get_key_value $synoinfo $smc)"
+    setting="$(/bin/get_key_value $synoinfo $smc)"
     if [[ $ram == "yes" ]]; then
         if [[ $setting == "yes" ]]; then
             # Disable support_memory_compatibility
             /tmpRoot/usr/syno/bin/synosetkeyvalue "$synoinfo" "$smc" "no"
-            setting="$(/tmpRoot/bin/get_key_value "$synoinfo" $smc)"
+            setting="$(/bin/get_key_value "$synoinfo" $smc)"
             if [[ $setting == "no" ]]; then
                 echo -e "\nDisabled support memory compatibility."
             fi
@@ -862,7 +800,7 @@ if [[ ${model:0:3} != "dva" ]]; then
         if [[ $setting == "no" ]]; then
             # Enable support_memory_compatibility
             /tmpRoot/usr/syno/bin/synosetkeyvalue "$synoinfo" "$smc" "yes"
-            setting="$(/tmpRoot/bin/get_key_value "$synoinfo" $smc)"
+            setting="$(/bin/get_key_value "$synoinfo" $smc)"
             if [[ $setting == "yes" ]]; then
                 echo -e "\nRe-enabled support memory compatibility."
             fi
@@ -909,13 +847,13 @@ if [[ $dsm -gt "6" ]]; then  # DSM 6 as has no /tmpRoot/proc/meminfo
             done
         fi
         # Set mem_max_mb to the amount of installed memory
-        setting="$(/tmpRoot/bin/get_key_value $synoinfo mem_max_mb)"
-        settingbak="$(/tmpRoot/bin/get_key_value ${synoinfo}.bak mem_max_mb)"                      # GitHub issue #107
+        setting="$(/bin/get_key_value $synoinfo mem_max_mb)"
+        settingbak="$(/bin/get_key_value ${synoinfo}.bak mem_max_mb)"                      # GitHub issue #107
         if [[ $ramtotal =~ ^[0-9]+$ ]]; then   # Check $ramtotal is numeric
             if [[ $ramtotal -gt "$setting" ]]; then
                 /tmpRoot/usr/syno/bin/synosetkeyvalue "$synoinfo" mem_max_mb "$ramtotal"
                 # Check we changed mem_max_mb
-                setting="$(/tmpRoot/bin/get_key_value $synoinfo mem_max_mb)"
+                setting="$(/bin/get_key_value $synoinfo mem_max_mb)"
                 if [[ $ramtotal == "$setting" ]]; then
                     #echo -e "\nSet max memory to $ramtotal MB."
                     ramgb=$((ramtotal / 1024))
@@ -929,7 +867,7 @@ if [[ $dsm -gt "6" ]]; then  # DSM 6 as has no /tmpRoot/proc/meminfo
                 # Fix setting is greater than both ramtotal and default in syninfo.conf.bak
                 /tmpRoot/usr/syno/bin/synosetkeyvalue "$synoinfo" mem_max_mb "$settingbak"
                 # Check we restored mem_max_mb
-                setting="$(/tmpRoot/bin/get_key_value $synoinfo mem_max_mb)"
+                setting="$(/bin/get_key_value $synoinfo mem_max_mb)"
                 if [[ $settingbak == "$setting" ]]; then
                     #echo -e "\nSet max memory to $ramtotal MB."
                     ramgb=$((ramtotal / 1024))
@@ -959,7 +897,7 @@ if [[ $m2 != "no" ]]; then
     if [[ $m2exists == "yes" ]]; then
         # Check if m2 volume support is enabled
         smp=support_m2_pool
-        setting="$(/tmpRoot/bin/get_key_value $synoinfo ${smp})"
+        setting="$(/bin/get_key_value $synoinfo ${smp})"
         enabled=""
         if [[ ! $setting ]]; then
             # Add support_m2_pool="yes"
@@ -975,7 +913,7 @@ if [[ $m2 != "no" ]]; then
         fi
 
         # Check if we enabled m2 volume support
-        setting="$(/tmpRoot/bin/get_key_value $synoinfo ${smp})"
+        setting="$(/bin/get_key_value $synoinfo ${smp})"
         if [[ $enabled == "yes" ]]; then
             if [[ $setting == "yes" ]]; then
                 echo -e "\nEnabled M.2 volume support."
@@ -989,7 +927,7 @@ fi
 
 # Edit synoinfo.conf to prevent drive db updates
 dtu=drive_db_test_url
-url="$(/tmpRoot/bin/get_key_value $synoinfo ${dtu})"
+url="$(/bin/get_key_value $synoinfo ${dtu})"
 disabled=""
 if [[ $nodbupdate == "yes" ]]; then
     if [[ ! $url ]]; then
@@ -1004,7 +942,7 @@ if [[ $nodbupdate == "yes" ]]; then
     fi
 
     # Check if we disabled drive db auto updates
-    url="$(/tmpRoot/bin/get_key_value $synoinfo drive_db_test_url)"
+    url="$(/bin/get_key_value $synoinfo drive_db_test_url)"
     if [[ $disabled == "yes" ]]; then
         if [[ $url == "127.0.0.1" ]]; then
             echo -e "\nDisabled drive db auto updates."
@@ -1023,7 +961,7 @@ else
         sed -i "/drive_db_test_url=*/d" /tmpRoot/etc/synoinfo.conf
 
         # Check if we re-enabled drive db auto updates
-        url="$(/tmpRoot/bin/get_key_value $synoinfo drive_db_test_url)"
+        url="$(/bin/get_key_value $synoinfo drive_db_test_url)"
         if [[ $url != "127.0.0.1" ]]; then
             echo -e "\nRe-enabled drive db auto updates."
         else
@@ -1036,12 +974,12 @@ fi
 
 
 # Optionally disable "support_wdda"
-setting="$(/tmpRoot/bin/get_key_value $synoinfo support_wdda)"
+setting="$(/bin/get_key_value $synoinfo support_wdda)"
 if [[ $wdda == "no" ]]; then
     if [[ $setting == "yes" ]]; then
         # Disable support_memory_compatibility
         /tmpRoot/usr/syno/bin/synosetkeyvalue "$synoinfo" support_wdda "no"
-        setting="$(/tmpRoot/bin/get_key_value "$synoinfo" support_wdda)"
+        setting="$(/bin/get_key_value "$synoinfo" support_wdda)"
         if [[ $setting == "no" ]]; then
             echo -e "\nDisabled support WDDA."
         fi
@@ -1052,12 +990,12 @@ fi
 
 
 # Optionally enable "support_worm" (immutable snapshots)
-setting="$(/tmpRoot/bin/get_key_value $synoinfo support_worm)"
+setting="$(/bin/get_key_value $synoinfo support_worm)"
 if [[ $immutable == "yes" ]]; then
     if [[ $setting != "yes" ]]; then
         # Disable support_memory_compatibility
         /tmpRoot/usr/syno/bin/synosetkeyvalue "$synoinfo" support_worm "yes"
-        setting="$(/tmpRoot/bin/get_key_value "$synoinfo" support_worm)"
+        setting="$(/bin/get_key_value "$synoinfo" support_worm)"
         if [[ $setting == "yes" ]]; then
             echo -e "\nEnabled Immutable Snapshots."
         fi
