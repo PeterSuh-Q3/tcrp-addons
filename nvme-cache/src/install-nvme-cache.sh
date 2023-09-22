@@ -80,7 +80,7 @@ function prepare_nvme() {
     COUNT=1
     NVME_PORTS=$(ls /sys/class/nvme | wc -w)
     for I in $(seq 0 $((${NVME_PORTS} - 1))); do  
-      _PATH=$(readlink /sys/class/nvme/nvme${I} | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1) 
+      _PATH=$(/usr/sbin/readlink /sys/class/nvme/nvme${I} | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1) 
       echo "pci${COUNT}=\"${_PATH}\"" >>/etc/extensionPorts ;   COUNT=$((${COUNT} + 1))
     done
     cat /etc/extensionPorts
