@@ -76,12 +76,12 @@ function prepare_nvme() {
     rm -f /etc/extensionPorts
     echo "[pci]" >/etc/extensionPorts
     chmod 755 /etc/extensionPorts
-
-    COUNT=1
+    
     NVME_PORTS=$(ls /sys/class/nvme | wc -w)
     for I in $(seq 0 $((${NVME_PORTS} - 1))); do  
       _PATH=$(/usr/sbin/readlink /sys/class/nvme/nvme${I} | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1) 
-      echo "pci${COUNT}=\"${_PATH}\"" >>/etc/extensionPorts ;   COUNT=$((${COUNT} + 1))
+      COUNT=$((${I} + 1))
+      echo "pci${COUNT}=\"${_PATH}\"" >>/etc/extensionPorts ;   
     done
     cat /etc/extensionPorts
   fi
