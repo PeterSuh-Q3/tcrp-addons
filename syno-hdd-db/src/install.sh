@@ -207,13 +207,6 @@ scriptver="v3.1.63"
 script=Synology_HDD_db
 repo="007revad/Synology_HDD_db"
 
-# Check BASH variable is bash
-if [ ! "$(basename "$BASH")" = bash ]; then
-    echo "This is a bash script. Do not run it with $(basename "$BASH")"
-    printf \\a
-    exit 1
-fi
-
 #echo -e "bash version: $(bash --version | head -1 | cut -d' ' -f4)\n"  # debug
 
 # Shell Colors
