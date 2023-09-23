@@ -243,12 +243,12 @@ modeldtb="/tmpRoot/etc.defaults/model.dtb"
 
 fixdrivemodel(){
     # Remove " 00Y" from end of Samsung/Lenovo SSDs  # Github issue #13
-    if [[ $1 =~ MZ.*" 00Y" ]]; then
-        hdmodel=$(printf "%s" "$1" | sed 's/ 00Y.*//')
+    if [[ ${1} =~ MZ.*" 00Y" ]]; then
+        hdmodel=$(printf "%s" "${1}" | sed 's/ 00Y.*//')
     fi
 
     # Brands that return "BRAND <model>" and need "BRAND " removed.
-    if [[ $1 =~ ^[A-Za-z]{1,7}" ".* ]]; then
+    if [[ ${1} =~ ^[A-Za-z]{1,7}" ".* ]]; then
         #see  Smartmontools database in /tmpRoot/var/lib/smartmontools/drivedb.db
         hdmodel=${hdmodel#"WDC "}       # Remove "WDC " from start of model name
         hdmodel=${hdmodel#"HGST "}      # Remove "HGST " from start of model name
@@ -263,28 +263,29 @@ fixdrivemodel(){
 }
 
 getdriveinfo(){
-    # $1 is /sys/block/sata1 etc
+    # ${1} is /sys/block/sata1 etc
 
     # Skip USB drives
-    usb=$(grep "$(basename -- "$1")" /tmpRoot/proc/mounts | grep "[Uu][Ss][Bb]" | cut -d" " -f1-2)
+    usb=$(grep "$(basename -- "${1}")" /tmpRoot/proc/mounts | grep "[Uu][Ss][Bb]" | cut -d" " -f1-2)
     if [[ ! $usb ]]; then
-
+    
         # Get drive model
-        hdmodel=$(cat "$1/device/model")
+        hdmodel=$(cat "${1}/device/model")
         hdmodel=$(printf "%s" "$hdmodel" | xargs)  # trim leading and trailing white space
 
         # Fix dodgy model numbers
         fixdrivemodel "$hdmodel"
 
         # Get drive firmware version
-        #fwrev=$(cat "$1/device/rev")
+        #fwrev=$(cat "${1}/device/rev")
         #fwrev=$(printf "%s" "$fwrev" | xargs)  # trim leading and trailing white space
 
-        device="/dev/$(basename -- "$1")"
+        device="/dev/$(basename -- "${1}")"
         #fwrev=$(syno_hdd_util --ssd_detect | grep "$device " | awk '{print $2}')      # GitHub issue #86, 87
         # Account for SSD drives with spaces in their model name/number
         fwrev=$(/tmpRoot/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $(NF-3)}')  # GitHub issue #86, 87
-
+        echo $hdmodel
+        echo $fwrev
         if [[ $hdmodel ]] && [[ $fwrev ]]; then
             hdlist+=("${hdmodel},${fwrev}")
         fi
@@ -292,13 +293,13 @@ getdriveinfo(){
 }
 
 getm2info(){
-    # $1 is /sys/block/nvme0n1 etc
-    nvmemodel=$(cat "$1/device/model")
+    # ${1} is /sys/block/nvme0n1 etc
+    nvmemodel=$(cat "${1}/device/model")
     nvmemodel=$(printf "%s" "$nvmemodel" | xargs)  # trim leading and trailing white space
     if [[ $2 == "nvme" ]]; then
-        nvmefw=$(cat "$1/device/firmware_rev")
+        nvmefw=$(cat "${1}/device/firmware_rev")
     elif [[ $2 == "nvc" ]]; then
-        nvmefw=$(cat "$1/device/rev")
+        nvmefw=$(cat "${1}/device/rev")
     fi
     nvmefw=$(printf "%s" "$nvmefw" | xargs)  # trim leading and trailing white space
 
@@ -309,9 +310,9 @@ getm2info(){
 
 getcardmodel(){
     # Get M.2 card model (if M.2 drives found)
-    # $1 is /dev/nvme0n1 etc
+    # ${1} is /dev/nvme0n1 etc
     if [[ ${#nvmelist[@]} -gt "0" ]]; then
-        cardmodel=$(tmpRoot/usr/syno/bin/synodisk --m2-card-model-get "$1")
+        cardmodel=$(tmpRoot/usr/syno/bin/synodisk --m2-card-model-get "${1}")
         if [[ $cardmodel =~ M2D[0-9][0-9] ]]; then
             # M2 adaptor card
             if [[ -f "${model}_${cardmodel,,}${version}.db" ]]; then
@@ -335,8 +336,8 @@ getcardmodel(){
 }
 
 m2_pool_support(){
-    if [[ -f /tmpRoot/run/synostorage/disks/"$(basename -- "$1")"/m2_pool_support ]]; then  # GitHub issue #86, 87
-        echo 1 > /tmpRoot/run/synostorage/disks/"$(basename -- "$1")"/m2_pool_support
+    if [[ -f /tmpRoot/run/synostorage/disks/"$(basename -- "${1}")"/m2_pool_support ]]; then  # GitHub issue #86, 87
+        echo 1 > /tmpRoot/run/synostorage/disks/"$(basename -- "${1}")"/m2_pool_support
     fi
 }
 
@@ -529,10 +530,10 @@ fi
 
 getdbtype(){
     # Detect drive db type
-    if grep -F '{"disk_compatbility_info":' "$1" >/dev/null; then
+    if grep -F '{"disk_compatbility_info":' "${1}" >/dev/null; then
         # DSM 7 drive db files start with {"disk_compatbility_info":
         dbtype=7
-    elif grep -F '{"success":1,"list":[' "$1" >/dev/null; then
+    elif grep -F '{"success":1,"list":[' "${1}" >/dev/null; then
         # DSM 6 drive db files start with {"success":1,"list":[
         dbtype=6
     else
@@ -545,11 +546,11 @@ getdbtype(){
 
 backupdb(){
     # Backup database file if needed
-    if [[ ! -f "$1.bak" ]]; then
-        if [[ $(basename "$1") == "synoinfo.conf" ]]; then
+    if [[ ! -f "${1}.bak" ]]; then
+        if [[ $(basename "${1}") == "synoinfo.conf" ]]; then
             echo "" >&2  # Formatting for stdout
         fi
-        if cp -p "$1" "$1.bak"; then
+        if cp -p "${1}" "${1}.bak"; then
             echo -e "Backed up $(basename -- "${1}")" >&2
         else
             echo -e "${Error}ERROR 5${Off} Failed to backup $(basename -- "${1}")!" >&2
@@ -557,9 +558,9 @@ backupdb(){
         fi
     fi
     # Fix permissions if needed
-    octal=$(stat -c "%a %n" "$1" | cut -d" " -f1)
+    octal=$(stat -c "%a %n" "${1}" | cut -d" " -f1)
     if [[ ! $octal -eq 644 ]]; then
-        chmod 644 "$1"
+        chmod 644 "${1}"
     fi
     return 0
 }
@@ -585,16 +586,16 @@ done
 
 editcount(){
     # Count drives added to host db files
-    if [[ $1 =~ .*\.db$ ]]; then
+    if [[ ${1} =~ .*\.db$ ]]; then
         db1Edits=$((db1Edits +1))
-    elif [[ $1 =~ .*\.db.new ]]; then
+    elif [[ ${1} =~ .*\.db.new ]]; then
         db2Edits=$((db2Edits +1))
     fi
 }
 
 
 editdb7(){
-    if [[ $1 == "append" ]]; then  # model not in db file
+    if [[ ${1} == "append" ]]; then  # model not in db file
         #if sed -i "s/}}}/}},\"$hdmodel\":{$fwstrng$default/" "$2"; then  # append
         if sed -i "s/}}}/}},\"${hdmodel//\//\\/}\":{$fwstrng$default/" "$2"; then  # append
             echo -e "Added ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}"
@@ -604,7 +605,7 @@ editdb7(){
             #exit 6
         fi
 
-    elif [[ $1 == "insert" ]]; then  # model and default exists
+    elif [[ ${1} == "insert" ]]; then  # model and default exists
         #if sed -i "s/\"$hdmodel\":{/\"$hdmodel\":{$fwstrng/" "$2"; then  # insert firmware
         if sed -i "s/\"${hdmodel//\//\\/}\":{/\"${hdmodel//\//\\/}\":{$fwstrng/" "$2"; then  # insert firmware
             echo -e "Updated ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}"
@@ -614,7 +615,7 @@ editdb7(){
             #exit 6
         fi
 
-    elif [[ $1 == "empty" ]]; then  # db file only contains {}
+    elif [[ ${1} == "empty" ]]; then  # db file only contains {}
         #if sed -i "s/{}/{\"$hdmodel\":{$fwstrng${default}}/" "$2"; then  # empty
         if sed -i "s/{}/{\"${hdmodel//\//\\/}\":{$fwstrng${default}}/" "$2"; then  # empty
             echo -e "Added ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}"
@@ -629,10 +630,10 @@ editdb7(){
 
 
 updatedb(){
-    hdmodel=$(printf "%s" "$1" | cut -d"," -f 1)
-    fwrev=$(printf "%s" "$1" | cut -d"," -f 2)
+    hdmodel=$(printf "%s" "${1}" | cut -d"," -f 1)
+    fwrev=$(printf "%s" "${1}" | cut -d"," -f 2)
 
-    #echo arg1 "$1" >&2           # debug
+    #echo arg1 "${1}" >&2           # debug
     #echo arg2 "$2" >&2           # debug
     #echo hdmodel "$hdmodel" >&2  # debug
     #echo fwrev "$fwrev" >&2      # debug
@@ -828,7 +829,7 @@ if [[ $dsm -gt "6" ]]; then  # DSM 6 as has no /tmpRoot/proc/meminfo
         if [[ ${#array[@]} -gt "0" ]]; then
             num="0"
             while [[ $num -lt "${#array[@]}" ]]; do
-                check=$(printf %s "${array[num]}" | awk '{print $1}')
+                check=$(printf %s "${array[num]}" | awk '{print ${1}}')
                 if [[ ${check,,} == "size:" ]]; then
                     ramsize=$(printf %s "${array[num]}" | awk '{print $2}')           # GitHub issue #86, 87
                     bytes=$(printf %s "${array[num]}" | awk '{print $3}')             # GitHub issue #86, 87
