@@ -12,13 +12,12 @@ Cyan='\e[0;36m'
 Error='\e[41m'
 Off='\e[0m'
 
-dbpath=/tmpRoot/var/lib/disk-compatibility/
-model=${uname -u | cut -d '_' -f3)
+model=$(uname -u | cut -d '_' -f3)
 # Host db files
 dbfile="/tmpRoot/var/lib/disk-compatibility/${model}_host_v7.db"
 
-echo model $model
-echo dbfile $dbfile
+echo model "$model" >&2  # debug
+echo dbfile "$dbfile" >&2  # debug
 #------------------------------------------------------------------------------
 # Get list of installed SATA, SAS and M.2 NVMe/SATA drives,
 # PCIe M.2 cards and connected Expansion Units.
