@@ -55,7 +55,7 @@ getdriveinfo(){
         echo $hdmodel
         echo $fwrev
         if [[ -n "$hdmodel" ]] && [[ -n "$fwrev" ]]; then
-            hdlist+=("${hdmodel},${fwrev}")
+            hdlist+=("$hdmodel,$fwrev");
         fi        
     fi
 }
