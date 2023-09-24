@@ -60,22 +60,6 @@ getdriveinfo(){
     fi
 }
 
-getm2info(){
-    # ${1} is /sys/block/nvme0n1 etc
-    nvmemodel=$(cat "${1}/device/model")
-    nvmemodel=$(printf "%s" "$nvmemodel" | xargs)  # trim leading and trailing white space
-    if [[ $2 == "nvme" ]]; then
-        nvmefw=$(cat "${1}/device/firmware_rev")
-    elif [[ $2 == "nvc" ]]; then
-        nvmefw=$(cat "${1}/device/rev")
-    fi
-    nvmefw=$(printf "%s" "$nvmefw" | xargs)  # trim leading and trailing white space
-
-#    if [[ -n "$nvmemodel" ]] && [[ -n "$nvmefw" ]]; then
-#        nvmelist+="${nvmemodel},${nvmefw}"
-#    fi
-}
-
 for d in /sys/block/*; do
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
@@ -84,40 +68,6 @@ for d in /sys/block/*; do
                 # Get drive model and firmware version
                 echo $d 
                 getdriveinfo "$d"
-            fi
-        ;;
-        sata*|sas*)
-            if [[ $d =~ (sas|sata)[0-9][0-9]?[0-9]?$ ]]; then
-                # Get drive model and firmware version
-                getdriveinfo "$d"
-            fi
-        ;;
-        nvme*)
-            if [[ $d =~ nvme[0-9][0-9]?n[0-9][0-9]?$ ]]; then
-                if [[ $m2 != "no" ]]; then
-                    getm2info "$d" "nvme"
-                    # Get M.2 card model if in M.2 card
-                    getcardmodel "/dev/$(basename -- "${d}")"
-
-                    # Enable creating M.2 storage pool and volume in Storage Manager
-                    m2_pool_support "$d"
-
-                    rebootmsg=yes  # Show reboot message at end
-                fi
-            fi
-        ;;
-        nvc*)  # M.2 SATA drives (in PCIe card only?)
-            if [[ $d =~ nvc[0-9][0-9]?$ ]]; then
-                if [[ $m2 != "no" ]]; then
-                    getm2info "$d" "nvc"
-                    # Get M.2 card model if in M.2 card
-                    getcardmodel "/dev/$(basename -- "${d}")"
-
-                    # Enable creating M.2 storage pool and volume in Storage Manager
-                    m2_pool_support "$d"
-
-                    rebootmsg=yes  # Show reboot message at end
-                fi
             fi
         ;;
     esac
