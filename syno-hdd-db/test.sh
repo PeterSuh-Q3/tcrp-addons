@@ -76,39 +76,6 @@ getm2info(){
 #    fi
 }
 
-getcardmodel(){
-    # Get M.2 card model (if M.2 drives found)
-    # ${1} is /dev/nvme0n1 etc
-    if [[ ${#nvmelist[@]} -gt "0" ]]; then
-        cardmodel=$(tmpRoot/usr/syno/bin/synodisk --m2-card-model-get "${1}")
-        if [[ $cardmodel =~ M2D[0-9][0-9] ]]; then
-            # M2 adaptor card
-            if [[ -f "${model}_${cardmodel,,}${version}.db" ]]; then
-                m2carddblist+=("${model}_${cardmodel,,}${version}.db")  # M.2 card's db file
-            fi
-            if [[ -f "${model}_${cardmodel,,}.db" ]]; then
-                m2carddblist+=("${model}_${cardmodel,,}.db")            # M.2 card's db file
-            fi
-            m2cardlist+=("$cardmodel")                                  # M.2 card
-        elif [[ $cardmodel =~ E[0-9][0-9]+M.+ ]]; then
-            # Ethernet + M2 adaptor card
-            if [[ -f "${model}_${cardmodel,,}${version}.db" ]]; then
-                m2carddblist+=("${model}_${cardmodel,,}${version}.db")  # M.2 card's db file
-            fi
-            if [[ -f "${model}_${cardmodel,,}.db" ]]; then
-                m2carddblist+=("${model}_${cardmodel,,}.db")            # M.2 card's db file
-            fi
-            m2cardlist+="$cardmodel"                                  # M.2 card
-        fi
-    fi
-}
-
-m2_pool_support(){
-    if [[ -f /tmpRoot/run/synostorage/disks/"$(basename -- "${1}")"/m2_pool_support ]]; then  # GitHub issue #86, 87
-        echo 1 > /tmpRoot/run/synostorage/disks/"$(basename -- "${1}")"/m2_pool_support
-    fi
-}
-
 for d in /sys/block/*; do
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
