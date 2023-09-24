@@ -3,7 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/syno-hdd-db/src/install.sh",
-      "sha256": "48e282c3cbf8580f4a04dae9f86616493525d36a9498c2e9e657ed272b7973cb",
+      "sha256": "/tmpRoot/usr/syno/bin/syno_hdd_util --ssd_detect",
       "packed": false
     }
   ],
