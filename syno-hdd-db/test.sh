@@ -54,9 +54,9 @@ getdriveinfo(){
         fwrev=$(/tmpRoot/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $(NF-3)}')  # GitHub issue #86, 87
         echo $hdmodel
         echo $fwrev
-        if [[ $hdmodel ]] && [[ $fwrev ]]; then
+        if [[ -n "$hdmodel" ]] && [[ -n "$fwrev" ]]; then
             hdlist+=("${hdmodel},${fwrev}")
-        fi
+        fi        
     fi
 }
 
@@ -71,7 +71,7 @@ getm2info(){
     fi
     nvmefw=$(printf "%s" "$nvmefw" | xargs)  # trim leading and trailing white space
 
-    if [[ $nvmemodel ]] && [[ $nvmefw ]]; then
+    if [[ -n "$nvmemodel" ]] && [[ -n "$nvmefw" ]]; then
         nvmelist+=("${nvmemodel},${nvmefw}")
     fi
 }
