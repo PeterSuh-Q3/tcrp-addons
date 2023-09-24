@@ -17,7 +17,7 @@ fixdrivemodel(){
 
     # Brands that return "BRAND <model>" and need "BRAND " removed.
     if [[ ${1} =~ ^[A-Za-z]{1,7}" ".* ]]; then
-        #see  Smartmontools database in /tmpRoot/var/lib/smartmontools/drivedb.db
+        #see  Smartmontools database in /var/lib/smartmontools/drivedb.db
         hdmodel=${hdmodel#"WDC "}       # Remove "WDC " from start of model name
         hdmodel=${hdmodel#"HGST "}      # Remove "HGST " from start of model name
         hdmodel=${hdmodel#"TOSHIBA "}   # Remove "TOSHIBA " from start of model name
@@ -34,7 +34,7 @@ getdriveinfo(){
     # ${1} is /sys/block/sata1 etc
 
     # Skip USB drives
-    usb=$(grep "$(basename -- "${1}")" /tmpRoot/proc/mounts | grep "[Uu][Ss][Bb]" | cut -d" " -f1-2)
+    usb=$(grep "$(basename -- "${1}")" /proc/mounts | grep "[Uu][Ss][Bb]" | cut -d" " -f1-2)
     if [[ ! $usb ]]; then
     
         # Get drive model
@@ -51,7 +51,7 @@ getdriveinfo(){
         device="/dev/$(basename -- "${1}")"
         #fwrev=$(syno_hdd_util --ssd_detect | grep "$device " | awk '{print $2}')      # GitHub issue #86, 87
         # Account for SSD drives with spaces in their model name/number
-        fwrev=$(/tmpRoot/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $(NF-3)}')  # GitHub issue #86, 87
+        fwrev=$(/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $(NF-3)}')  # GitHub issue #86, 87
         echo $hdmodel
         echo $fwrev
         if [[ -n "$hdmodel" ]] && [[ -n "$fwrev" ]]; then
