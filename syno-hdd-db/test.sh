@@ -54,9 +54,9 @@ getdriveinfo(){
         fwrev=$(/tmpRoot/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $(NF-3)}')  # GitHub issue #86, 87
         echo $hdmodel
         echo $fwrev
-#        if [[ -n "$hdmodel" ]] && [[ -n "$fwrev" ]]; then
-#            hdlist+="${hdmodel},${fwrev}"
-#        fi        
+        if [[ -n "$hdmodel" ]] && [[ -n "$fwrev" ]]; then
+            hdlist+=("${hdmodel},${fwrev}")
+        fi        
     fi
 }
 
