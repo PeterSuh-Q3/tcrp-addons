@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-dbpath=tmpRoot/var/lib/disk-compatibility/
-synoinfo="/tmpRoot/etc.defaults/synoinfo.conf"
-adapter_cards="/tmpRoot/etc.defaults/adapter_cards.conf"
-modeldtb="/tmpRoot/etc.defaults/model.dtb"
+dbpath=/var/lib/disk-compatibility/
+synoinfo="/etc.defaults/synoinfo.conf"
+adapter_cards="/etc.defaults/adapter_cards.conf"
+modeldtb="/etc.defaults/model.dtb"
 
 #------------------------------------------------------------------------------
 # Get list of installed SATA, SAS and M.2 NVMe/SATA drives,
@@ -54,9 +54,9 @@ getdriveinfo(){
         fwrev=$(/tmpRoot/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $(NF-3)}')  # GitHub issue #86, 87
         echo $hdmodel
         echo $fwrev
-#        if [[ -n "$hdmodel" ]] && [[ -n "$fwrev" ]]; then
-#            hdlist+=("$hdmodel,$fwrev");
-#        fi        
+        if [[ -n "$hdmodel" ]] && [[ -n "$fwrev" ]]; then
+            hdlist+=("$hdmodel,$fwrev");
+        fi        
     fi
 }
 
