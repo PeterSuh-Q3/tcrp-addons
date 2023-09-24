@@ -55,7 +55,7 @@ getdriveinfo(){
         echo $hdmodel
         echo $fwrev
         if [[ -n "$hdmodel" ]] && [[ -n "$fwrev" ]]; then
-            hdlist+=("${hdmodel},${fwrev}")
+            hdlist+="${hdmodel},${fwrev}"
         fi        
     fi
 }
@@ -72,7 +72,7 @@ getm2info(){
     nvmefw=$(printf "%s" "$nvmefw" | xargs)  # trim leading and trailing white space
 
     if [[ -n "$nvmemodel" ]] && [[ -n "$nvmefw" ]]; then
-        nvmelist+=("${nvmemodel},${nvmefw}")
+        nvmelist+="${nvmemodel},${nvmefw}"
     fi
 }
 
@@ -98,7 +98,7 @@ getcardmodel(){
             if [[ -f "${model}_${cardmodel,,}.db" ]]; then
                 m2carddblist+=("${model}_${cardmodel,,}.db")            # M.2 card's db file
             fi
-            m2cardlist+=("$cardmodel")                                  # M.2 card
+            m2cardlist+="$cardmodel"                                  # M.2 card
         fi
     fi
 }
