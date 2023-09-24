@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 dbpath=tmpRoot/var/lib/disk-compatibility/
 synoinfo="/tmpRoot/etc.defaults/synoinfo.conf"
