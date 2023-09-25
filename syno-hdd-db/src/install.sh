@@ -59,31 +59,33 @@ editcount(){
 editdb7(){
     if [[ ${1} == "append" ]]; then  # model not in db file
         #if sed -i "s/}}}/}},\"$hdmodel\":{$fwstrng$default/" "$2"; then  # append
+        echo fwstrng "${fwstrng}" >&2  # debug
+        echo default "${default}" >&2  # debug
         if sed -i "s/}}}/}},\"${hdmodel//\//\\/}\":{$fwstrng$default/" "$2"; then  # append
-            echo -e "Added ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}"
+            echo -e "Added ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}" >&2
             editcount "$2"
         else
-            echo -e "\n${Error}ERROR 6a${Off} Failed to update $(basename -- "$2")${Off}"
+            echo -e "\n${Error}ERROR 6a${Off} Failed to update $(basename -- "$2")${Off}" >&2
             #exit 6
         fi
 
     elif [[ ${1} == "insert" ]]; then  # model and default exists
         #if sed -i "s/\"$hdmodel\":{/\"$hdmodel\":{$fwstrng/" "$2"; then  # insert firmware
         if sed -i "s/\"${hdmodel//\//\\/}\":{/\"${hdmodel//\//\\/}\":{$fwstrng/" "$2"; then  # insert firmware
-            echo -e "Updated ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}"
+            echo -e "Updated ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}" >&2
             #editcount "$2"
         else
-            echo -e "\n${Error}ERROR 6b${Off} Failed to update $(basename -- "$2")${Off}"
+            echo -e "\n${Error}ERROR 6b${Off} Failed to update $(basename -- "$2")${Off}" >&2
             #exit 6
         fi
 
     elif [[ ${1} == "empty" ]]; then  # db file only contains {}
         #if sed -i "s/{}/{\"$hdmodel\":{$fwstrng${default}}/" "$2"; then  # empty
         if sed -i "s/{}/{\"${hdmodel//\//\\/}\":{$fwstrng${default}}/" "$2"; then  # empty
-            echo -e "Added ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}"
+            echo -e "Added ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}" >&2
             editcount "$2"
         else
-            echo -e "\n${Error}ERROR 6c${Off} Failed to update $(basename -- "$2")${Off}"
+            echo -e "\n${Error}ERROR 6c${Off} Failed to update $(basename -- "$2")${Off}" >&2
             #exit 6
         fi
 
@@ -108,17 +110,17 @@ updatedb(){
 
         if grep '"disk_compatbility_info":{}' "$1" >/dev/null; then
            # Replace  "disk_compatbility_info":{}  with  "disk_compatbility_info":{"WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}}
-            #echo "Edit empty db file:"  # debug
+            echo "Edit empty db file:" >&2 # debug
             editdb7 "empty" "$1"
 
         elif grep '"'"$hdmodel"'":' "$1" >/dev/null; then
            # Replace  "WD40PURX-64GVNY0":{  with  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
-            #echo "Insert firmware version:"  # debug
+            echo "Insert firmware version:" >&2 # debug
             editdb7 "insert" "$1"
 
         else
            # Add  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}
-            #echo "Append drive and firmware:"  # debug
+            echo "Append drive and firmware:" >&2 # debug
             editdb7 "append" "$1"
         fi
     fi
@@ -146,9 +148,11 @@ getdriveinfo(){
         #fwrev=$(syno_hdd_util --ssd_detect | grep "$device " | awk '{print $2}')      # GitHub issue #86, 87
         # Account for SSD drives with spaces in their model name/number
         fwrev=$(/tmpRoot/bin/hdparm -I "$device" | grep Firmware | awk '{print $3}')  # GitHub issue #86, 87
-        echo $hdmodel
-        echo $fwrev
-        if [[ $hdmodel ]] && [[ $fwrev ]]; then
+
+        echo hdmodel "$hdmodel" >&2  # debug
+        echo fwrev "$fwrev" >&2  # debug
+        
+        if [[ -n $hdmodel ]] && [[ -n $fwrev ]]; then
             updatedb $dbfile
         fi
     fi
