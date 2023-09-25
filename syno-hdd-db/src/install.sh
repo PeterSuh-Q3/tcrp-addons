@@ -145,7 +145,7 @@ getdriveinfo(){
       ;;
     esac
   done
-  cp -vf dbfile /etc/
+  cp -vf ${dbfile} /etc/
 elif [ "${1}" = "late" ]; then
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
 fi
