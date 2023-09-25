@@ -70,8 +70,6 @@ editdb7(){
 
 
 updatedb(){
-    echo hdmodel "$hdmodel" >&2  # debug
-    echo fwrev "$fwrev" >&2      # debug
 
     if grep "$hdmodel"'":{"'"$fwrev" "$1" >/dev/null; then
         echo -e "$hdmodel already exists in $(basename -- "$1")" >&2
@@ -114,9 +112,9 @@ getdriveinfo(){
         hdmodel=$(printf "%s" "$hdmodel" | xargs)  # trim leading and trailing white space
 
         # Fix dodgy model numbers
-        if [ $(echo  "$hdmodel" | grep Virtual | wc -l) -eq 0 ]; then
-            fixdrivemodel "$hdmodel"
-        fi    
+        #if [ $(echo  "$hdmodel" | grep Virtual | wc -l) -eq 0 ]; then
+        #    fixdrivemodel "$hdmodel"
+        #fi    
 
         # Get drive firmware version
         #fwrev=$(cat "${1}/device/rev")
@@ -128,6 +126,8 @@ getdriveinfo(){
         fwrev=$(./hdparm -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
         
         if [[ -n $hdmodel ]] && [[ -n $fwrev ]]; then
+            echo hdmodel "$hdmodel" >&2  # debug
+            echo fwrev "$fwrev" >&2      # debug
             updatedb $dbfile
         fi
     fi
