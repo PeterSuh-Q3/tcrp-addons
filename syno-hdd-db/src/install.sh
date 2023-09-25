@@ -161,7 +161,10 @@ getdriveinfo(){
 }
 
 if [ "${1}" = "late" ]; then
-
+echo "scan /sys/block"
+ll /sys/block/*
+echo "scan /tmpRoot/sys/block"
+ll /tmpRoot/sys/block/*
     for d in /sys/block/*; do
         # $d is /sys/block/sata1 etc
         case "$(basename -- "${d}")" in
