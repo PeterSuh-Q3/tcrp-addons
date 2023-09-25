@@ -33,17 +33,6 @@ fixdrivemodel(){
     fi
 }
 
-#------------------------------------------------------------------------------
-# Check databases and add our drives if needed
-editcount(){
-    # Count drives added to host db files
-    if [[ ${1} =~ .*\.db$ ]]; then
-        db1Edits=$((db1Edits +1))
-    elif [[ ${1} =~ .*\.db.new ]]; then
-        db2Edits=$((db2Edits +1))
-    fi
-}
-
 editdb7(){
     if [[ ${1} == "append" ]]; then  # model not in db file
         #if sed -i "s/}}}/}},\"$hdmodel\":{$fwstrng$default/" "$2"; then  # append
@@ -51,7 +40,6 @@ editdb7(){
         echo default "${default}" >&2  # debug
         if sed -i "s/}}}/}},\"${hdmodel//\//\\/}\":{$fwstrng$default/" "$2"; then  # append
             echo -e "Added $hdmodel to $(basename -- "$2")" >&2
-            editcount "$2"
         else
             echo -e "\nERROR 6a Failed to update $(basename -- "$2")" >&2
             #exit 6
@@ -61,7 +49,6 @@ editdb7(){
         #if sed -i "s/\"$hdmodel\":{/\"$hdmodel\":{$fwstrng/" "$2"; then  # insert firmware
         if sed -i "s/\"${hdmodel//\//\\/}\":{/\"${hdmodel//\//\\/}\":{$fwstrng/" "$2"; then  # insert firmware
             echo -e "Updated $hdmodel to $(basename -- "$2")" >&2
-            #editcount "$2"
         else
             echo -e "\nERROR 6b Failed to update $(basename -- "$2")" >&2
             #exit 6
@@ -71,7 +58,6 @@ editdb7(){
         #if sed -i "s/{}/{\"$hdmodel\":{$fwstrng${default}}/" "$2"; then  # empty
         if sed -i "s/{}/{\"${hdmodel//\//\\/}\":{$fwstrng${default}}/" "$2"; then  # empty
             echo -e "Added $hdmodel to $(basename -- "$2")" >&2
-            editcount "$2"
         else
             echo -e "\nERROR 6c Failed to update $(basename -- "$2")" >&2
             #exit 6
@@ -133,10 +119,9 @@ getdriveinfo(){
         #fwrev=$(printf "%s" "$fwrev" | xargs)  # trim leading and trailing white space
 
         device="/dev/$(basename -- "${1}")"
-        #fwrev=$(syno_hdd_util --ssd_detect | grep "$device " | awk '{print $2}')      # GitHub issue #86, 87
         # Account for SSD drives with spaces in their model name/number
         chmod +x ./hdparm
-        fwrev=$(./hdparm -I "$device" | grep Firmware | awk '{print $3}')  # GitHub issue #86, 87
+        fwrev=$(./hdparm -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
 
         echo hdmodel "$hdmodel" >&2  # debug
         echo fwrev "$fwrev" >&2  # debug
