@@ -85,8 +85,6 @@ updatedb(){
     echo hdmodel "$hdmodel" >&2  # debug
     echo fwrev "$fwrev" >&2      # debug
 
-    jq . "$dbfile"
-
     if grep "$hdmodel"'":{"'"$fwrev" "$1" >/dev/null; then
         echo -e "$hdmodel already exists in $(basename -- "$1")" >&2
     else
