@@ -14,7 +14,10 @@ Off='\e[0m'
 
 model=$(uname -u | cut -d '_' -f3)
 # Host db files
-dbfile="/tmpRoot/var/lib/disk-compatibility/${model}_host_v7.db"
+
+dbpath="/tmpRoot/var/lib/disk-compatibility/"
+dbfile=$(find "$dbpath" -maxdepth 1 -name "*${model}_host_v7.db")
+#dbfile="/tmpRoot/var/lib/disk-compatibility/${model}_host_v7.db"
 
 echo model "$model" >&2  # debug
 echo dbfile "$dbfile" >&2  # debug
@@ -78,17 +81,8 @@ if [ "${1}" = "late" ]; then
 for d in /sys/block/*; do
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
-        sd*|hd*)
-            if [[ $d =~ [s|h]d[a-z][a-z]?$ ]]; then
-                # Get drive model and firmware version
-                getdriveinfo "$d"
-            fi
-        ;;
-        sata*|sas*)
-            if [[ $d =~ [sata|sas][0-9][0-9]?[0-9]?$ ]]; then
-                # Get drive model and firmware version
-                getdriveinfo "$d"
-            fi
+        sd*|hd*|sata*|sas*)
+            getdriveinfo "$d"
         ;;
     esac
 done
