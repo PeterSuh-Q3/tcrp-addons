@@ -79,20 +79,19 @@ for d in /sys/block/*; do
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
         sd*|hd*)
-            if [[ $d =~ [hs]d[a-z][a-z]?$ ]]; then
+            if [[ $d =~ [s|h]d[a-z][a-z]?$ ]]; then
                 # Get drive model and firmware version
                 getdriveinfo "$d"
             fi
         ;;
         sata*|sas*)
-            if [[ $d =~ (sas|sata)[0-9][0-9]?[0-9]?$ ]]; then
+            if [[ $d =~ [sata|sas][0-9][0-9]?[0-9]?$ ]]; then
                 # Get drive model and firmware version
                 getdriveinfo "$d"
             fi
         ;;
     esac
 done
-
 
 #------------------------------------------------------------------------------
 # Check databases and add our drives if needed
