@@ -45,47 +45,6 @@ fixdrivemodel(){
     fi
 }
 
-getdriveinfo(){
-    # ${1} is /sys/block/sata1 etc
-
-    # Skip USB drives
-    usb=$(grep "$(basename -- "${1}")" /tmpRoot/proc/mounts | grep "[Uu][Ss][Bb]" | cut -d" " -f1-2)
-    if [[ ! $usb ]]; then
-    
-        # Get drive model
-        hdmodel=$(cat "${1}/device/model")
-        hdmodel=$(printf "%s" "$hdmodel" | xargs)  # trim leading and trailing white space
-
-        # Fix dodgy model numbers
-        fixdrivemodel "$hdmodel"
-
-        # Get drive firmware version
-        #fwrev=$(cat "${1}/device/rev")
-        #fwrev=$(printf "%s" "$fwrev" | xargs)  # trim leading and trailing white space
-
-        device="/dev/$(basename -- "${1}")"
-        #fwrev=$(syno_hdd_util --ssd_detect | grep "$device " | awk '{print $2}')      # GitHub issue #86, 87
-        # Account for SSD drives with spaces in their model name/number
-        fwrev=$(/tmpRoot/bin/hdparm -I "$device" | grep Firmware | awk '{print $3}')  # GitHub issue #86, 87
-        echo $hdmodel
-        echo $fwrev
-        if [[ $hdmodel ]] && [[ $fwrev ]]; then
-            updatedb $dbfile
-        fi
-    fi
-}
-
-if [ "${1}" = "late" ]; then
-
-for d in /sys/block/*; do
-    # $d is /sys/block/sata1 etc
-    case "$(basename -- "${d}")" in
-        sd*|hd*|sata*|sas*)
-            getdriveinfo "$d"
-        ;;
-    esac
-done
-
 #------------------------------------------------------------------------------
 # Check databases and add our drives if needed
 editcount(){
@@ -164,6 +123,47 @@ updatedb(){
         fi
     fi
 }
+
+getdriveinfo(){
+    # ${1} is /sys/block/sata1 etc
+
+    # Skip USB drives
+    usb=$(grep "$(basename -- "${1}")" /tmpRoot/proc/mounts | grep "[Uu][Ss][Bb]" | cut -d" " -f1-2)
+    if [[ ! $usb ]]; then
+    
+        # Get drive model
+        hdmodel=$(cat "${1}/device/model")
+        hdmodel=$(printf "%s" "$hdmodel" | xargs)  # trim leading and trailing white space
+
+        # Fix dodgy model numbers
+        fixdrivemodel "$hdmodel"
+
+        # Get drive firmware version
+        #fwrev=$(cat "${1}/device/rev")
+        #fwrev=$(printf "%s" "$fwrev" | xargs)  # trim leading and trailing white space
+
+        device="/dev/$(basename -- "${1}")"
+        #fwrev=$(syno_hdd_util --ssd_detect | grep "$device " | awk '{print $2}')      # GitHub issue #86, 87
+        # Account for SSD drives with spaces in their model name/number
+        fwrev=$(/tmpRoot/bin/hdparm -I "$device" | grep Firmware | awk '{print $3}')  # GitHub issue #86, 87
+        echo $hdmodel
+        echo $fwrev
+        if [[ $hdmodel ]] && [[ $fwrev ]]; then
+            updatedb $dbfile
+        fi
+    fi
+}
+
+if [ "${1}" = "late" ]; then
+
+    for d in /sys/block/*; do
+        # $d is /sys/block/sata1 etc
+        case "$(basename -- "${d}")" in
+            sd*|hd*|sata*|sas*)
+                getdriveinfo "$d"
+            ;;
+        esac
+    done
 
 fi
 
