@@ -12,7 +12,7 @@ Cyan='\e[0;36m'
 Error='\e[41m'
 Off='\e[0m'
 
-model=$(cat /proc/sys/kernel/syno_hw_version)
+model=$(cat /tmpRoot/proc/sys/kernel/syno_hw_version)
 model=$(echo "${model,,}")
 
 # Host db files
