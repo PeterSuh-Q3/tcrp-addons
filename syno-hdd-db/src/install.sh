@@ -12,12 +12,12 @@ Cyan='\e[0;36m'
 Error='\e[41m'
 Off='\e[0m'
 
-model=$(uname -u | cut -d '_' -f3)
-# Host db files
+model=$(cat /proc/sys/kernel/syno_hw_version)
+model=$(echo "${model,,}")
 
+# Host db files
 dbpath="/tmpRoot/var/lib/disk-compatibility/"
-dbfile=$(find "$dbpath" -maxdepth 1 -name "*${model}_host_v7.db")
-#dbfile="/tmpRoot/var/lib/disk-compatibility/${model}_host_v7.db"
+dbfile="${dbpath}${model}_host_v7.db"
 
 echo model "$model" >&2  # debug
 echo dbfile "$dbfile" >&2  # debug
