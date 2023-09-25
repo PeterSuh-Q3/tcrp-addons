@@ -128,7 +128,7 @@ getdriveinfo(){
         echo hdmodel "$hdmodel" >&2  # debug
         echo fwrev "$fwrev" >&2      # debug
         
-        if [[ -n $hdmodel ]] && [[ -n $fwrev ]]; then
+        if [[ $hdmodel ]] && [[ $fwrev ]]; then
             updatedb $dbfile
         fi
     fi
