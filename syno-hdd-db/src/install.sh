@@ -160,6 +160,8 @@ ls -l /sys/block/*
             ;;
         esac
     done
+elif [ "${1}" = "late" ]; then
+  cp -vf dbfile /tmpRoot${dbpath}
 fi
 
 exit
