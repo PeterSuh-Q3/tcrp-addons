@@ -112,9 +112,9 @@ getdriveinfo(){
         hdmodel=$(printf "%s" "$hdmodel" | xargs)  # trim leading and trailing white space
 
         # Fix dodgy model numbers
-        #if [ $(echo  "$hdmodel" | grep Virtual | wc -l) -eq 0 ]; then
-        #    fixdrivemodel "$hdmodel"
-        #fi    
+        if [ $(echo  "$hdmodel" | grep Virtual | wc -l) -eq 0 ]; then
+            fixdrivemodel "$hdmodel"
+        fi    
 
         # Get drive firmware version
         #fwrev=$(cat "${1}/device/rev")
@@ -124,10 +124,11 @@ getdriveinfo(){
         # Account for SSD drives with spaces in their model name/number
         chmod +x ./hdparm
         fwrev=$(./hdparm -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
+
+        echo hdmodel "$hdmodel" >&2  # debug
+        echo fwrev "$fwrev" >&2      # debug
         
         if [[ -n $hdmodel ]] && [[ -n $fwrev ]]; then
-            echo hdmodel "$hdmodel" >&2  # debug
-            echo fwrev "$fwrev" >&2      # debug
             updatedb $dbfile
         fi
     fi
