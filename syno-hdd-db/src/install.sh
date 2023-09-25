@@ -62,30 +62,30 @@ editdb7(){
         echo fwstrng "${fwstrng}" >&2  # debug
         echo default "${default}" >&2  # debug
         if sed -i "s/}}}/}},\"${hdmodel//\//\\/}\":{$fwstrng$default/" "$2"; then  # append
-            echo -e "Added ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}" >&2
+            echo -e "Added $hdmodel to $(basename -- "$2")" >&2
             editcount "$2"
         else
-            echo -e "\n${Error}ERROR 6a${Off} Failed to update $(basename -- "$2")${Off}" >&2
+            echo -e "\nERROR 6a Failed to update $(basename -- "$2")" >&2
             #exit 6
         fi
 
     elif [[ ${1} == "insert" ]]; then  # model and default exists
         #if sed -i "s/\"$hdmodel\":{/\"$hdmodel\":{$fwstrng/" "$2"; then  # insert firmware
         if sed -i "s/\"${hdmodel//\//\\/}\":{/\"${hdmodel//\//\\/}\":{$fwstrng/" "$2"; then  # insert firmware
-            echo -e "Updated ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}" >&2
+            echo -e "Updated $hdmodel to $(basename -- "$2")" >&2
             #editcount "$2"
         else
-            echo -e "\n${Error}ERROR 6b${Off} Failed to update $(basename -- "$2")${Off}" >&2
+            echo -e "\nERROR 6b Failed to update $(basename -- "$2")" >&2
             #exit 6
         fi
 
     elif [[ ${1} == "empty" ]]; then  # db file only contains {}
         #if sed -i "s/{}/{\"$hdmodel\":{$fwstrng${default}}/" "$2"; then  # empty
         if sed -i "s/{}/{\"${hdmodel//\//\\/}\":{$fwstrng${default}}/" "$2"; then  # empty
-            echo -e "Added ${Yellow}$hdmodel${Off} to ${Cyan}$(basename -- "$2")${Off}" >&2
+            echo -e "Added $hdmodel to $(basename -- "$2")" >&2
             editcount "$2"
         else
-            echo -e "\n${Error}ERROR 6c${Off} Failed to update $(basename -- "$2")${Off}" >&2
+            echo -e "\nERROR 6c Failed to update $(basename -- "$2")" >&2
             #exit 6
         fi
 
@@ -97,8 +97,10 @@ updatedb(){
     echo hdmodel "$hdmodel" >&2  # debug
     echo fwrev "$fwrev" >&2      # debug
 
+    jq . "$dbfile"
+
     if grep "$hdmodel"'":{"'"$fwrev" "$1" >/dev/null; then
-        echo -e "${Yellow}$hdmodel${Off} already exists in ${Cyan}$(basename -- "$1")${Off}" >&2
+        echo -e "$hdmodel already exists in $(basename -- "$1")" >&2
     else
         fwstrng=\"$fwrev\"
         fwstrng="$fwstrng":{\"compatibility_interval\":[{\"compatibility\":\"support\",\"not_yet_rolling_status\"
