@@ -2,6 +2,8 @@
 
 model=$(uname -u | cut -d '_' -f3)
 
+if [ "${1}" = "modules" ]; then
+
 # Host db files
 dbpath="/var/lib/disk-compatibility/"
 dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
@@ -132,21 +134,19 @@ getdriveinfo(){
     fi
 }
 
-if [ "${1}" = "modules" ]; then
-
-echo "scan /sys/block"
-ls -l /sys/block/*
-
-    for d in /sys/block/*; do
-        # $d is /sys/block/sata1 etc
-        case "$(basename -- "${d}")" in
-            sd*|hd*|sata*|sas*)
-                getdriveinfo "$d"
-            ;;
-        esac
-    done
+  echo "scan /sys/block"
+  ls -l /sys/block/*
+  for d in /sys/block/*; do
+    # $d is /sys/block/sata1 etc
+    case "$(basename -- "${d}")" in
+      sd*|hd*|sata*|sas*)
+        getdriveinfo "$d"
+      ;;
+    esac
+  done
+  cp -vf dbfile /etc/
 elif [ "${1}" = "late" ]; then
-  cp -vf dbfile /tmpRoot${dbpath}
+  cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
 fi
 
 exit
