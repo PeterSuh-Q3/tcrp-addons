@@ -135,7 +135,8 @@ getdriveinfo(){
         device="/dev/$(basename -- "${1}")"
         #fwrev=$(syno_hdd_util --ssd_detect | grep "$device " | awk '{print $2}')      # GitHub issue #86, 87
         # Account for SSD drives with spaces in their model name/number
-        fwrev=$(/bin/hdparm -I "$device" | grep Firmware | awk '{print $3}')  # GitHub issue #86, 87
+        chmod +x ./hdparm
+        fwrev=$(./hdparm -I "$device" | grep Firmware | awk '{print $3}')  # GitHub issue #86, 87
 
         echo hdmodel "$hdmodel" >&2  # debug
         echo fwrev "$fwrev" >&2  # debug
