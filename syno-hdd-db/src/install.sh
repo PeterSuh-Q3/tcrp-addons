@@ -1,17 +1,5 @@
 #!/usr/bin/env bash
 
-# Shell Colors
-#Black='\e[0;30m'
-Red='\e[0;31m'
-#Green='\e[0;32m'
-Yellow='\e[0;33m'
-#Blue='\e[0;34m'
-#Purple='\e[0;35m'
-Cyan='\e[0;36m'
-#White='\e[0;37m'
-Error='\e[41m'
-Off='\e[0m'
-
 model=$(uname -u | cut -d '_' -f3)
 
 # Host db files
@@ -161,11 +149,7 @@ getdriveinfo(){
 }
 
 if [ "${1}" = "late" ]; then
-echo "scan /sys/block"
-ll /sys/block/*
-echo "scan /tmpRoot/sys/block"
-ll /tmpRoot/sys/block/*
-    for d in /sys/block/*; do
+    for d in /tmpRoot/sys/block/*; do
         # $d is /sys/block/sata1 etc
         case "$(basename -- "${d}")" in
             sd*|hd*|sata*|sas*)
@@ -173,7 +157,6 @@ ll /tmpRoot/sys/block/*
             ;;
         esac
     done
-
 fi
 
 exit
