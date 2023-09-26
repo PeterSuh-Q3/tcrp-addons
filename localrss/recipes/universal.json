@@ -26,7 +26,7 @@
     },
     {
       "name": "rss7.2.1.json",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/rss7.2.0.json",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/rss7.2.1.json",
       "sha256": "9bcc6c20ef6210ce9fb96a18d5948c6e3b12025d9499b90ab0449366d3e4bc89",
       "packed": false
     }
