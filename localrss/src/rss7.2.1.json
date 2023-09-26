@@ -22,6 +22,16 @@
                 "isSecurityVersion": false,
                 "model": [
                     {
+                        "mUnique": "synology_broadwellnk_3617xs",
+                        "mLink": "https:\/\/global.synologydownload.com\/download\/DSM\/release\/7.2.1\/69057\/DSM_DS3617xs_69057.pat",
+                        "mCheckSum": "bda93b275177bba7bc1da6f5e75a992f"
+                    },
+                    {
+                        "mUnique": "synology_apollolake_918+",
+                        "mLink": "https:\/\/global.synologydownload.com\/download\/DSM\/release\/7.2.1\/69057\/DSM_DS918%2B_69057.pat",
+                        "mCheckSum": "72ab2f5e35f23be4b4b0d70ec2e9a157"
+                    },
+                    {
                         "mUnique": "synology_apollolake_1019+",
                         "mLink": "https:\/\/global.synologydownload.com\/download\/DSM\/release\/7.2.1\/69057\/DSM_DS1019%2B_69057.pat",
                         "mCheckSum": "7233d7596a58cb6978a56c39ddf79c71"
