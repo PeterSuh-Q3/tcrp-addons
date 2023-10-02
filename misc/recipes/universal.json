@@ -3,7 +3,7 @@
     {
       "name": "install-all.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install-all.sh",
-      "sha256": "47f4bf828923600b826c47b6af4b5928aa591249ede14e3f0286aab8ec6623ce",
+      "sha256": "bf7901c5331deb1c83aeb5564ae74ad189107f023e089bddb93cedb1e77385db",
       "packed": false
     },
     {
@@ -31,9 +31,9 @@
       "packed": false 
     },
 	  {
-      "name": "pciids",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/pciids",
-      "sha256": "a32808aca2edec084ba0bd6cab84a13591c91053c8b160d5d3279b2abca88199",
+      "name": "i915ids",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/i915ids",
+      "sha256": "5dc5c546e94664370d4b927a6a324430dc43de6fe07892890034b1fea557edfb",
       "packed": false
     }    
   ],
