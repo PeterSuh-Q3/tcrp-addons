@@ -12,7 +12,7 @@ if [ $# -lt 1 ]; then
   dsmMode="ON"
 else
   tmpRoot="/tmpRoot"
-  libPath="."
+  libPath="/exts/nvme-cache"
   dsmMode="OFF"
 fi
 
@@ -62,7 +62,7 @@ function prepare_nvme() {
     #if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
       nvmefile="${libPath}/libsynonvme.so.7.2.xxd"
     #fi
-  elif [ $(uname -a | grep '4.4.108+' | wc -l) -gt 0 ]; then
+  elif [ $(uname -a | grep '4.4.180+' | wc -l) -gt 0 ]; then
     if [ ${REVISION} = "#42218" ]; then
       nvmefile="${libPath}/libsynonvme.so.7.0"
     else
