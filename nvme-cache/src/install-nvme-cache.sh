@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# |       models      |     1st      |     2nd      |
+# | DS918+            | 0000:00:13.1 | 0000:00:13.2 |
+# | RS1619xs+         | 0000:00:03.2 | 0000:00:03.3 |
+# | DS419+, DS1019+   | 0000:00:14.1 |              |
+# | DS719+, DS1621xs+ | 0000:00:01.1 | 0000:00:01.0 |
+
 if [ $# -lt 1 ]; then
   tmpRoot=""
   libPath="/lib64"
@@ -46,6 +52,7 @@ function prepare_nvme() {
       echo $nvme4hex
   fi
 
+  REVISION="$(uname -a | cut -d ' ' -f4)"
   if [ $(uname -a | grep '4.4.302+' | wc -l) -gt 0 ]; then
     #nvmefile="${libPath}/libsynonvme.so.7.2"
     #if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
@@ -55,8 +62,16 @@ function prepare_nvme() {
       nvmefile="${libPath}/libsynonvme.so.7.2.xxd"
     #fi
   elif [ $(uname -a | grep '4.4.108+' | wc -l) -gt 0 ]; then
-    nvmefile="${libPath}/libsynonvme.so.7.1"
+    if [ ${REVISION} = "#42218" ]; then
+      nvmefile="${libPath}/libsynonvme.so.7.0"
+    else
+      nvmefile="${libPath}/libsynonvme.so.7.1"
+    fi  
   fi  
+
+  echo "nvmefile = ${nvmefile}"
+
+  [ ! -f /usr/lib/libsynonvme.so.1.bak ] && cp -f /usr/lib/libsynonvme.so.1 /usr/lib/libsynonvme.so.1.bak && chmod a+rwx /usr/lib/libsynonvme.so.1.bak
 
   if [ $(uname -a | grep '918+' | wc -l) -gt 0 ]; then
     if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
