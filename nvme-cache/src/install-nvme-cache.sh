@@ -53,6 +53,7 @@ function prepare_nvme() {
   fi
 
   REVISION="$(uname -a | cut -d ' ' -f4)"
+  echo "REVISION = ${REVISION}"
   if [ $(uname -a | grep '4.4.302+' | wc -l) -gt 0 ]; then
     #nvmefile="${libPath}/libsynonvme.so.7.2"
     #if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
@@ -70,9 +71,7 @@ function prepare_nvme() {
   fi  
 
   echo "nvmefile = ${nvmefile}"
-
-  [ ! -f /usr/lib/libsynonvme.so.1.bak ] && cp -f /usr/lib/libsynonvme.so.1 /usr/lib/libsynonvme.so.1.bak && chmod a+rwx /usr/lib/libsynonvme.so.1.bak
-
+ 
   if [ $(uname -a | grep '918+' | wc -l) -gt 0 ]; then
     if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
         xxd -c 256 ${nvmefile} | sed "s/3a31 332e 3100/$nvme1hex/" | sed "s/3133 2e32/$nvme2hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
