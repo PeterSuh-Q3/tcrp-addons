@@ -19,6 +19,12 @@
       "packed": false
     },
     {
+      "name": "libsynonvme.so.7.0",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynonvme.so.7.0",
+      "sha256": "5482dc45d7afad6a6ffceb2febe11ae8444f6cb94c2eef3be30ee59e5167a336",
+      "packed": false
+    },
+    {
       "name": "libsynonvme.so.7.1",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvme-cache/releases/libsynonvme.so.7.1",
       "sha256": "3473d391e1ab6033700c85b826522975b7f1da75046e1b3e12c393316afd1c44",
