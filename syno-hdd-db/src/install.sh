@@ -104,7 +104,7 @@ elif [ "${1}" = "late" ]; then
 
   diskdata=$(/tmpRoot/bin/jq . /etc/disk_db.json)
   jsonfile=$(/tmpRoot/bin/jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | /tmpRoot/bin/jq . > $dbfile
-  #/tmpRoot/bin/jq . $dbfile
+  /tmpRoot/bin/jq . $dbfile
   
 fi
 
