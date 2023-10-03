@@ -83,6 +83,7 @@ if [ "${1}" = "modules" ]; then
     esac
   done
   sed -i '$s/,$/}/' /etc/disk_db.json
+  cat /etc/disk_db.json
   
 elif [ "${1}" = "late" ]; then
 
@@ -95,7 +96,8 @@ elif [ "${1}" = "late" ]; then
   echo dbfile "$dbfile" >&2  # debug
 
   diskdata=$(/tmpRoot/bin/jq . /etc/disk_db.json)
-  jsonfile=$(/tmpRoot/bin/jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | jq . > $dbfile
+  jsonfile=$(/tmpRoot/bin/jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | /tmpRoot/bin/jq . > $dbfile
+  /tmpRoot/bin/jq . $dbfile
   
 fi
 
