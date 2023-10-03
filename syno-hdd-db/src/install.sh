@@ -1,15 +1,7 @@
 #!/usr/bin/env bash
 
-model=$(uname -u | cut -d '_' -f3)
-
 if [ "${1}" = "modules" ]; then
 
-  # Host db files
-  dbpath="/var/lib/disk-compatibility/"
-  dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
-
-  echo model "$model" >&2  # debug
-  echo dbfile "$dbfile" >&2  # debug
   #------------------------------------------------------------------------------
   # Get list of installed SATA, SAS and M.2 NVMe/SATA drives,
   # PCIe M.2 cards and connected Expansion Units.
@@ -32,70 +24,6 @@ if [ "${1}" = "modules" ]; then
         hdmodel=${hdmodel#"SAMSUNG "}   # Remove "SAMSUNG " from start of model name
         hdmodel=${hdmodel#"FUJISTU "}   # Remove "FUJISTU " from start of model name
         hdmodel=${hdmodel#"APPLE HDD "} # Remove "APPLE HDD " from start of model name
-    fi
-  }
-
-  editdb7(){
-    if [[ ${1} == "append" ]]; then  # model not in db file
-        #if sed -i "s/}}}/}},\"$hdmodel\":{$fwstrng$default/" "$2"; then  # append
-        echo fwstrng "${fwstrng}" >&2  # debug
-        echo default "${default}" >&2  # debug
-        if sed -i "s/}}}/}},\"${hdmodel//\//\\/}\":{$fwstrng$default/" "$2"; then  # append
-            echo -e "Added $hdmodel to $(basename -- "$2")" >&2
-        else
-            echo -e "\nERROR 6a Failed to update $(basename -- "$2")" >&2
-            #exit 6
-        fi
-
-    elif [[ ${1} == "insert" ]]; then  # model and default exists
-        #if sed -i "s/\"$hdmodel\":{/\"$hdmodel\":{$fwstrng/" "$2"; then  # insert firmware
-        if sed -i "s/\"${hdmodel//\//\\/}\":{/\"${hdmodel//\//\\/}\":{$fwstrng/" "$2"; then  # insert firmware
-            echo -e "Updated $hdmodel to $(basename -- "$2")" >&2
-        else
-            echo -e "\nERROR 6b Failed to update $(basename -- "$2")" >&2
-            #exit 6
-        fi
-
-    elif [[ ${1} == "empty" ]]; then  # db file only contains {}
-        #if sed -i "s/{}/{\"$hdmodel\":{$fwstrng${default}}/" "$2"; then  # empty
-        if sed -i "s/{}/{\"${hdmodel//\//\\/}\":{$fwstrng${default}}/" "$2"; then  # empty
-            echo -e "Added $hdmodel to $(basename -- "$2")" >&2
-        else
-            echo -e "\nERROR 6c Failed to update $(basename -- "$2")" >&2
-            #exit 6
-        fi
-
-    fi
-  }
-
-  updatedb(){
-
-    if grep "$hdmodel"'":{"'"$fwrev" "$1" >/dev/null; then
-        echo -e "$hdmodel already exists in $(basename -- "$1")" >&2
-    else
-        fwstrng=\"$fwrev\"
-        fwstrng="$fwstrng":{\"compatibility_interval\":[{\"compatibility\":\"support\",\"not_yet_rolling_status\"
-        fwstrng="$fwstrng":\"support\",\"fw_dsm_update_status_notify\":false,\"barebone_installable\":true}]},
-
-        default=\"default\"
-        default="$default":{\"compatibility_interval\":[{\"compatibility\":\"support\",\"not_yet_rolling_status\"
-        default="$default":\"support\",\"fw_dsm_update_status_notify\":false,\"barebone_installable\":true}]}}}
-
-        if grep '"disk_compatbility_info":{}' "$1" >/dev/null; then
-           # Replace  "disk_compatbility_info":{}  with  "disk_compatbility_info":{"WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}}
-            echo "Edit empty db file:" >&2 # debug
-            editdb7 "empty" "$1"
-
-        elif grep '"'"$hdmodel"'":' "$1" >/dev/null; then
-           # Replace  "WD40PURX-64GVNY0":{  with  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
-            echo "Insert firmware version:" >&2 # debug
-            editdb7 "insert" "$1"
-
-        else
-           # Add  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}
-            echo "Append drive and firmware:" >&2 # debug
-            editdb7 "append" "$1"
-        fi
     fi
   }
 
@@ -137,12 +65,15 @@ if [ "${1}" = "modules" ]; then
         echo fwrev "$fwrev" >&2      # debug
         
         if [ -n "$hdmodel" ] && [ -n "$fwrev" ]; then
-            echo "updatedb excute!!!!!!"
-            updatedb $dbfile
+            echo "Append drive and firmware:" >&2 # debug
+            jsondata='"${hdmodel}":{"${fwrev}":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]},
+            "default":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]}}' && echo $jsondata >> /etc/disk_db.json
+            echo "," >> /etc/disk_db.json
         fi
     fi
   }
 
+  echo "{" > /etc/disk_db.json
   for d in /sys/block/*; do
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
@@ -151,10 +82,21 @@ if [ "${1}" = "modules" ]; then
       ;;
     esac
   done
-  cp -vf ${dbfile} /etc/
+  sed -i '$s/,$/}/' /etc/disk_db.json
   
 elif [ "${1}" = "late" ]; then
-  cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
+
+  model=$(uname -u | cut -d '_' -f3)
+  echo model "$model" >&2  # debug
+  
+  # Host db files
+  dbpath="/tmpRoot/var/lib/disk-compatibility/"
+  dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
+  echo dbfile "$dbfile" >&2  # debug
+
+  diskdata=$(/tmpRoot/bin/jq . /etc/disk_db.json)
+  jsonfile=$(/tmpRoot/bin/jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | jq . > $dbfile
+  
 fi
 
 exit
