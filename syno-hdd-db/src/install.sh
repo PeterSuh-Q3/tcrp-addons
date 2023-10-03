@@ -52,11 +52,14 @@ if [ "${1}" = "modules" ]; then
 
         device="/dev/$(basename -- "${1}")"
         # Account for SSD drives with spaces in their model name/number
+        chmod +x ./hdparm701
         chmod +x ./hdparm711
         chmod +x ./hdparm720
 
         if [[ $2 == "sd" ]]; then
-            if [ ${REVISION} = "#42962" ]; then
+            if [ ${REVISION} = "#42218" ]; then
+                fwrev=$(./hdparm701 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
+            elif [ ${REVISION} = "#42962" ]; then
                 fwrev=$(./hdparm711 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
             else
                 fwrev=$(./hdparm720 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
