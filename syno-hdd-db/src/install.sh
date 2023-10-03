@@ -66,7 +66,7 @@ if [ "${1}" = "modules" ]; then
         
         if [ -n "$hdmodel" ] && [ -n "$fwrev" ]; then
             echo "Append drive and firmware:" >&2 # debug
-            jsondata='"${hdmodel}":{"${fwrev}":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]},
+            jsondata='"'"$hdmodel"'":{"'"$fwrev"'":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]},
             "default":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]}}' && echo $jsondata >> /etc/disk_db.json
             echo "," >> /etc/disk_db.json
         fi
