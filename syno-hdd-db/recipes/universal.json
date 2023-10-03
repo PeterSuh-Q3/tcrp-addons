@@ -7,8 +7,14 @@
       "packed": false
     },
     {
-      "name": "hdparm",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/syno-hdd-db/src/hdparm",
+      "name": "hdparm711",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/syno-hdd-db/src/hdparm711",
+      "sha256": "2764fe51405bb259d81a1c23e8b7652cff4b6dcd48cbb7e83291ac76cfb94a3c",
+      "packed": false
+    },
+    {
+      "name": "hdparm720",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/syno-hdd-db/src/hdparm720",
       "sha256": "6b07abfe013c0a9d1bf3751c8d94d2a8e3e7c0654ac119760e28d26726d90c04",
       "packed": false
     }
