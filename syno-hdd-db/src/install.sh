@@ -4,17 +4,17 @@ model=$(uname -u | cut -d '_' -f3)
 
 if [ "${1}" = "modules" ]; then
 
-# Host db files
-dbpath="/var/lib/disk-compatibility/"
-dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
+  # Host db files
+  dbpath="/var/lib/disk-compatibility/"
+  dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
 
-echo model "$model" >&2  # debug
-echo dbfile "$dbfile" >&2  # debug
-#------------------------------------------------------------------------------
-# Get list of installed SATA, SAS and M.2 NVMe/SATA drives,
-# PCIe M.2 cards and connected Expansion Units.
+  echo model "$model" >&2  # debug
+  echo dbfile "$dbfile" >&2  # debug
+  #------------------------------------------------------------------------------
+  # Get list of installed SATA, SAS and M.2 NVMe/SATA drives,
+  # PCIe M.2 cards and connected Expansion Units.
 
-fixdrivemodel(){
+  fixdrivemodel(){
     # Remove " 00Y" from end of Samsung/Lenovo SSDs  # Github issue #13
     if [[ ${1} =~ MZ.*" 00Y" ]]; then
         hdmodel=$(printf "%s" "${1}" | sed 's/ 00Y.*//')
@@ -33,9 +33,9 @@ fixdrivemodel(){
         hdmodel=${hdmodel#"FUJISTU "}   # Remove "FUJISTU " from start of model name
         hdmodel=${hdmodel#"APPLE HDD "} # Remove "APPLE HDD " from start of model name
     fi
-}
+  }
 
-editdb7(){
+  editdb7(){
     if [[ ${1} == "append" ]]; then  # model not in db file
         #if sed -i "s/}}}/}},\"$hdmodel\":{$fwstrng$default/" "$2"; then  # append
         echo fwstrng "${fwstrng}" >&2  # debug
@@ -66,10 +66,9 @@ editdb7(){
         fi
 
     fi
-}
+  }
 
-
-updatedb(){
+  updatedb(){
 
     if grep "$hdmodel"'":{"'"$fwrev" "$1" >/dev/null; then
         echo -e "$hdmodel already exists in $(basename -- "$1")" >&2
@@ -98,10 +97,13 @@ updatedb(){
             editdb7 "append" "$1"
         fi
     fi
-}
+  }
 
-getdriveinfo(){
+  getdriveinfo(){
     # ${1} is /sys/block/sata1 etc
+
+    REVISION="$(uname -a | cut -d ' ' -f4)"
+    echo "REVISION = ${REVISION}"
 
     # Skip USB drives
     usb=$(grep "$(basename -- "${1}")" /proc/mounts | grep "[Uu][Ss][Bb]" | cut -d" " -f1-2)
@@ -114,7 +116,7 @@ getdriveinfo(){
         # Fix dodgy model numbers
         if [ $(echo  "$hdmodel" | grep Virtual | wc -l) -eq 0 ]; then
             fixdrivemodel "$hdmodel"
-        fi    
+        fi
 
         # Get drive firmware version
         #fwrev=$(cat "${1}/device/rev")
@@ -122,8 +124,14 @@ getdriveinfo(){
 
         device="/dev/$(basename -- "${1}")"
         # Account for SSD drives with spaces in their model name/number
-        chmod +x ./hdparm
-        fwrev=$(./hdparm -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
+        chmod +x ./hdparm711
+        chmod +x ./hdparm720
+        
+        if [ ${REVISION} = "#42962" ]; then
+            fwrev=$(./hdparm711 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
+        else
+            fwrev=$(./hdparm720 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
+        fi
 
         echo hdmodel "$hdmodel" >&2  # debug
         echo fwrev "$fwrev" >&2      # debug
@@ -133,10 +141,8 @@ getdriveinfo(){
             updatedb $dbfile
         fi
     fi
-}
+  }
 
-  echo "scan /sys/block"
-  ls -l /sys/block/*
   for d in /sys/block/*; do
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
@@ -146,6 +152,7 @@ getdriveinfo(){
     esac
   done
   cp -vf ${dbfile} /etc/
+  
 elif [ "${1}" = "late" ]; then
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
 fi
