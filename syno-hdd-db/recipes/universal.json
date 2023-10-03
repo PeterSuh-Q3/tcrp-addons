@@ -3,7 +3,13 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/syno-hdd-db/src/install.sh",
-      "sha256": "8112baa153886f6e476a807ef60559b3224921cc18ea30151dd9ec3de0735379",
+      "sha256": "f0ef1fc36b98eacb0c05f35ea8960a219287bd5a2ed59f5452be4c7585b8ba94",
+      "packed": false
+    },
+    {
+      "name": "hdparm701",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/syno-hdd-db/src/hdparm701",
+      "sha256": "7775ba097e7822a64568ac828e446a3157a9c8388a6cd57ee28c8e2880d02c7b",
       "packed": false
     },
     {
