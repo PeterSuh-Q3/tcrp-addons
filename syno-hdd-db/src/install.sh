@@ -54,11 +54,15 @@ if [ "${1}" = "modules" ]; then
         # Account for SSD drives with spaces in their model name/number
         chmod +x ./hdparm711
         chmod +x ./hdparm720
-        
-        if [ ${REVISION} = "#42962" ]; then
-            fwrev=$(./hdparm711 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
-        else
-            fwrev=$(./hdparm720 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
+
+        if [[ $2 == "sd" ]]; then
+            if [ ${REVISION} = "#42962" ]; then
+                fwrev=$(./hdparm711 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
+            else
+                fwrev=$(./hdparm720 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
+            fi
+        elif [[ $2 == "nvme" ]]; then
+            fwrev=$(cat "$1/device/firmware_rev")
         fi
 
         echo hdmodel "$hdmodel" >&2  # debug
@@ -78,12 +82,15 @@ if [ "${1}" = "modules" ]; then
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
       sd*|hd*|sata*|sas*)
-        getdriveinfo "$d"
+        getdriveinfo "$d" "sd"
+      ;;
+      nvme*)
+        getdriveinfo "$d" "nvme"
       ;;
     esac
   done
   sed -i '$s/,$/}/' /etc/disk_db.json
-  cat /etc/disk_db.json
+  #cat /etc/disk_db.json
   
 elif [ "${1}" = "late" ]; then
 
@@ -97,7 +104,7 @@ elif [ "${1}" = "late" ]; then
 
   diskdata=$(/tmpRoot/bin/jq . /etc/disk_db.json)
   jsonfile=$(/tmpRoot/bin/jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | /tmpRoot/bin/jq . > $dbfile
-  /tmpRoot/bin/jq . $dbfile
+  #/tmpRoot/bin/jq . $dbfile
   
 fi
 
