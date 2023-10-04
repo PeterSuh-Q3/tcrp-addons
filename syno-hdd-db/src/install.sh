@@ -97,21 +97,24 @@ if [ "${1}" = "modules" ]; then
 
 elif [ "${1}" = "late" ]; then
 
+  JQ_PATH='/tmpRoot/usr/bin/jq'
+
   echo "copy disk_db.json file....."
   cp -vf /etc/disk_db.json /tmpRoot/etc/disk_db.json
-  
-elif [ "${1}" = "rcExit" ]; then
+
+  echo "wait 2 seconds for jq libs..."
+  sleep 2
 
   model=$(uname -u | cut -d '_' -f3)
   echo model "$model" >&2  # debug
   
   # Host db files
-  dbpath="/var/lib/disk-compatibility/"
+  dbpath="/tmpRoot/var/lib/disk-compatibility/"
   dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
   echo dbfile "$dbfile" >&2  # debug
 
-  diskdata=$(jq . /etc/disk_db.json)
-  jsonfile=$(jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | jq . > $dbfile
+  diskdata=$(${JQ_PATH} . /tmpRoot/etc/disk_db.json)
+  jsonfile=$(${JQ_PATH} '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | ${JQ_PATH} . > $dbfile
   jq . $dbfile
   
 fi
