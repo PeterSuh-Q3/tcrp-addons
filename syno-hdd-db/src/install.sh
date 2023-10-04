@@ -60,6 +60,7 @@ if [ "${1}" = "modules" ]; then
         chmod +x ./hdparm720
 
         if [[ $2 == "sd" ]]; then
+            jsonfile="/etc/disk_db.json"
             if [ ${REVISION} = "#42218" ]; then
                 fwrev=$(./hdparm701 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
             elif [ ${REVISION} = "#42962" ]; then
@@ -68,8 +69,10 @@ if [ "${1}" = "modules" ]; then
                 fwrev=$(./hdparm720 -I "$device" | grep Firmware | cut -d':' -f2- | cut -d ' ' -f 3 )
             fi
         elif [[ $2 == "nvme" ]]; then
+            jsonfile="/etc/disk_db.json"
             fwrev=$(cat "$1/device/firmware_rev")
         elif [[ $2 == "hba" ]]; then
+            jsonfile="/etc/disk_db_hba.json"
             fwrev="1.13.2"
         fi
 
@@ -78,9 +81,9 @@ if [ "${1}" = "modules" ]; then
         
         if [ -n "$hdmodel" ] && [ -n "$fwrev" ]; then
             echo "Append drive and firmware:" >&2 # debug
-            jsondata='"'"$hdmodel"'":{"'"$fwrev"'":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]},
-            "default":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]}}' && echo $jsondata >> /etc/disk_db.json
-            echo "," >> /etc/disk_db.json
+            jsond='"'"$hdmodel"'":{"'"$fwrev"'":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]},
+            "default":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]}}' && echo $jsond >> $jsonfile
+            echo "," >> $jsonfile
         fi
     fi
   }
@@ -97,7 +100,11 @@ if [ "${1}" = "modules" ]; then
       ;;
     esac
   done
+  sed -i '$s/,$/}/' /etc/disk_db.json
+  #cat /etc/disk_db.json
+  
   # for HBA SAS CONTROLLER
+  echo "{" > /etc/disk_db_hba.json  
   for d in /sys/block/*; do
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
@@ -106,8 +113,8 @@ if [ "${1}" = "modules" ]; then
       ;;
     esac
   done
-  sed -i '$s/,$/}/' /etc/disk_db.json
-  #cat /etc/disk_db.json
+  sed -i '$s/,$/}/' /etc/disk_db_hba.json
+  #cat /etc/disk_db_hba.json
   
   # Host db files
   dbpath="/var/lib/disk-compatibility/"
@@ -115,15 +122,19 @@ if [ "${1}" = "modules" ]; then
   echo dbfile "$dbfile" >&2  # debug
 
   diskdata=$(jq . /etc/disk_db.json)
-  jsonfile=$(jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | jq . > $dbfile
+  jsondata=$(jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsondata | jq . > $dbfile
+  diskdata=$(jq . /etc/disk_db_hba.json)
+  jsondata=$(jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsondata | jq . > $dbfile
+  
   # print last 8 elements
-  jq '.disk_compatbility_info | to_entries | map(select(.value != null)) | .[-8:]' $dbfile
+  jq '.disk_compatbility_info | to_entries | map(select(.value != null)) | .[-16:]' $dbfile
 
   cp -vf ${dbfile} /etc/
   
 elif [ "${1}" = "late" ]; then
-  echo "copy disk_db.json file....."
+  echo "copy disk_db json files....."
   cp -vf /etc/disk_db.json /tmpRoot/etc/disk_db.json
+  cp -vf /etc/disk_db_hba.json /tmpRoot/etc/disk_db_hba.json
 
   echo "copy db file to /tmpRoot/....."
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/etc/
