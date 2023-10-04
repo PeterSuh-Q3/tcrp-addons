@@ -69,6 +69,8 @@ if [ "${1}" = "modules" ]; then
             fi
         elif [[ $2 == "nvme" ]]; then
             fwrev=$(cat "$1/device/firmware_rev")
+        elif [[ $2 == "hba" ]]; then
+            fwrev="1.13.2"
         fi
 
         echo hdmodel "$hdmodel" >&2  # debug
@@ -92,6 +94,15 @@ if [ "${1}" = "modules" ]; then
       ;;
       nvme*)
         getdriveinfo "$d" "nvme"
+      ;;
+    esac
+  done
+  # for HBA SAS CONTROLLER
+  for d in /sys/block/*; do
+    # $d is /sys/block/sata1 etc
+    case "$(basename -- "${d}")" in
+      sd*|hd*|sata*|sas*)
+        getdriveinfo "$d" "hba"
       ;;
     esac
   done
