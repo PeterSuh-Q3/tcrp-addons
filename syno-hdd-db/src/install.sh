@@ -95,8 +95,6 @@ if [ "${1}" = "modules" ]; then
   sed -i '$s/,$/}/' /etc/disk_db.json
   #cat /etc/disk_db.json
 
-  JQ_PATH='/usr/bin/jq'
-
   model=$(uname -u | cut -d '_' -f3)
   echo model "$model" >&2  # debug
   
@@ -105,9 +103,9 @@ if [ "${1}" = "modules" ]; then
   dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
   echo dbfile "$dbfile" >&2  # debug
 
-  diskdata=$(${JQ_PATH} . /etc/disk_db.json)
-  jsonfile=$(${JQ_PATH} '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | ${JQ_PATH} . > $dbfile
-  ${JQ_PATH} . $dbfile
+  diskdata=$(jq . /etc/disk_db.json)
+  jsonfile=$(jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | jq . > $dbfile
+  jq . $dbfile
 
   cp -vf ${dbfile} /etc/
   
