@@ -115,5 +115,6 @@ elif [ "${1}" = "late" ]; then
   cp -vf /etc/disk_db.json /tmpRoot/etc/disk_db.json
 
   echo "copy db file to /tmpRoot/....."
+  cp -vf /etc/*${model}_host_v7.db /tmpRoot/etc/
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
 fi
