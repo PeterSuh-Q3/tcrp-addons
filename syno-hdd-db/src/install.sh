@@ -95,26 +95,26 @@ if [ "${1}" = "modules" ]; then
   sed -i '$s/,$/}/' /etc/disk_db.json
   #cat /etc/disk_db.json
 
-elif [ "${1}" = "late" ]; then
-
-  JQ_PATH='/tmpRoot/usr/bin/jq'
-
-  echo "copy disk_db.json file....."
-  cp -vf /etc/disk_db.json /tmpRoot/etc/disk_db.json
-
-  echo "wait 2 seconds for jq libs..."
-  sleep 2
+  JQ_PATH='/usr/bin/jq'
 
   model=$(uname -u | cut -d '_' -f3)
   echo model "$model" >&2  # debug
   
   # Host db files
-  dbpath="/tmpRoot/var/lib/disk-compatibility/"
+  dbpath="/var/lib/disk-compatibility/"
   dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
   echo dbfile "$dbfile" >&2  # debug
 
   diskdata=$(${JQ_PATH} . /etc/disk_db.json)
   jsonfile=$(${JQ_PATH} '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | ${JQ_PATH} . > $dbfile
   ${JQ_PATH} . $dbfile
+
+  cp -vf ${dbfile} /etc/
   
+elif [ "${1}" = "late" ]; then
+  echo "copy disk_db.json file....."
+  cp -vf /etc/disk_db.json /tmpRoot/etc/disk_db.json
+
+  echo "copy db file to /tmpRoot/....."
+  cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
 fi
