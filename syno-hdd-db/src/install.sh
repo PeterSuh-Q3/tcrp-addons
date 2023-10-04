@@ -94,21 +94,24 @@ if [ "${1}" = "modules" ]; then
   done
   sed -i '$s/,$/}/' /etc/disk_db.json
   #cat /etc/disk_db.json
-  
+
 elif [ "${1}" = "late" ]; then
+
+  echo "copy disk_db.json file....."
+  cp -vf /etc/disk_db.json /tmpRoot/etc/disk_db.json
+  
+elif [ "${1}" = "rcExit" ]; then
 
   model=$(uname -u | cut -d '_' -f3)
   echo model "$model" >&2  # debug
   
   # Host db files
-  dbpath="/tmpRoot/var/lib/disk-compatibility/"
+  dbpath="/var/lib/disk-compatibility/"
   dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
   echo dbfile "$dbfile" >&2  # debug
 
-  diskdata=$(/tmpRoot/bin/jq . /etc/disk_db.json)
-  jsonfile=$(/tmpRoot/bin/jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | /tmpRoot/bin/jq . > $dbfile
-  /tmpRoot/bin/jq . $dbfile
+  diskdata=$(jq . /etc/disk_db.json)
+  jsonfile=$(jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | jq . > $dbfile
+  jq . $dbfile
   
 fi
-
-exit
