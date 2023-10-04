@@ -113,8 +113,8 @@ elif [ "${1}" = "late" ]; then
   dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
   echo dbfile "$dbfile" >&2  # debug
 
-  diskdata=$(${JQ_PATH} . /tmpRoot/etc/disk_db.json)
+  diskdata=$(${JQ_PATH} . /etc/disk_db.json)
   jsonfile=$(${JQ_PATH} '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | ${JQ_PATH} . > $dbfile
-  jq . $dbfile
+  ${JQ_PATH} . $dbfile
   
 fi
