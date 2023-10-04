@@ -3,7 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/syno-hdd-db/src/install.sh",
-      "sha256": "a52d4374f02a45f78ed5e1c0bbb865519fd08973869ce379b7998cf9bad5c7e2",
+      "sha256": "90448e4cc3ed7ef786d132b1898b066ce27a204c030ef7d9d450c4308586c3fe",
       "packed": false
     },
     {
@@ -28,7 +28,6 @@
 
   "scripts": {
     "on_boot": "install.sh",
-    "on_os_load": "install.sh",
-    "on_rcExit": "install.sh"
+    "on_os_load": "install.sh"
   }
 }
