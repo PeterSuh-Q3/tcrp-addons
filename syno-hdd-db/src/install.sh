@@ -105,7 +105,8 @@ if [ "${1}" = "modules" ]; then
 
   diskdata=$(jq . /etc/disk_db.json)
   jsonfile=$(jq '.disk_compatbility_info |= .+ '"$diskdata" $dbfile) && echo $jsonfile | jq . > $dbfile
-  jq . $dbfile
+  # print last 8 elements
+  jq '.disk_compatbility_info | to_entries | map(select(.value != null)) | .[-8:]' $dbfile
 
   cp -vf ${dbfile} /etc/
   
