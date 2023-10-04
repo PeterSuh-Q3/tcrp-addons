@@ -60,7 +60,7 @@ if [ "${1}" = "modules" ]; then
         chmod +x ./hdparm720
 
         if [[ $2 == "sd" ]]; then
-          if [ -f "$device"/device/sas_address ]; then
+          if [ -f ${1}/device/sas_address ]; then
             fwrev="1.13.2"
           else
             if [ ${REVISION} = "#42218" ]; then
