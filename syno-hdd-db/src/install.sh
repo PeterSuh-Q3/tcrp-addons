@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+model=$(uname -u | cut -d '_' -f3)
+echo model "$model" >&2  # debug
+
 if [ "${1}" = "modules" ]; then
 
   #------------------------------------------------------------------------------
@@ -94,9 +97,6 @@ if [ "${1}" = "modules" ]; then
   done
   sed -i '$s/,$/}/' /etc/disk_db.json
   #cat /etc/disk_db.json
-
-  model=$(uname -u | cut -d '_' -f3)
-  echo model "$model" >&2  # debug
   
   # Host db files
   dbpath="/var/lib/disk-compatibility/"
