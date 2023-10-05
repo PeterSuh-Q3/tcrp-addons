@@ -79,17 +79,17 @@ if [ "${1}" = "modules" ]; then
         echo fwrev "${fwrev}" >&2      # debug
         
         if [ -n "${hdmodel}" ] && [ -n "${fwrev}" ]; then
-#            if grep '"'"${hdmodel}"'":' /etc/disk_db.json >/dev/null; then
+            if grep '"'"${hdmodel}"'":' /etc/disk_db.json >/dev/null; then
                # Replace  "WD40PURX-64GVNY0":{  with  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
-#                echo "Insert firmware version:"  # debug
-#                sed -i 's#"'"${hdmodel}"'":{#"'"${hdmodel}"'":{"'"${fwrev}"'":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]},#' /etc/disk_db.json
-#            else
+                echo "Insert firmware version:"  # debug
+                sed -i 's#"'"${hdmodel}"'":{#"'"${hdmodel}"'":{"'"${fwrev}"'":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]},#' /etc/disk_db.json
+            else
                # Add  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}
                 echo "Append drive and firmware:"  # debug
                 jsondata='"'"${hdmodel}"'":{"'"${fwrev}"'":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]},
                 "default":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true}]}}' && echo $jsondata >> /etc/disk_db.json
                 echo "," >> /etc/disk_db.json
-#            fi                    
+            fi                    
         fi
     fi
   }
