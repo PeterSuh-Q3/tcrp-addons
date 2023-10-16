@@ -1,6 +1,8 @@
 #!/bin/sh
 echo "Change the default of grub.cfg boot menu to Tinycore Loader Build in M-SHELL"
-mkdir /mnt/tcrp-p1
+if [ ! -d /mnt/tcrp-p1 ]; then
+  mkdir /mnt/tcrp-p1
+fi  
 cd /dev/
 mount -t vfat synoboot1 /mnt/tcrp-p1
 cd /mnt/tcrp-p1
