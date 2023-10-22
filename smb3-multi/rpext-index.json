@@ -57,6 +57,9 @@
     "sa3400_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "sa3600_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "sa6400_42962": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
+    "ds720p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
+    "rs1221p_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
+    "rs3621xsp_42218": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/recipes/universal.json",
     "zendofmodel": "endofurls"
   },
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/rpext-index.json"
