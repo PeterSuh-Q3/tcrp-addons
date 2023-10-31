@@ -102,7 +102,7 @@ function _kernelVersion()
 	/bin/echo ${_release%%[-+]*} | /usr/bin/cut -d'.' -f1-3
 }
 
-BOOTDISK="$(blkid | grep "6234-C863" | cut -c 1-8 | awk -F\/ '{print $3}')"
+BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
 
 # synoboot
 function checkSynoboot() {
