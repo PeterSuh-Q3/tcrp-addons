@@ -389,11 +389,13 @@ MODEL="$(uname -u)"
 #
 if [ "${1}" = "modules" ]; then
 
-  cp -vf  dtc /usr/sbin/
-  cp -vf  readlink /usr/sbin/
-  cp -vf  sed /usr/sbin/sed
+  cp -vf dtc /usr/sbin/
+  cp -vf readlink /usr/sbin/
+  cp -vf sed /usr/sbin/sed
+  cp -vf blkid /usr/sbin/blkid
+  cp -vf libblkid.so.1 /lib64/libblkid.so.1
 
-  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed
+  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed /usr/sbin/blkid /lib64/libblkid.so.1
 
   echo "Adjust disks related configs automatically - modules"
   [[ ${ISDTMODEL} = true ]] && dtModel $MODEL || nondtModel
