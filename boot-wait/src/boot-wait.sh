@@ -8,7 +8,36 @@ dump_all_partitions()
   echo "========== END OF DUMP OF ALL PARTITIONS DETECTED =========="
 }
 
-if [ "${1}" = "modules" ]; then
+devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
+if [ "${devtype}" = "sd" ]; then
+  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
+elif [ "${devtype}" = "sa" ]; then
+  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+elif [ "${devtype}" = "nv" ]; then  
+  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+fi  
+
+# synoboot
+function checkSynoboot() {
+  [ -b /dev/synoboot -a -b /dev/synoboot1 -a -b /dev/synoboot2 ] && return
+  [ -z "${BOOTDISK}" ] && return
+
+  [ ! -b /dev/synoboot -a -d /sys/block/${BOOTDISK} ] &&
+    /bin/mknod /dev/synoboot b $(cat /sys/block/${BOOTDISK}/dev | sed 's/:/ /') >/dev/null 2>&1
+  # sataN, nvmeN
+  [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p1 ] &&
+    /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p1/dev | sed 's/:/ /') >/dev/null 2>&1
+  [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p2 ] &&
+    /bin/mknod /dev/synoboot2 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p2/dev | sed 's/:/ /') >/dev/null 2>&1
+  # sdN
+  [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}1 ] &&
+    /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}1/dev | sed 's/:/ /') >/dev/null 2>&1
+  [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}2 ] &&
+    /bin/mknod /dev/synoboot2 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}2/dev | sed 's/:/ /') >/dev/null 2>&1
+
+}
+
+if [ "${1}" = "patches" ]; then
     wait_time=10 # maximum wait time in seconds
 
     time_counter=0
@@ -22,11 +51,8 @@ if [ "${1}" = "modules" ]; then
       echo "ERROR: Timeout waiting for /dev/synoboot device to appear."
       echo "Most likely your vid/pid configuration is not correct, or you don't have drivers needed for your USB/SATA controller"
       dump_all_partitions
-      echo "Force the creation of synoboot , synoboot1 , synoboot2 and synoboot3 nodes..."
-      mknod /dev/synoboot b 8 1
-      mknod /dev/synoboot1 b 8 1
-      mknod /dev/synoboot2 b 8 1
-      mknod /dev/synoboot3 b 8 1
+      echo "Force the creation of synoboot, synoboot1 and synoboot2 nodes..."
+      checkSynoboot
       echo "Confirmed a valid-looking /dev/synoboot device"
       exit 0
     fi
