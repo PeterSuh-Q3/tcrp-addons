@@ -397,8 +397,8 @@ if [ "${1}" = "modules" ]; then
 
   chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed /usr/sbin/blkid /lib64/libblkid.so.1
 
-  echo "Adjust disks related configs automatically - modules"
-  [[ ${ISDTMODEL} = true ]] && dtModel $MODEL || nondtModel
+#  echo "Adjust disks related configs automatically - modules"
+#  [[ ${ISDTMODEL} = true ]] && dtModel $MODEL || nondtModel
   
 elif [ "${1}" = "patches" ]; then
   echo "Adjust disks related configs automatically - patches"
