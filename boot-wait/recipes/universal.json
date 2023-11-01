@@ -3,7 +3,7 @@
     {
       "name": "boot-wait.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/boot-wait/src/boot-wait.sh",
-      "sha256": "9a76b28979719b8c1996a28a5ca4337bf4dee0fdd807b1f795ba5c0750c89d25",
+      "sha256": "9eada05e9c78f9cd2cb00d1b5ab98407750c0e0eaa0357e0824221bec3279b49",
       "packed": false
     },
     {
