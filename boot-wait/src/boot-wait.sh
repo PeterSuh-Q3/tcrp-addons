@@ -41,7 +41,7 @@ function checkSynoboot() {
 if [ "${1}" = "modules" ]; then
 
   cp -vf blkid /usr/sbin/blkid
-  cp -vf blkid /usr/sbin/sed
+  cp -vf sed /usr/sbin/sed
   cp -vf libblkid.so.1 /lib64/libblkid.so.1
   chmod 755 /usr/sbin/blkid /usr/sbin/sed /lib64/libblkid.so.1
 
