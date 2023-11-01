@@ -8,17 +8,18 @@ dump_all_partitions()
   echo "========== END OF DUMP OF ALL PARTITIONS DETECTED =========="
 }
 
-devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
-if [ "${devtype}" = "sd" ]; then
-  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
-elif [ "${devtype}" = "sa" ]; then
-  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
-elif [ "${devtype}" = "nv" ]; then  
-  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
-fi  
-
 # synoboot
 function checkSynoboot() {
+
+  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
+  if [ "${devtype}" = "sd" ]; then
+    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
+  elif [ "${devtype}" = "sa" ]; then
+    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+  elif [ "${devtype}" = "nv" ]; then
+    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+  fi
+
   [ -b /dev/synoboot -a -b /dev/synoboot1 -a -b /dev/synoboot2 ] && return
   [ -z "${BOOTDISK}" ] && return
 
@@ -37,7 +38,14 @@ function checkSynoboot() {
 
 }
 
-if [ "${1}" = "patches" ]; then
+if [ "${1}" = "modules" ]; then
+
+  cp -vf blkid /usr/sbin/blkid
+  cp -vf blkid /usr/sbin/sed
+  cp -vf libblkid.so.1 /lib64/libblkid.so.1
+  chmod 755 /usr/sbin/blkid /usr/sbin/sed /lib64/libblkid.so.1
+
+elif [ "${1}" = "patches" ]; then
     wait_time=10 # maximum wait time in seconds
 
     time_counter=0
