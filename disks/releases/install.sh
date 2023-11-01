@@ -102,7 +102,14 @@ function _kernelVersion()
 	/bin/echo ${_release%%[-+]*} | /usr/bin/cut -d'.' -f1-3
 }
 
-BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
+if [ "${devtype}" = "sd" ]; then
+  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
+elif [ "${devtype}" = "sa" ]; then
+  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+elif [ "${devtype}" = "nv" ]; then  
+  BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+fi  
 
 # synoboot
 function checkSynoboot() {
