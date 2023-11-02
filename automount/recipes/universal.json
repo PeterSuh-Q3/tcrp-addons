@@ -2,7 +2,7 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/src/automount.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/src/install.sh",
       "sha256": "bbe572c2e879ee9e23236c25125e9533048ff4ff01a51a0074146ed619f1e833",
       "packed": false
     },
