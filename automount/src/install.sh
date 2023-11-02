@@ -8,7 +8,7 @@ function checkSynoboot() {
     BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
     echo "Found Sata Disk loader!"
   elif [ "${devtype}" = "nv" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-12 )"
     echo "Found NVMe Disk loader!"
   elif [ "${devtype}" = "mm" ]; then
     BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-13 )"
