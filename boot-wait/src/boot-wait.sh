@@ -14,10 +14,8 @@ function checkSynoboot() {
   devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
   if [ "${devtype}" = "sd" ]; then
     BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
-  elif [ "${devtype}" = "sa" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
-  elif [ "${devtype}" = "nv" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+  else
+    BOOTDISK=""
   fi
 
   [ -b /dev/synoboot -a -b /dev/synoboot1 -a -b /dev/synoboot2 ] && return
@@ -25,11 +23,6 @@ function checkSynoboot() {
 
   [ ! -b /dev/synoboot -a -d /sys/block/${BOOTDISK} ] &&
     /bin/mknod /dev/synoboot b $(cat /sys/block/${BOOTDISK}/dev | sed 's/:/ /') >/dev/null 2>&1
-  # sataN, nvmeN
-  [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p1 ] &&
-    /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p1/dev | sed 's/:/ /') >/dev/null 2>&1
-  [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p2 ] &&
-    /bin/mknod /dev/synoboot2 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p2/dev | sed 's/:/ /') >/dev/null 2>&1
   # sdN
   [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}1 ] &&
     /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}1/dev | sed 's/:/ /') >/dev/null 2>&1
@@ -65,9 +58,8 @@ elif [ "${1}" = "patches" ]; then
       exit 0
     fi
 
-    [ -b /dev/synoboot3 ] || sleep 1 # sometimes we can hit synoboot but before partscan
-    if [ ! -b /dev/synoboot1 ] || [ ! -b /dev/synoboot2 ] || [ ! -b /dev/synoboot3 ]; then
-      echo "The /dev/synoboot device exists but it does not contain expected partitions (>=3 partitions)"
+    if [ ! -b /dev/synoboot1 ] || [ ! -b /dev/synoboot2 ]; then
+      echo "The /dev/synoboot device exists but it does not contain expected partitions (>=2 partitions)"
       dump_all_partitions
       exit 1
     fi
