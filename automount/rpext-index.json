@@ -2,9 +2,9 @@
   "id": "automount",
   "info": {
     "description": "Addon that activates nvme / mmc / sata disks as bootloaders other than devices identified as /dev/sd#, such as USB sticks.",
-    "help_url": "",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/automount",
     "name": "RedPill auto mount loader patition",
-    "packer_url": ""
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/automount"
   },
   "releases": {
     "apollolake_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/automount/recipes/universal.json",
