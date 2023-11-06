@@ -32,13 +32,11 @@
 
 if [ "${1}" = "late" ]; then
 
-HDD_BAY="${2:-RACK_24_Bay}"
-SSD_BAY="${3:-1X8}"
+HDD_BAY="${2:-RACK_12_Bay}"
+SSD_BAY="${3:-1X4}"
 
-#_UNIQUE="$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/synoinfo.conf unique)"
-_UNIQUE="synology_apollolake_620slim"
-#_BUILD="$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/VERSION buildnumber)"
-_BUILD="69057"
+_UNIQUE="$(uname -u)"
+_BUILD="$(uname -v | cut -d ' ' -f 1 | grep -o '[0-9]*')"
 
 echo "_UNIQUE=${_UNIQUE}"
 echo "_BUILD=${_BUILD}"
