@@ -35,8 +35,10 @@ if [ "${1}" = "late" ]; then
 HDD_BAY="${2:-RACK_24_Bay}"
 SSD_BAY="${3:-1X8}"
 
-_UNIQUE="$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/synoinfo.conf unique)"
-_BUILD="$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/VERSION buildnumber)"
+#_UNIQUE="$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/synoinfo.conf unique)"
+_UNIQUE="synology_apollolake_620slim"
+#_BUILD="$(/tmpRoot/bin/get_key_value /tmpRoot/etc.defaults/VERSION buildnumber)"
+_BUILD="69057"
 
 echo "_UNIQUE=${_UNIQUE}"
 echo "_BUILD=${_BUILD}"
