@@ -32,8 +32,8 @@
 
 if [ "${1}" = "late" ]; then
 
-HDD_BAY="${2:-RACK_12_Bay}"
-SSD_BAY="${3:-1X4}"
+HDD_BAY="RACK_60_Bay"
+SSD_BAY="1X4"
 
 _UNIQUE="$(uname -u)"
 _BUILD="$(uname -v | cut -d ' ' -f 1 | grep -o '[0-9]*')"
