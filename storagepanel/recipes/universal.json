@@ -11,15 +11,8 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/src/install.sh",
       "sha256": "dcb543b4734aad5ce7b49d6a0bf07d2bfa2db53728f8b513e2ab260865ed8d15",
       "packed": false
-    },
-    {
-      "name": "runonce.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/src/runonce.sh",
-      "sha256": "c157ffa396149fcf000fbf98fc68ae070995ee7d41e8deeb1d4e4fb462f07659",
-      "packed": false
     }
   ],
-
   "scripts": {
     "on_os_load": "install.sh"
   }
