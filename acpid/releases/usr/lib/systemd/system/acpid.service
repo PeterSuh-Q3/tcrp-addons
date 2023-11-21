@@ -5,10 +5,13 @@ IgnoreOnIsolate=true
 After=multi-user.target
 
 [Service]
+Type=forking
 Restart=always
 RestartSec=30
 PIDFile=/var/run/acpid.pid
+ExecStartPre=/sbin/modprobe button
 ExecStart=/usr/sbin/acpid -f
+ExecStopPost=/sbin/modprobe -r button
 
 [X-Synology]
 Author=Virtualization Team
