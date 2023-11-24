@@ -17,8 +17,8 @@ if [ "${1}" = "early" ]; then
   
   #echo "Starting ttyd..."
   #/usr/sbin/ttyd /usr/bin/ash -l &
-elif [ "${1}" = "jrExit" ]; then
-  saveLogs
+#elif [ "${1}" = "jrExit" ]; then
+#  saveLogs
 elif [ "${1}" = "rcExit" ]; then
   saveLogs
 fi
