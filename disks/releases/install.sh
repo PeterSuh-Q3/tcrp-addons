@@ -195,8 +195,7 @@ function dtModel() {
       for P in $(lspci -d ::106 2>/dev/null | cut -d' ' -f1); do
         HOSTNUM=$(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | wc -l)
         PCIPATH=""
-        for Q in $(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | head -1 | grep -oE ":..\.."); do PCIPATH="${PCIPATH},${Q//:/
-}"; done
+        for Q in $(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | head -1 | grep -oE ":..\.."); do PCIPATH="${PCIPATH},${Q//:/}"; done
         [ -z "${PCIPATH}" ] && continue
         if [ "$(_kernelVersionCode "$(_kernelVersion)")" -ge "$(_kernelVersionCode "5.10")" ]; then
           PCIPATH="0000:00:${PCIPATH:1}" # 5.10+ kernel  TODO: check 0000
@@ -204,8 +203,7 @@ function dtModel() {
           PCIPATH="00:${PCIPATH:1}" # 5.10- kernel
         fi
 
-        [ -n "${BOOTDISK}" ] && PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || PHYSDEVPA
-TH=""
+        [ -n "${BOOTDISK}" ] && PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || PHYSDEVPATH=""
         if echo "${PHYSDEVPATH}" | grep -q "${P}"; then
           ATAPORT=$(grep 'ata_port_no' /sys/block/${BOOTDISK}/device/syno_block_info | cut -d'=' -f2)
           checkSynoboot
