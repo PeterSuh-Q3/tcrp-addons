@@ -108,6 +108,8 @@ elif [ "${devtype}" = "sa" ]; then
   BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
 elif [ "${devtype}" = "nv" ]; then  
   BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+else
+  BOOTDISK="synoboot"
 fi
 echo "BOOTDISK=${BOOTDISK}"
 
@@ -418,7 +420,7 @@ if [ "${1}" = "modules" ]; then
 
 elif [ "${1}" = "patches" ]; then
   echo "Adjust disks related configs automatically - patches"
-  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "true" || nondtModel "false"
+  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "false" || nondtModel "false"
 
 elif [ "${1}" = "late" ]; then
   echo "Adjust disks related configs automatically - late"
