@@ -79,29 +79,28 @@ function _atoi() {
 #   KernelVersionCode "2.6.32"  => 132640
 #   KernelVersionCode "3"       => 196608
 #   KernelVersionCode "3.0.0"   => 196608
-function _kernelVersionCode()
-{
-	[ $# -eq 1 ] || return
+function _kernelVersionCode() {
+  [ $# -eq 1 ] || return
 
-	local _version_string _major_version _minor_version _revision
-	_version_string="$(echo "$1" | /usr/bin/cut -d'_' -f1)."
-	_major_version=$(echo "${_version_string}" | /usr/bin/cut -d'.' -f1)
-	_minor_version=$(echo "${_version_string}" | /usr/bin/cut -d'.' -f2)
-	_revision=$(echo "${_version_string}" | /usr/bin/cut -d'.' -f3)
+  local _version_string _major_version _minor_version _revision
+  _version_string="$(echo "$1" | /usr/bin/cut -d'_' -f1)."
+  _major_version=$(echo "${_version_string}" | /usr/bin/cut -d'.' -f1)
+  _minor_version=$(echo "${_version_string}" | /usr/bin/cut -d'.' -f2)
+  _revision=$(echo "${_version_string}" | /usr/bin/cut -d'.' -f3)
 
-	/bin/echo $((${_major_version:-0} * 65536 + ${_minor_version:-0} * 256 + ${_revision:-0}))
+  /bin/echo $((${_major_version:-0} * 65536 + ${_minor_version:-0} * 256 + ${_revision:-0}))
 }
 
 # Get current linux kernel version without extra version
 # format: VERSION.PATCHLEVEL.SUBLEVEL
 # ex. "2.6.32"
-function _kernelVersion()
-{
-	local _release
-	_release=$(/bin/uname -r)
-	/bin/echo ${_release%%[-+]*} | /usr/bin/cut -d'.' -f1-3
+function _kernelVersion() {
+  local _release
+  _release=$(/bin/uname -r)
+  /bin/echo ${_release%%[-+]*} | /usr/bin/cut -d'.' -f1-3
 }
 
+BOOTDISK=""
 devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
 if [ "${devtype}" = "sd" ]; then
   BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
@@ -109,7 +108,8 @@ elif [ "${devtype}" = "sa" ]; then
   BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
 elif [ "${devtype}" = "nv" ]; then  
   BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
-fi  
+fi
+echo "BOOTDISK=${BOOTDISK}"
 
 # synoboot
 function checkSynoboot() {
@@ -118,12 +118,12 @@ function checkSynoboot() {
 
   [ ! -b /dev/synoboot -a -d /sys/block/${BOOTDISK} ] &&
     /bin/mknod /dev/synoboot b $(cat /sys/block/${BOOTDISK}/dev | sed 's/:/ /') >/dev/null 2>&1
-  # sataN, nvmeN
+  # sataN, nvmeXnN, mmcblkN
   [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p1 ] &&
     /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p1/dev | sed 's/:/ /') >/dev/null 2>&1
   [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p2 ] &&
     /bin/mknod /dev/synoboot2 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p2/dev | sed 's/:/ /') >/dev/null 2>&1
-  # sdN
+  # sdN, vdN
   [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}1 ] &&
     /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}1/dev | sed 's/:/ /') >/dev/null 2>&1
   [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}2 ] &&
@@ -165,41 +165,9 @@ function getUsbPorts() {
   echo
 }
 
-# NVME ports
-# 1 - is DT model
-function nvmePorts() {
-  local PCI_ER="^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F]{1}"
-  local NVME_PORTS=$(ls /sys/class/nvme | wc -w)
-
-  for I in $(seq 0 $((${NVME_PORTS} - 1))); do
-    if [ -n "${BOOTDISK}" -a -d "/sys/class/nvme/nvme${I}/${BOOTDISK}" ]; then
-      checkSynoboot
-      continue
-    fi
-    _PATH=$(readlink /sys/class/nvme/nvme${I} | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2-)
-    if [ "${1}" = "true" ]; then
-      # Device-tree: assemble complete path in DSM format
-      DSMPATH=""
-      while true; do
-        FIRST=$(echo "${_PATH}" | cut -d'/' -f1)
-        echo "${FIRST}" | grep -qE "${PCI_ER}" || break
-        [ -z "${DSMPATH}" ] &&
-          DSMPATH="$(echo "${FIRST}" | cut -d':' -f2-)" ||
-          DSMPATH="${DSMPATH},$(echo "${FIRST}" | cut -d':' -f3)"
-        _PATH=$(echo ${_PATH} | cut -d'/' -f2-)
-      done
-    else
-      # Non-dt: just get PCI ID
-      DSMPATH=$(echo "${_PATH}" | cut -d'/' -f1)
-    fi
-    echo -n "${DSMPATH} "
-  done
-  echo
-}
-
 #
 function dtModel() {
-  DEST="/etc/model.dts"
+  DEST="/addons/model.dts"
   UNIQUE=$(_get_conf_kv unique)
   if [ ! -f "${DEST}" ]; then # Users can put their own dts.
     echo "/dts-v1/;" >${DEST}
@@ -227,20 +195,25 @@ function dtModel() {
       for P in $(lspci -d ::106 2>/dev/null | cut -d' ' -f1); do
         HOSTNUM=$(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | wc -l)
         PCIPATH=""
-        for Q in $(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | head -1 | grep -oE ":..\.."); do PCIPATH="${PCIPATH},${Q//:/}"; done
+        for Q in $(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | head -1 | grep -oE ":..\.."); do PCIPATH="${PCIPATH},${Q//:/
+}"; done
         [ -z "${PCIPATH}" ] && continue
         if [ "$(_kernelVersionCode "$(_kernelVersion)")" -ge "$(_kernelVersionCode "5.10")" ]; then
-          PCIPATH="0000:00:${PCIPATH:1}"  # 5.10+ kernel  TODO: check 0000
+          PCIPATH="0000:00:${PCIPATH:1}" # 5.10+ kernel  TODO: check 0000
         else
-          PCIPATH="00:${PCIPATH:1}"       # 5.10- kernel
+          PCIPATH="00:${PCIPATH:1}" # 5.10- kernel
+        fi
+
+        [ -n "${BOOTDISK}" ] && PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || PHYSDEVPA
+TH=""
+        if echo "${PHYSDEVPATH}" | grep -q "${P}"; then
+          ATAPORT=$(grep 'ata_port_no' /sys/block/${BOOTDISK}/device/syno_block_info | cut -d'=' -f2)
+          checkSynoboot
+        else
+          ATAPORT=""
         fi
 
         for J in $(seq 0 $((${HOSTNUM} - 1))); do
-          ATAPORT=""
-          if [ "sata${J}" = "${BOOTDISK}" ]; then
-            ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info | cut -d'=' -f2)
-            checkSynoboot
-          fi
           [ "${J}" = "${ATAPORT}" ] && continue
           echo "    internal_slot@${I} {" >>${DEST}
           echo "        protocol_type = \"sata\";" >>${DEST}
@@ -252,8 +225,6 @@ function dtModel() {
           I=$((${I} + 1))
         done
       done
-
-      # HBA
       for P in $(lspci -d ::107 2>/dev/null | cut -d' ' -f1); do
         J=1
         while true; do
@@ -278,7 +249,7 @@ function dtModel() {
           fi
           J=$((${J} + 1))
         done
-      done      
+      done
     else
       I=1
       J=1
@@ -287,8 +258,8 @@ function dtModel() {
         if [ "sata${J}" = "${BOOTDISK}" ]; then
           checkSynoboot
         else
-          PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info | cut -d'=' -f2)
-          ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info | cut -d'=' -f2)
+          PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+          ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
           if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
             echo "    internal_slot@${I} {" >>${DEST}
             echo "        protocol_type = \"sata\";" >>${DEST}
@@ -313,13 +284,22 @@ function dtModel() {
 
     # NVME ports
     COUNT=1
-    for P in $(nvmePorts true); do
-      echo "    nvme_slot@${COUNT} {" >>${DEST}
-      echo "        pcie_root = \"${P}\";" >>${DEST}
-      echo "        port_type = \"ssdcache\";" >>${DEST}
-      echo "    };" >>${DEST}
-      COUNT=$((${COUNT} + 1))
+    for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
+      if [ "/sys/block/${BOOTDISK}" = "${P}" ]; then
+        checkSynoboot
+        continue
+      fi
+      PCIEPATH=$(grep 'pciepath' ${P}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+      if [ -n "${PCIEPATH}" ]; then
+        echo "    nvme_slot@${COUNT} {" >>${DEST}
+        echo "        pcie_root = \"${PCIEPATH}\";" >>${DEST}
+        echo "        port_type = \"ssdcache\";" >>${DEST}
+        echo "    };" >>${DEST}
+        COUNT=$((${COUNT} + 1))
+      fi
     done
+
+    checkSynoboot
 
     # USB ports
     COUNT=1
@@ -397,28 +377,36 @@ function nondtModel() {
     echo "set maxdisks=${MAXDISKS}"
   fi
 
-  # NVME
-  COUNT=1
-  rm -f /etc/extensionPorts
-  echo "[pci]" >/etc/extensionPorts
-  chmod 755 /etc/extensionPorts
-  for P in $(nvmePorts false); do
-    echo "pci${COUNT}=\"${P}\"" >>/etc/extensionPorts
-    COUNT=$((${COUNT} + 1))
-  done
-  if [ $(ls /sys/class/nvme | wc -w) -gt 0 ]; then
-    _set_conf_kv rd "supportnvme" "yes"
-    _set_conf_kv rd "support_m2_pool" "yes"
-  fi
-
-  checkSynoboot
-
   if [ "${1}" = "true" ]; then
     echo "TODO: no-DT's sort!!!"
   fi
+  checkSynoboot
+
+  # NVME
+  COUNT=1
+  echo "[pci]" >/etc/extensionPorts
+  for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
+    if [ "/sys/block/${BOOTDISK}" = "${P}" ]; then
+      checkSynoboot
+      continue
+    fi
+    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'/' -f4)
+    if [ -n "${PCIEPATH}" ]; then
+      # TODO: Need check?
+      # MULTIPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'/' -f5)
+      # if [ -z "${MULTIPATH}" ]; then
+      #   echo "${PCIEPATH} does not support!"
+      #   continue
+      # fi
+      echo "pci${COUNT}=\"${PCIEPATH}\"" >>/etc/extensionPorts
+      COUNT=$((${COUNT} + 1))
+
+      _set_conf_kv rd "supportnvme" "yes"
+      _set_conf_kv rd "support_m2_pool" "yes"
+    fi
+  done
 }
 
-[ -f /etc/model.dtb ] || [ -f /etc.defaults/model.dtb ] && ISDTMODEL="true" || ISDTMODEL="false"
 #
 if [ "${1}" = "modules" ]; then
 
@@ -430,18 +418,14 @@ if [ "${1}" = "modules" ]; then
 
   chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed /usr/sbin/blkid /lib64/libblkid.so.1
 
-#  echo "Adjust disks related configs automatically - modules"
-#  [[ ${ISDTMODEL} = true ]] && dtModel $MODEL || nondtModel
-  
 elif [ "${1}" = "patches" ]; then
   echo "Adjust disks related configs automatically - patches"
-  UNIQUE=$(_get_conf_kv unique)
-  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "${ISDTMODEL}" || nondtModel
+  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "true" || nondtModel "false"
 
 elif [ "${1}" = "late" ]; then
   echo "Adjust disks related configs automatically - late"
   if [ "$(_get_conf_kv supportportmappingv2)" = "yes" ]; then
-    echo "Copying /etc.defaults/.dtb"
+    echo "Copying /etc.defaults/model.dtb"
     # copy file
     cp -vf /etc/model.dtb /tmpRoot/etc/model.dtb
     cp -vf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
