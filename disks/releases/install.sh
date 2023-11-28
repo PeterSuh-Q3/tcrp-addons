@@ -418,8 +418,7 @@ function nondtModel() {
   fi
 }
 
-MODEL="$(uname -u)"
-[ -f /etc/model.dtb ] || [ -f /etc.defaults/model.dtb ] && ISDTMODEL="true"
+[ -f /etc/model.dtb ] || [ -f /etc.defaults/model.dtb ] && ISDTMODEL="true" || ISDTMODEL="false"
 #
 if [ "${1}" = "modules" ]; then
 
@@ -436,12 +435,13 @@ if [ "${1}" = "modules" ]; then
   
 elif [ "${1}" = "patches" ]; then
   echo "Adjust disks related configs automatically - patches"
-  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "${MODEL}" || nondtModel "${MODEL}"
+  UNIQUE=$(_get_conf_kv unique)
+  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "${ISDTMODEL}" || nondtModel
 
 elif [ "${1}" = "late" ]; then
   echo "Adjust disks related configs automatically - late"
   if [ "$(_get_conf_kv supportportmappingv2)" = "yes" ]; then
-    echo "Copying /etc.defaults/model.dtb"
+    echo "Copying /etc.defaults/.dtb"
     # copy file
     cp -vf /etc/model.dtb /tmpRoot/etc/model.dtb
     cp -vf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
