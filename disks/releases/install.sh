@@ -255,31 +255,28 @@ function dtModel() {
 
       # HBA
       for P in $(lspci -d ::107 2>/dev/null | cut -d' ' -f1); do
-        HOSTNUM=$(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | wc -l)
-        PCIPATH=""
-        for Q in $(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | head -1 | grep -oE ":..\.."); do PCIPATH="${PCIPATH},${Q//:/}"; done
-        [ -z "${PCIPATH}" ] && continue
-        if [ "$(_kernelVersionCode "$(_kernelVersion)")" -ge "$(_kernelVersionCode "5.10")" ]; then
-          PCIPATH="0000:00:${PCIPATH:1}"  # 5.10+ kernel  TODO: check 0000
-        else
-          PCIPATH="00:${PCIPATH:1}"       # 5.10- kernel
-        fi
-
-        for J in $(seq 0 $((${HOSTNUM} - 1))); do
-          ATAPORT=""
-          if [ "sata${J}" = "${BOOTDISK}" ]; then
-            ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info | cut -d'=' -f2)
-            checkSynoboot
+        J=1
+        while true; do
+          [ ! -d /sys/block/sata${J} ] && break
+          if cat /sys/block/sata${J}/uevent | grep 'PHYSDEVPATH' | grep -q "${P}"; then
+            if [ "sata${J}" = "${BOOTDISK}" ]; then
+              checkSynoboot
+            else
+              PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+              ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+              if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
+                echo "    internal_slot@${I} {" >>${DEST}
+                echo "        protocol_type = \"sata\";" >>${DEST}
+                echo "        ahci {" >>${DEST}
+                echo "            pcie_root = \"${PCIEPATH}\";" >>${DEST}
+                echo "            ata_port = <0x$(printf '%02X' ${ATAPORT})>;" >>${DEST}
+                echo "        };" >>${DEST}
+                echo "    };" >>${DEST}
+                I=$((${I} + 1))
+              fi
+            fi
           fi
-          [ "${J}" = "${ATAPORT}" ] && continue
-          echo "    internal_slot@${I} {" >>${DEST}
-          echo "        protocol_type = \"sata\";" >>${DEST}
-          echo "        ahci {" >>${DEST}
-          echo "            pcie_root = \"${PCIPATH}\";" >>${DEST}
-          echo "            ata_port = <0x$(printf '%02X' ${J})>;" >>${DEST}
-          echo "        };" >>${DEST}
-          echo "    };" >>${DEST}
-          I=$((${I} + 1))
+          J=$((${J} + 1))
         done
       done      
     else
