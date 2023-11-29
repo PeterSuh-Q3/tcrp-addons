@@ -258,12 +258,14 @@ function dtModel() {
         if [ "sata${J}" = "${BOOTDISK}" ]; then
           checkSynoboot
         else
-          #PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-          #ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-          PCIEPATH1=$(udevadm info -q path --name /dev/sata${J} | cut -d/ -f4)
-          PCIEPATH2=$(udevadm info -q path --name /dev/sata${J} | cut -d/ -f5 | cut -d: -f3)
-          PCIEPATH=${PCIEPATH1},${PCIEPATH2}
-          ATAPORT=$((${J} - 1))
+          PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+          ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+          if [ -z "${PCIEPATH}" ]; then
+            PCIEPATH1=$(udevadm info -q path --name /dev/sata${J} | cut -d/ -f4)
+            PCIEPATH2=$(udevadm info -q path --name /dev/sata${J} | cut -d/ -f5 | cut -d: -f3)
+            PCIEPATH=${PCIEPATH1},${PCIEPATH2}
+            ATAPORT=$((${J} - 1))
+          fi
           if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
             echo "    internal_slot@${I} {" >>${DEST}
             echo "        protocol_type = \"sata\";" >>${DEST}
