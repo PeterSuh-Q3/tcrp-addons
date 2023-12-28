@@ -7,6 +7,7 @@ echo model "${model}" >&2  # debug
 dbpath="/var/lib/disk-compatibility/"
 dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
 echo dbfile "${dbfile}" >&2  # debug
+ll ${dbfile} >&2
 
 dbdata=$(jq . ${dbfile})
 
