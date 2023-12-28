@@ -6,7 +6,6 @@ echo model "${model}" >&2  # debug
 # Host db files
 dbpath="/var/lib/disk-compatibility/"
 dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
-echo dbfile "${dbfile}" >&2  # debug
 
 if [ "${1}" = "modules" ]; then
 
@@ -82,11 +81,13 @@ if [ "${1}" = "modules" ]; then
 
         echo hdmodel "${hdmodel}" >&2  # debug
         echo fwrev "${fwrev}" >&2      # debug
+        echo dbfile "${dbfile}" >&2  # debug        
 
-        if [ $(cat "${dbfile}" | grep "${hdmodel}" | wc -l) -gt 0 ]; then
-          echo "${hdmodel} is already exists in ${dbfile}, skip writing to /etc/disk_db.json"
-        else
-          if [ -n "${hdmodel}" ] && [ -n "${fwrev}" ]; then
+        if [ -n "${hdmodel}" ] && [ -n "${fwrev}" ]; then
+          if [ $(cat "${dbfile}" | grep "${hdmodel}" | wc -l) -gt 0 ]; then
+            echo "${hdmodel} is already exists in ${dbfile}, skip writing to /etc/disk_db.json" >&2  # debug
+            echo skip_hdmodel "${hdmodel}" >&2  # debug
+          else
               if grep '"'"${hdmodel}"'":' /etc/disk_db.json >/dev/null; then
                  # Replace  "WD40PURX-64GVNY0":{  with  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
                   echo "Insert firmware version:"  # debug
@@ -117,7 +118,6 @@ if [ "${1}" = "modules" ]; then
   done
   sed -i '$s/,$/}/' /etc/disk_db.json
   #cat /etc/disk_db.json
-  
 
   diskdata=$(jq . /etc/disk_db.json)
   jsonfile=$(jq '.disk_compatbility_info |= .+ '"$diskdata" ${dbfile}) && echo $jsonfile | jq . > ${dbfile}
