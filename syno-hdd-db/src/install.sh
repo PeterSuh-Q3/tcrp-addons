@@ -6,6 +6,9 @@ echo model "${model}" >&2  # debug
 # Host db files
 dbpath="/var/lib/disk-compatibility/"
 dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
+echo dbfile "${dbfile}" >&2  # debug
+
+dbdata=$(jq . ${dbfile})
 
 if [ "${1}" = "modules" ]; then
 
@@ -81,12 +84,10 @@ if [ "${1}" = "modules" ]; then
 
         echo hdmodel "${hdmodel}" >&2  # debug
         echo fwrev "${fwrev}" >&2      # debug
-        echo dbfile "${dbfile}" >&2  # debug        
 
         if [ -n "${hdmodel}" ] && [ -n "${fwrev}" ]; then
-          if [ $(cat "${dbfile}" | grep "${hdmodel}" | wc -l) -gt 0 ]; then
+          if [ $(echo "${dbdata}" | grep "${hdmodel}" | wc -l) -gt 0 ]; then
             echo "${hdmodel} is already exists in ${dbfile}, skip writing to /etc/disk_db.json" >&2  # debug
-            echo skip_hdmodel "${hdmodel}" >&2  # debug
           else
               if grep '"'"${hdmodel}"'":' /etc/disk_db.json >/dev/null; then
                  # Replace  "WD40PURX-64GVNY0":{  with  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
