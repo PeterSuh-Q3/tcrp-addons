@@ -132,4 +132,7 @@ elif [ "${1}" = "late" ]; then
   echo "copy db file to /tmpRoot/....."
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/etc/
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
+
+  /tmpRoot/usr/syno/bin/synosetkeyvalue "/tmpRoot/etc.defaults/synoinfo.conf" "drive_db_test_url" "127.0.0.1"
+  /tmpRoot/usr/syno/bin/synosetkeyvalue "/tmpRoot/etc/synoinfo.conf" "drive_db_test_url" "127.0.0.1"
 fi
