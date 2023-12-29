@@ -136,4 +136,7 @@ elif [ "${1}" = "late" ]; then
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/etc/
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
 
+  echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc.defaults/synoinfo.conf
+  echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc/synoinfo.conf
+
 fi
