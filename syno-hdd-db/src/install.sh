@@ -124,6 +124,9 @@ if [ "${1}" = "modules" ]; then
   #jq '.disk_compatbility_info | to_entries | map(select(.value != null)) | .[-8:]' ${dbfile}
 
   cp -vf ${dbfile} /etc/
+
+  #synosetkeyvalue "/etc.defaults/synoinfo.conf" "drive_db_test_url" "127.0.0.1"
+  #synosetkeyvalue "/etc/synoinfo.conf" "drive_db_test_url" "127.0.0.1"
   
 elif [ "${1}" = "late" ]; then
   echo "copy disk_db.json file....."
@@ -133,6 +136,4 @@ elif [ "${1}" = "late" ]; then
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/etc/
   cp -vf /etc/*${model}_host_v7.db /tmpRoot/var/lib/disk-compatibility/
 
-  /tmpRoot/usr/syno/bin/synosetkeyvalue "/tmpRoot/etc.defaults/synoinfo.conf" "drive_db_test_url" "127.0.0.1"
-  /tmpRoot/usr/syno/bin/synosetkeyvalue "/tmpRoot/etc/synoinfo.conf" "drive_db_test_url" "127.0.0.1"
 fi
