@@ -15,7 +15,7 @@ if [ "${1}" = "modules" ]; then
     I=1
     J=0
     for eth in $ethdevs; do
-        HWADDR="$(ifconfig eth0 | grep HWaddr | cut -d ' ' -f 11)"
+        HWADDR="$(ifconfig ${eth} | grep HWaddr | cut -d ' ' -f 11)"
         eval "usrmac=\${mac${I}}"
         MAC="${usrmac:0:2}:${usrmac:2:2}:${usrmac:4:2}:${usrmac:6:2}:${usrmac:8:2}:${usrmac:10:2}"
         if [ "${HWADDR}" != "${MAC}" ]; then
