@@ -10,7 +10,7 @@ if [ "${1}" = "modules" ]; then
 
     . /tmp/cmdline.check
 
-    # Set custom MAC if defined
+    # Set custom MAC if defined 
     ethdevs=$(ls /sys/class/net/ | grep eth || true)
     I=1
     J=0
