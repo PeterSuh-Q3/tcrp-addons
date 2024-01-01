@@ -19,7 +19,7 @@ if [ "${1}" = "modules" ]; then
         eval "usrmac=\${mac${I}}"
         MAC="${usrmac:0:2}:${usrmac:2:2}:${usrmac:4:2}:${usrmac:6:2}:${usrmac:8:2}:${usrmac:10:2}"
         if [ "${HWADDR}" != "${MAC}" ]; then
-            echo "Setting MAC Address to ${MAC} on ${eth}"
+            echo "Setting MAC Address from ${HWADDR} to ${MAC} on ${eth}"
             /sbin/ip link set dev ${eth} address ${MAC}
             J=$((${J} + 1))
         fi
