@@ -29,10 +29,11 @@ if [ "${1}" = "modules" ]; then
         fi
     done
 
-    if [ $J -gt 0 ]; then 
-        echo "Restarting /etc/rc.network to renew IP..."
-        /etc/rc.network restart >/dev/null 2>&1
-    fi
+    # CAUSES SAN MANAGER BROKE, BLOCK ON 2024.01.02
+    #if [ $J -gt 0 ]; then 
+    #    echo "Restarting /etc/rc.network to renew IP..."
+    #    /etc/rc.network restart >/dev/null 2>&1
+    #fi
 
 elif [ "${1}" = "late" ]; then
     echo "mac-spoof - late"
