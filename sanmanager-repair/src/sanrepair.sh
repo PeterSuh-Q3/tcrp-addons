@@ -5,8 +5,7 @@ set -euo pipefail
 
 while true; do
     sleep 5
-    status=$(synopkg status ScsiTarget)
-    if [ -n "$(echo "$status" | grep error)" ]; then
+    if [ $(synopkg status ScsiTarget | grep error | wc -l) -gt 0 ]; then
         modprobe target_core_mod
         modprobe target_core_iblock
         modprobe target_core_file
@@ -19,8 +18,7 @@ while true; do
 
         synopkg start ScsiTarget
     fi
-    status=$(synopkg status ScsiTarget)
-    if [ -z "$(echo "$status" | grep error)" ]; then
+    if [ $(synopkg status ScsiTarget | grep error | wc -l) -eq 0 ]; then
         break
     fi
 done
