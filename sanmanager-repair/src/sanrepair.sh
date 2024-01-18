@@ -3,8 +3,14 @@
 # Make things safer
 set -euo pipefail
 
-if [ $(synopkg status ScsiTarget | grep error | wc -l) -gt 0 ]; then
+while true; do
+    if dmesg | grep -q "fuse init"; then
+        break
+    fi
+    sleep 1
+done
 
+if [ -n "$(synopkg status ScsiTarget | grep error)" ]; then
     modprobe target_core_mod
     modprobe target_core_iblock
     modprobe target_core_file
@@ -16,5 +22,4 @@ if [ $(synopkg status ScsiTarget | grep error | wc -l) -gt 0 ]; then
     modprobe vhost_scsi
 
     synopkg start ScsiTarget
-    
 fi
