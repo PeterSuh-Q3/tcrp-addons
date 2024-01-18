@@ -3,7 +3,7 @@
 # Make things safer
 set -euo pipefail
 
-if [ $(synopkg status ScsiTarget | grep failed | wc -l) -gt 0 ]; then
+if [ $(synopkg status ScsiTarget | grep error | wc -l) -gt 0 ]; then
 
     modprobe target_core_mod
     modprobe target_core_iblock
