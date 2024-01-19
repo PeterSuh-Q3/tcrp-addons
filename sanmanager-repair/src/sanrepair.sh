@@ -4,7 +4,7 @@
 set -euo pipefail
 
 #while true; do
-    sleep 180
+    sleep 60
     if [ $(synopkg status ScsiTarget | grep error | wc -l) -gt 0 ]; then
         modprobe target_core_mod
         modprobe target_core_iblock
