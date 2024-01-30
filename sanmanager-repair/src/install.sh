@@ -17,15 +17,13 @@ EOF
   ln -sf /etc/systemd/system/sanrepair.timer /tmpRoot/etc/systemd/system/timers.target.wants/sanrepair.timer
   cat > /tmpRoot/etc/systemd/system/sanmanager-repair.service <<'EOF'
 [Unit]
-Description=Adds repair SAN MANAGER
-After=multi-user.target
+Description=Configure SAN MANAGER Repair schedule
 [Service]
 User=root
 Type=oneshot
-RemainAfterExit=true
 ExecStart=/usr/sbin/sanrepair.sh
 [Install]
-WantedBy=multi-user.target  
+WantedBy=multi-user.target
 EOF
   mkdir -p /tmpRoot/etc/systemd/system/multi-user.target.wants
   ln -sf /etc/systemd/system/sanmanager-repair.service /tmpRoot/etc/systemd/system/multi-user.target.wants/sanmanager-repair.service
