@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "name": "vmmrepair.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/vmm-repair/src/vmmrepair.sh",
+      "sha256": "e2f1154f38668f5a40987e631ccc5a9c01b27fa6801952dfe9b3865f24b3bb48",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/vmm-repair/src/install.sh",
+      "sha256": "d134f09296547b0a9e90eff26ea2db47d391c83ff87726832e10dabdf6426466",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
