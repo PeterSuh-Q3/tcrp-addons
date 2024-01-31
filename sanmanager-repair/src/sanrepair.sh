@@ -33,7 +33,7 @@ set -euo pipefail
 
         synopkg start ScsiTarget
     fi
-    
+    /usr/sbin/vmmrepair.sh
 #    if [ $(synopkg status ScsiTarget | grep error | wc -l) -eq 0 ]; then
 #        break
 #    fi
