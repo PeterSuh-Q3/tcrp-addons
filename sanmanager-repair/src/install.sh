@@ -4,8 +4,6 @@ if [ "${1}" = "late" ]; then
   echo "Installing daemon for SAN MANAGER Repait Tool"
   cp -vf sanrepair.sh /tmpRoot/usr/sbin/sanrepair.sh
   chmod 755 /tmpRoot/usr/sbin/sanrepair.sh
-  cp -vf vmmrepair.sh /tmpRoot/usr/sbin/vmmrepair.sh
-  chmod 755 /tmpRoot/usr/sbin/vmmrepair.sh
   cat > /tmpRoot/etc/systemd/system/sanrepair.timer <<'EOF'
 [Unit]
 Description=Configure SAN MANAGER Repair schedule
