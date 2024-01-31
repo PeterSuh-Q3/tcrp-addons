@@ -3,13 +3,7 @@
     {
       "name": "sanrepair.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/src/sanrepair.sh",
-      "sha256": "67f5020c6dbc6deb02bd4a25c7ec4dbc2e60b4860544f6ec6a46b408c5f9a82b",
-      "packed": false
-    },
-    {
-      "name": "vmmrepair.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/src/vmmrepair.sh",
-      "sha256": "e2f1154f38668f5a40987e631ccc5a9c01b27fa6801952dfe9b3865f24b3bb48",
+      "sha256": "dd0148fda4df839c591da77e7d20ff8dd9cd4ea2bc3d473163e1314f58f91c7c",
       "packed": false
     },
     {
