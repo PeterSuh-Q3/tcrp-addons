@@ -10,7 +10,7 @@ if [ "${1}" = "late" ]; then
       echo "A sanmanager-repair task already exists at task_name. skipped!!!"
     else
       echo "insert sanmanager-repair task"
-      /tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db "INSERT INTO task VALUES('sanmanager-repair', '', 'bootup', '', 1, 0, 0, 0, '', 0, 'while true; do sleep 10; /usr/sbin/sanrepair.sh.sh; done', 'script', '{"running":[17917]}', 1706787067, 0, '{}', '{}');"
+      /tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db "INSERT INTO task VALUES('sanmanager-repair', '', 'bootup', '', 1, 0, 0, 0, '', 0, 'while true; do sleep 10; /usr/sbin/sanrepair.sh; done', 'script', '{"running":[17917]}', 1706787067, 0, '{}', '{}');"
     fi
   else
     echo "copy sanmanager-repair task db"
