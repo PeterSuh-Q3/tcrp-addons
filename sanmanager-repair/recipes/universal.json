@@ -11,6 +11,12 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/src/install.sh",
       "sha256": "0f75fdbb053282cc6fcc5e05975d49bc814ccb21d8b4bf560947fc1875ae9073",
       "packed": false
+    },
+    {
+      "name": "esynoscheduler.db",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/src/esynoscheduler.db",
+      "sha256": "edfa17bf2b21e3126b9315a40cff4285c84722c32dddc12fc904b62d59cf077e",
+      "packed": false
     }
   ],
 
