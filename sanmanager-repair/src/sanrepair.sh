@@ -22,5 +22,4 @@ fi
 if [ -d /config/target ]; then
     mkdir /config/target/iscsi
     mkdir /config/target/loopback
-    break
 fi
