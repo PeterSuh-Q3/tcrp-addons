@@ -1,30 +1,21 @@
 #!/bin/bash
 
 if [ "${1}" = "late" ]; then
-  echo "Installing daemon for SAN MANAGER Repait Tool"
+  echo "sanmanager-repair late"
   cp -vf sanrepair.sh /tmpRoot/usr/sbin/sanrepair.sh
   chmod 755 /tmpRoot/usr/sbin/sanrepair.sh
-  cat > /tmpRoot/etc/systemd/system/sanrepair.timer <<'EOF'
-[Unit]
-Description=Configure SAN MANAGER Repair schedule
-[Timer]
-OnCalendar=*-*-* *:*:00
-Persistent=true
-[Install]
-WantedBy=timers.target
-EOF
-  mkdir -p /tmpRoot/etc/systemd/system/timers.target.wants
-  ln -sf /etc/systemd/system/sanrepair.timer /tmpRoot/etc/systemd/system/timers.target.wants/sanrepair.timer
-  cat > /tmpRoot/etc/systemd/system/sanmanager-repair.service <<'EOF'
-[Unit]
-Description=Configure SAN MANAGER Repair schedule
-[Service]
-User=root
-Type=oneshot
-ExecStart=/usr/sbin/sanrepair.sh
-[Install]
-WantedBy=multi-user.target
-EOF
-  mkdir -p /tmpRoot/etc/systemd/system/multi-user.target.wants
-  ln -sf /etc/systemd/system/sanmanager-repair.service /tmpRoot/etc/systemd/system/multi-user.target.wants/sanmanager-repair.service
+  
+  if [ -f /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db ]; then
+    if [ $(/tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db "select count(*) as cnt from task a where task_name = 'sanmanager-repair';") -gt "0" ]; then
+      echo "A sanmanager-repair task already exists at task_name. skipped!!!"
+    else
+      echo "insert sanmanager-repair task"
+      /tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db "INSERT INTO task VALUES('sanmanager-repair', '', 'bootup', '', 1, 0, 0, 0, '', 0, 'while true; do sleep 10; /usr/sbin/sanrepair.sh.sh; done', 'script', '{"running":[17917]}', 1706787067, 0, '{}', '{}');"
+    fi
+  else
+    echo "copy sanmanager-repair task db"
+    mkdir -p /tmpRoot/usr/syno/etc/esynoscheduler
+    cp -f esynoscheduler.db /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db
+  fi
+
 fi
