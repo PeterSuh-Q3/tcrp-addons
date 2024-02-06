@@ -17,8 +17,12 @@ if [ "${1}" = "early" ]; then
   
   #echo "Starting ttyd..."
   #/usr/sbin/ttyd /usr/bin/ash -l &
-#elif [ "${1}" = "jrExit" ]; then
-#  saveLogs
-elif [ "${1}" = "rcExit" ]; then
+elif [ "${1}" = "modules" ]; then
+  echo "dbgutils - modules"
   saveLogs
+  echo "dbgutils - modules" > /mnt/logs/jr/modules
+elif [ "${1}" = "rcExit" ]; then
+  echo "dbgutils - rcExit"
+  saveLogs
+  echo "dbgutils - rcExit" > /mnt/logs/jr/rcExit  
 fi
