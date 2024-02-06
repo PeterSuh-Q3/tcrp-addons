@@ -16,8 +16,6 @@ function saveLogs() {
   ls -l /dev/ >"/mnt/logs/${1}/disk-dev.log" || true
   ls -l /sys/class/scsi_host >"/mnt/logs/${1}/disk-scsi_host.log" || true
   ls -l /sys/class/net/*/device/driver >"/mnt/logs/${1}/net-driver.log" || true
-    
-  echo "dbgutils - ${1}" > "/mnt/logs/${1}/${1}"
   
   umount /mnt
 }
