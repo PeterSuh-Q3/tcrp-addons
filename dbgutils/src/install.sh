@@ -31,8 +31,8 @@ if [ "${1}" = "early" ]; then
   #/usr/sbin/ttyd /usr/bin/ash -l &
 elif [ "${1}" = "jrExit" ]; then
   echo "dbgutils - jrExit"
-  saveLogs
+  saveLogs "${1}"
 elif [ "${1}" = "rcExit" ]; then
   echo "dbgutils - rcExit"
-  saveLogs
+  saveLogs "${1}"
 fi
