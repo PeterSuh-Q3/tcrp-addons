@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/lsiutil/src/install.sh",
+      "sha256": "f0b1b85e1b65174a6e4b0e9fc2edd8ab7334b7220db0e8912daf7c098a3808f0",
+      "packed": false
+    },
+    {
+      "name": "lsiutil",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/lsiutil/src/lsiutil",
+      "sha256": "7acfceae651ed41034356e1da95092dd0c5f3b4d0b63cb7410f7900900ae1778",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
