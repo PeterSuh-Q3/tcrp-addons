@@ -240,6 +240,7 @@ function dtModel() {
     else
       I=1
       J=1
+      K=1
       while true; do
         [ ! -d /sys/block/sata${J} ] && break
         if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
@@ -251,7 +252,8 @@ function dtModel() {
             PCIEPATH1=$(udevadm info -q path --name /dev/sata${J} | cut -d/ -f4)
             PCIEPATH2=$(udevadm info -q path --name /dev/sata${J} | cut -d/ -f5 | cut -d: -f3)
             PCIEPATH=${PCIEPATH1},${PCIEPATH2}
-            ATAPORT=$((${J} - 1))
+            ATAPORT=$((${K} - 1))
+            K=$((${K} + 1))
           fi
           if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
             echo "    internal_slot@${I} {" >>${DEST}
