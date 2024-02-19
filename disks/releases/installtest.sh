@@ -214,26 +214,25 @@ function dtModel() {
       done
       # 100 = SCSI, 104 = RAIDHBA, 107 = SAS
       for P in $(lspci -d ::107 2>/dev/null | cut -d' ' -f1) $(lspci -d ::104 2>/dev/null | cut -d' ' -f1) $(lspci -d ::100 2>/dev/null | cut -d' ' -f1); do
-        echo "100 = SCSI OK"
         J=1
         while true; do
           [ ! -d /sys/block/sata${J} ] && break
           if cat /sys/block/sata${J}/uevent | grep 'PHYSDEVPATH' | grep -q "${P}"; then
-            echo "PHYSDEVPATH FOUND !!!"
             if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
               echo "bootloader: /sys/block/sata${J}"
             else
               PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-              echo "PCIEPATH=${PCIEPATH}"
-              DRIVER=$(grep 'driver' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-              echo "DRIVER=${DRIVER}"
-              if [ "${DRIVER}" = "virtio" ]; then
-                ATAPORT=${J}
-              else
+              #DRIVER=$(grep 'driver' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+              #if [ "${DRIVER}" = "virtio" ]; then
+              #  ATAPORT=${J}
+              #else
                 ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-              fi  
-              echo "ATAPORT=${ATAPORT}"
-              if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
+              #fi  
+              #if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
+              if [ -z "${ATAPORT}" ]; then
+                 ATAPORT=${J}
+              fi
+              if [ -n "${PCIEPATH}" ]; then
                 echo "    internal_slot@${I} {" >>${DEST}
                 echo "        protocol_type = \"sata\";" >>${DEST}
                 echo "        ahci {" >>${DEST}
