@@ -35,12 +35,6 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/releases/libblkid.so.1",
       "sha256": "33bc0e824592479e95718f858653d04a4e810c863e8399c859fcf27ed9d70590",
       "packed": false
-    },
-    {
-      "name": "rp-epyc7002-7.2-5.10.55-prod.ko",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/releases/rp-epyc7002-7.2-5.10.55-prod.ko",
-      "sha256": "d9e6579eb4352bb84000ae11602ad640dc8276e13ff97b949bc445ddfb32de17",
-      "packed": false
     }
   ],
   "scripts": {
