@@ -433,7 +433,7 @@ elif [ "${1}" = "patches" ]; then
   echo "BOOTDISK_PHYSDEVPATH=${BOOTDISK_PHYSDEVPATH}"
   checkSynoboot
 
-  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "false" || nondtModel "false"
+  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "true" || nondtModel "false"
 
 elif [ "${1}" = "late" ]; then
   echo "Installing addon disks - ${1}"
