@@ -221,7 +221,12 @@ function dtModel() {
               echo "bootloader: /sys/block/sata${J}"
             else
               PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-              ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+              DRIVER=$(grep 'driver' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+              if [ "${DRIVER}" = "virtio" ]; then
+                ATAPORT=${J}
+              else
+                ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
+              fi  
               if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
                 echo "    internal_slot@${I} {" >>${DEST}
                 echo "        protocol_type = \"sata\";" >>${DEST}
