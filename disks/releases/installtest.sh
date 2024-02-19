@@ -204,7 +204,7 @@ function dtModel() {
           echo "    internal_slot@${I} {" >>${DEST}
           echo "        protocol_type = \"sata\";" >>${DEST}
           echo "        ahci {" >>${DEST}
-          echo "            pcie_root = \"0000:00:1e.0,04.0,0${J}.0\";" >>${DEST}
+          echo "            pcie_root = \"${PCIPATH}\";" >>${DEST}
           echo "            ata_port = <0x$(printf '%02X' ${J})>;" >>${DEST}
           echo "        };" >>${DEST}
           echo "    };" >>${DEST}
@@ -221,17 +221,11 @@ function dtModel() {
               echo "bootloader: /sys/block/sata${J}"
             else
               PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-              #DRIVER=$(grep 'driver' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-              #if [ "${DRIVER}" = "virtio" ]; then
-              #  ATAPORT=${J}
-              #else
-                ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-              #fi  
-              #if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
+              ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
               if [ -z "${ATAPORT}" ]; then
-                 ATAPORT=${J}
+                ATAPORT=${J}
               fi
-              if [ -n "${PCIEPATH}" ]; then
+              if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
                 echo "    internal_slot@${I} {" >>${DEST}
                 echo "        protocol_type = \"sata\";" >>${DEST}
                 echo "        ahci {" >>${DEST}
