@@ -183,7 +183,6 @@ function dtModel() {
       I=1
       for P in $(lspci -d ::106 2>/dev/null | cut -d' ' -f1); do
         HOSTNUM=$(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | wc -l)
-        echo "HOSTNUM=${HOSTNUM}"        
         PCIPATH=""
         for Q in $(ls -l /sys/class/scsi_host 2>/dev/null | grep ${P} | head -1 | grep -oE ":..\.."); do PCIPATH="${PCIPATH},${Q//:/}"; done
         [ -z "${PCIPATH}" ] && continue
@@ -205,7 +204,7 @@ function dtModel() {
           echo "    internal_slot@${I} {" >>${DEST}
           echo "        protocol_type = \"sata\";" >>${DEST}
           echo "        ahci {" >>${DEST}
-          echo "            pcie_root = \"${PCIPATH}\";" >>${DEST}
+          echo "            pcie_root = \"0000:00:1e.0,04.0,0${J}.0\";" >>${DEST}
           echo "            ata_port = <0x$(printf '%02X' ${J})>;" >>${DEST}
           echo "        };" >>${DEST}
           echo "    };" >>${DEST}
