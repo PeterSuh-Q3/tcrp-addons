@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/src/install.sh",
       "sha256": "d4d28668928e9dd8d4800b93eacc7286ac0baf88224987d014c3b0c7f714cbe2",
       "packed": false
     },
     {
       "name": "libhwcontrol.so.7.2",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/libhwcontrol.so.7.2",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/src/libhwcontrol.so.7.2",
       "sha256": "fb4f099d9bb762defbe541b239f90dbd3e0301d0d0793c0bacb5e7d1948515aa",
       "packed": false
     }
