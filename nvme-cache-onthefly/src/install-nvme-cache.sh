@@ -12,7 +12,7 @@ if [ $# -lt 1 ]; then
   dsmMode="ON"
 else
   tmpRoot="/tmpRoot"
-  libPath="/exts/nvme-cache"
+  libPath="/exts/nvme-cache-onthefly"
   dsmMode="OFF"
 fi
 
