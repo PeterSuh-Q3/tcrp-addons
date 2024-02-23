@@ -9,7 +9,7 @@
     {
       "name": "libhwcontrol.so.7.2",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/src/libhwcontrol.so.7.2",
-      "sha256": "fb4f099d9bb762defbe541b239f90dbd3e0301d0d0793c0bacb5e7d1948515aa",
+      "sha256": "8dc00b5e9797a3f8020bfa0007eae1d50f5b38bbc7636c24439afc135a86941c",
       "packed": false
     }
   ],
