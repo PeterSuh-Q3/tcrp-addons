@@ -28,9 +28,16 @@ function run_modules() {
 }
 
 function run_late() {
-  echo "Copy libhwcontrol.so.1 file to tmpRoot"
+
+  echo "Check xxd and libhwcontrol.so.1 file in tmpRoot"
+  ls -l ${tmpRoot}/lib64/libhwcontrol.so.1
+  ls -l ${tmpRoot}/lib64/libhwcontrol.so
+  ls -l ${tmpRoot}/usr/bin/xxd
+
+  echo "Copy libhwcontrol.so.1 file to tmpRoot"  
   cp -vf /etc/libhwcontrol.so.1 ${tmpRoot}/lib64/
   #ln -s ${tmpRoot}/lib64/libhwcontrol.so.1 ${tmpRoot}/lib64/libhwcontrol.so
+  
 }
 
 if [ "${1}" = "modules" ]; then
