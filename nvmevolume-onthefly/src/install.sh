@@ -25,20 +25,7 @@ function prepare_nvme() {
 
 }
 
-function modify_synoinfo() {
-
-# Enable creating M.2 storage pool and volume in Storage Manager
-# for currently installed NVMe drives
-    for nvme in /run/synostorage/disks/nvme*; do
-        if [[ -f /run/synostorage/disks/"$(basename -- "$1")"/m2_pool_support ]]; then
-            echo 1 > /run/synostorage/disks/"$(basename -- "$nvme")"/m2_pool_support
-        fi
-    done
-
-}
-
 function run_modules() {
-  echo "nvme-cache - modules"
   prepare_nvme
 }
 
@@ -46,16 +33,13 @@ function run_late() {
   echo "nvme-cache - late"
   echo "Copy libhwcontrol.so.1 file to tmpRoot"
   cp -vf /etc/libhwcontrol.so.1 ${tmpRoot}/lib64/
-  ln -s ${tmpRoot}/lib64/libhwcontrol.so.1 ${tmpRoot}/lib64/libhwcontrol.so
- #modify_synoinfo
+  #ln -s ${tmpRoot}/lib64/libhwcontrol.so.1 ${tmpRoot}/lib64/libhwcontrol.so
 }
 
 if [ "${1}" = "modules" ]; then
+  echo "nvme-cache - ${1}"
   run_modules
-elif [ "${1}" = "patches" ]; then
-  echo "nvme-cache - patches"
-  tmpRoot=""
-  run_late
 elif [ "${1}" = "late" ]; then
+  echo "nvme-cache - ${1}"
   run_late
 fi
