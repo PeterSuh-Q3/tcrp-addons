@@ -46,11 +46,15 @@ function run_late() {
   echo "nvme-cache - late"
   echo "Copy libhwcontrol.so.1 file to tmpRoot"
   cp -vf /etc/libhwcontrol.so.1 ${tmpRoot}/lib64/
-  modify_synoinfo
+ #modify_synoinfo
 }
 
 if [ "${1}" = "modules" ]; then
   run_modules
+elif [ "${1}" = "patches" ]; then
+  echo "nvme-cache - patches"
+  tmpRoot=""
+  run_late
 elif [ "${1}" = "late" ]; then
   run_late
 fi

@@ -3,19 +3,20 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/install.sh",
-      "sha256": "f61e1d3bf8415c3994494fb3e2b29ce73467b0f143407ec25dab8d107d445208",
+      "sha256": "d4d28668928e9dd8d4800b93eacc7286ac0baf88224987d014c3b0c7f714cbe2",
       "packed": false
     },
     {
-      "name": "bc",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/bc",
-      "sha256": "2c999820e84386d83e3819588f8c69cb15923ea8afeb9f34377bb5c7c3a9bd3c",
+      "name": "libhwcontrol.so.7.2",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume/src/libhwcontrol.so.7.2",
+      "sha256": "fb4f099d9bb762defbe541b239f90dbd3e0301d0d0793c0bacb5e7d1948515aa",
       "packed": false
     }
   ],
 
   "scripts": {
     "on_boot": "install.sh",
+    "on_patches": "install.sh",
     "on_os_load": "install.sh"
   }
 }
