@@ -46,6 +46,7 @@ function run_late() {
   echo "nvme-cache - late"
   echo "Copy libhwcontrol.so.1 file to tmpRoot"
   cp -vf /etc/libhwcontrol.so.1 ${tmpRoot}/lib64/
+  ln ${tmpRoot}/lib64/libhwcontrol.so.1 ${tmpRoot}/lib64/libhwcontrol.so
  #modify_synoinfo
 }
 
