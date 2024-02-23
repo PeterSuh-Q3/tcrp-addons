@@ -16,7 +16,6 @@
 
   "scripts": {
     "on_boot": "install.sh",
-    "on_patches": "install.sh",    
     "on_os_load": "install.sh"
   }
 }
