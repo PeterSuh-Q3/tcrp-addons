@@ -37,6 +37,7 @@
 | DS918+       | Apollolake | DSM 7.2-64570 Update 3    | yes |
 | DS918+       | Apollolake | DSM 7.2-64561             | yes |
 | DS918+       | Apollolake | DSM 7.1.1-42962 Update 5  | **No** | Use newer DSM version |
+| DS620slim    | Apollolake | **DSM 7.2.1-69057 Update 4** | **No** | M.2 panel missing in storage manager |
 | DS1019+      | Apollolake | **DSM 7.2.1-69057 Update 4** | yes | Only one M.2 NVMe is supported |
 | DS1019+      | Apollolake | DSM 7.2-64570 Update 3    | yes | Only one M.2 NVMe is supported |
 | DS1019+      | Apollolake | DSM 7.2-64570 Update 1    | yes | Only one M.2 NVMe is supported |
