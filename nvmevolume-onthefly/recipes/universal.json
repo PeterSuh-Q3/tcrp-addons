@@ -3,55 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/src/install.sh",
-      "sha256": "c01c34c4ce5d6904884af231836dfac7e8eaae5113cc15e7f5a0cbbc9d8c710a",
-      "packed": false
-    },
-    {
-      "name": "libhwcontrol.so.7.2.apollolake.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/releases/libhwcontrol.so.7.2.apollolake.tgz",
-      "sha256": "188eccfb71c67db9ba342dee9437184eeaf966af1d5d6c677c431c83349d522b",
-      "packed": false
-    },
-    {
-      "name": "libhwcontrol.so.7.2.broadwell.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/releases/libhwcontrol.so.7.2.broadwell.tgz",
-      "sha256": "d804cba136579a3eb06c60de31f2170ce8226abc25a98198398714046045a3b3",
-      "packed": false
-    },
-    {
-      "name": "libhwcontrol.so.7.2.broadwellnk.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/releases/libhwcontrol.so.7.2.broadwellnk.tgz",
-      "sha256": "b9fedc6c4eb713dd4d6cabd4673d09443de95a85a58200493fe072e3cf867b5a",
-      "packed": false
-    },
-    {
-      "name": "libhwcontrol.so.7.2.denverton.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/releases/libhwcontrol.so.7.2.denverton.tgz",
-      "sha256": "5b1a6fc5ef2d05fdb3f41b41fb677f6bff97e88a10d5187a8e7257a1858f9c9b",
-      "packed": false
-    },
-    {
-      "name": "libhwcontrol.so.7.2.epyc7002.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/releases/libhwcontrol.so.7.2.epyc7002.tgz",
-      "sha256": "53e2325f8603baff7f2c33e2c3c9320035f1afee3521cad662b16963b72b633c",
-      "packed": false
-    },
-    {
-      "name": "libhwcontrol.so.7.2.geminilake.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/releases/libhwcontrol.so.7.2.geminilake.tgz",
-      "sha256": "a3b4bfb3c07ac4f84491ee96adac385e7d38fa1e9a0cf580f1b7202150cb8b7c",
-      "packed": false
-    },
-    {
-      "name": "libhwcontrol.so.7.2.r1000.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/releases/libhwcontrol.so.7.2.r1000.tgz",
-      "sha256": "54d04f0f659f7fca362eed176d2a73c69f8bf0a1cdeeeb57c8e0cec314e95d8a",
-      "packed": false
-    },
-    {
-      "name": "libhwcontrol.so.7.2.v1000.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmevolume-onthefly/releases/libhwcontrol.so.7.2.v1000.tgz",
-      "sha256": "5d7e94fb2462ca68baea5969e19dd63f7bc4b3dd2ed4c6c7b099925ce9d2b5a5",
+      "sha256": "ae1cf4738cf59d7d4db1cc3fa74c92e09db17ae6528ffcc4191bac0a3442faf9",
       "packed": false
     }
   ],
