@@ -13,6 +13,7 @@
 | DS923+       | R1000 | DSM 7.1.1-42962 Update 4       | yes |
 | DS723+       | R1000 | DSM 7.2-64570 Update 3         | yes |
 | DS423+       | Geminilake | DSM 7.1.1-42962 Update 5  | yes |
+| DS3622xs+    | Broadwellnk | DSM 7.2.1-69057 Update 4   | **No** | M.2 panel missing in storage manager |
 | DS3622xs+    | Broadwellnk | DSM 7.2-64570 Update 3   | **No** | M.2 panel missing in storage manager |
 | DS3622xs+    | Broadwellnk | DSM 7.2-64561            | yes |
 | DS3622xs+    | Broadwellnk | DSM 7.1.1-42962 Update 4 | yes |
