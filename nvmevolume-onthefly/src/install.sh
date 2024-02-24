@@ -8,7 +8,7 @@
 # xxd -c cols     format <cols> octets per line. Default 16 Max 256 (-i: 12, -ps: 30)
 
 tmpRoot="/tmpRoot"
-file="/libhwcontrol.so.1"
+file="/lib64/libhwcontrol.so.1"
 PLATFORM="$(uname -u | cut -d '_' -f2)"
 
 echo "nvmevolume-onthefly - PLATFORM = ${PLATFORM}"
@@ -21,6 +21,6 @@ fi
 
 if [ "${1}" = "late" ]; then
   echo "nvmevolume-onthefly - ${1}"
-  cp -vf ${tmpRoot}/${file} ${tmpRoot}/${file}.bak
-  ${tmpRoot}/usr/bin/xxd -c ${cols} ${tmpRoot}/${file}.bak | sed "s/803e 00b8 0100 0000 7524 488b/803e 00b8 0100 0000 9090 488b/" | xxd -c ${cols} -r > ${tmpRoot}/${file}
+  cp -vf ${tmpRoot}${file} ${tmpRoot}${file}.bak
+  ${tmpRoot}/usr/bin/xxd -c ${cols} ${tmpRoot}${file}.bak | sed "s/803e 00b8 0100 0000 7524 488b/803e 00b8 0100 0000 9090 488b/" | xxd -c ${cols} -r > ${tmpRoot}${file}
 fi
