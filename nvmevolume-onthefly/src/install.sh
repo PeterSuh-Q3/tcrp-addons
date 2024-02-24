@@ -1,8 +1,8 @@
 #!/usr/bin/env ash
 
 # | status      | Hexa value                    |
-# | original    | 803e 00b8 0100 0000 9090 488b |
-# | patched     | 803e 00b8 0100 0000 7524 488b |
+# | original    | 803e 00b8 0100 0000 7524 488b |
+# | patched     | 803e 00b8 0100 0000 9090 488b |
 
 # caution : In the case of ApolloLake, hexa detection is impossible if octets per line is specified as 256 bytes. It should be adjusted to 200.
 # xxd -c cols     format <cols> octets per line. Default 16 Max 256 (-i: 12, -ps: 30)
