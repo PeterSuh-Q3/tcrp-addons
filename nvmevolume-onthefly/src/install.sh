@@ -1,49 +1,26 @@
 #!/usr/bin/env ash
 
+# | status      | Hexa value                    |
+# | original    | 803e 00b8 0100 0000 9090 488b |
+# | patched     | 803e 00b8 0100 0000 7524 488b |
+
+# caution : In the case of ApolloLake, hexa detection is impossible if octets per line is specified as 256 bytes. It should be adjusted to 200.
+# xxd -c cols     format <cols> octets per line. Default 16 Max 256 (-i: 12, -ps: 30)
+
 tmpRoot="/tmpRoot"
-libPath="/exts/nvmevolume-onthefly"
 file="/libhwcontrol.so.1"
 PLATFORM="$(uname -u | cut -d '_' -f2)"
-REVISION="$(uname -a | cut -d ' ' -f4)"
 
-function prepare_nvme() {
-  
-  echo "PLATFORM = ${PLATFORM}"
-  echo "REVISION = ${REVISION}"
+echo "nvmevolume-onthefly - PLATFORM = ${PLATFORM}"
 
-  if [ $(uname -a | grep '4.4.302+' | wc -l) -gt 0 ]; then
-    nvmefile="${libPath}/libhwcontrol.so.7.2.${PLATFORM}.tgz"
-  elif [ $(uname -a | grep '4.4.180+' | wc -l) -gt 0 ]; then
-    nvmefile="${libPath}/libhwcontrol.so.7.1.${PLATFORM}.tgz"
-  fi
+if [ ${PLATFORM} = "apollolake" ]; then
+  cols="200"
+else
+  cols="256"
+fi  
 
-  echo "nvmefile = ${nvmefile}"
-  
-  tar xvfz ${nvmefile} -C /etc/
-
-}
-
-function run_modules() {
-  prepare_nvme
-}
-
-function run_late() {
-
-  echo "Check xxd and libhwcontrol.so.1 file in tmpRoot"
-  ls -l ${tmpRoot}/lib64/libhwcontrol.so.1
-  ls -l ${tmpRoot}/lib64/libhwcontrol.so
-  ls -l ${tmpRoot}/usr/bin/xxd
-
-  echo "Copy libhwcontrol.so.1 file to tmpRoot"  
-  cp -vf /etc/libhwcontrol.so.1 ${tmpRoot}/lib64/
-  #ln -s ${tmpRoot}/lib64/libhwcontrol.so.1 ${tmpRoot}/lib64/libhwcontrol.so
-  
-}
-
-if [ "${1}" = "modules" ]; then
-  echo "nvme-cache - ${1}"
-  run_modules
-elif [ "${1}" = "late" ]; then
-  echo "nvme-cache - ${1}"
-  run_late
+if [ "${1}" = "late" ]; then
+  echo "nvmevolume-onthefly - ${1}"
+  cp -vf ${tmpRoot}/${file} ${tmpRoot}/${file}.bak
+  ${tmpRoot}/usr/bin/xxd -c ${cols} ${tmpRoot}/${file}.bak | sed "s/803e 00b8 0100 0000 7524 488b/803e 00b8 0100 0000 9090 488b/" | xxd -c ${cols} -r > ${tmpRoot}/${file}
 fi
