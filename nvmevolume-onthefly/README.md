@@ -33,6 +33,7 @@
 | DS1821+      | V1000 | DSM 7.2-64570 Update 1         | yes |
 | DS1821+      | V1000 | DSM 7.2-64570                  | yes |
 | DS1821+      | V1000 | DSM 7.2-64561                  | yes |
+| DS918+       | Apollolake | **DSM 7.2.1-69057 Update 4** | yes |
 | DS918+       | Apollolake | DSM 7.2-64570 Update 3    | yes |
 | DS918+       | Apollolake | DSM 7.2-64561             | yes |
 | DS918+       | Apollolake | DSM 7.1.1-42962 Update 5  | **No** | Use newer DSM version |
