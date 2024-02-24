@@ -58,4 +58,3 @@
 | DS420+       | Geminilake | DSM 7.2-64561             | yes |
 | DS423+       | Geminilake | DSM 7.1.1-42962 Update 5  | yes |
 | DS3617xs     | Broadwell | DSM 7.x                    | **No** | Not working with any DSM version |
-| DS3617xs     | Broadwell | DSM 7.x                    | **No** | Not working with any DSM version |
