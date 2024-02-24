@@ -37,11 +37,12 @@
 | DS918+       | Apollolake | DSM 7.2-64570 Update 3    | yes |
 | DS918+       | Apollolake | DSM 7.2-64561             | yes |
 | DS918+       | Apollolake | DSM 7.1.1-42962 Update 5  | **No** | Use newer DSM version |
-| DS1019+      | Apollolake | DSM 7.2-64570 Update 3    | yes |
-| DS1019+      | Apollolake | DSM 7.2-64570 Update 1    | yes |
-| DS1019+      | Apollolake | DSM 7.2-64561             | yes |
+| DS1019+      | Apollolake | **DSM 7.2.1-69057 Update 4** | yes | Only one M.2 NVMe is supported |
+| DS1019+      | Apollolake | DSM 7.2-64570 Update 3    | yes | Only one M.2 NVMe is supported |
+| DS1019+      | Apollolake | DSM 7.2-64570 Update 1    | yes | Only one M.2 NVMe is supported |
+| DS1019+      | Apollolake | DSM 7.2-64561             | yes | Only one M.2 NVMe is supported |
 | DS1520+      | Geminilake | DSM 7.2.1-69057           | yes |
-| DS920+       | Geminilake | DSM 7.2.1-69057 Update 4  | yes |
+| DS920+       | Geminilake | **DSM 7.2.1-69057 Update 4**  | yes |
 | DS920+       | Geminilake | DSM 7.2.1-69057 Update 3  | yes |
 | DS920+       | Geminilake | DSM 7.2.1-69057 Update 2  | yes |
 | DS920+       | Geminilake | DSM 7.2.1-69057 Update 1  | yes |
