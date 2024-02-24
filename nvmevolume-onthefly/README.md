@@ -1,4 +1,4 @@
-| Model        | CPU Arch | DSM version              | Works | Note |
+| Model        | Platform | DSM version              | Works | Note |
 | ------------ |----------|--------------------------|-------|------|
 | **E10M20-T1** | | DSM 7.2.1 and later | **No** | Use <a href="https://github.com/007revad/Synology_HDD_db">Synology_HDD_db</a> |
 | **M2D20**    | | DSM 7.2.1 and later | **No** | Use <a href="https://github.com/007revad/Synology_HDD_db">Synology_HDD_db</a> |
