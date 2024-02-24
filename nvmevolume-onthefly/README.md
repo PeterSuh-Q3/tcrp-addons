@@ -27,6 +27,7 @@
 | DS1621xs+    | Broadwellnk | **DSM 7.2.1-69057 Update 4** | yes |
 | DS1621xs+    | Broadwellnk | DSM 7.2-64570 Update 3   | yes |
 | DS1621xs+    | Broadwellnk | DSM 7.2-64570 Update 1   | yes |
+| DS1821+      | V1000 | **DSM 7.2.1-69057 Update 4**   | yes |
 | DS1821+      | V1000 | DSM 7.2-64570 Update 3         | yes |
 | DS1821+      | V1000 | DSM 7.2-64570 Update 2         | yes |
 | DS1821+      | V1000 | DSM 7.2-64570 Update 1         | yes |
