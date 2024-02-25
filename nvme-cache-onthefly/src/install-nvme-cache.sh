@@ -1,108 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env ash
 
-# |       models      |     1st      |     2nd      |
-# | DS918+            | 0000:00:13.1 | 0000:00:13.2 |
-# | RS1619xs+         | 0000:00:03.2 | 0000:00:03.3 |
-# | DS419+, DS1019+   | 0000:00:14.1 |              |
-# | DS719+, DS1621xs+ | 0000:00:01.1 | 0000:00:01.0 |
-
-if [ $# -lt 1 ]; then
-  tmpRoot=""
-  libPath="/lib64"
-  dsmMode="ON"
-else
-  tmpRoot="/tmpRoot"
-  libPath="/exts/nvme-cache-onthefly"
-  dsmMode="OFF"
-fi
-
-function prepare_nvme() {
-
-  echo "Collecting 1st nvme paths"
-  nvmepath1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
-  echo "Found local 1st nvme with path $nvmepath1"
-  if [ $(echo $nvmepath1 | wc -w) -eq 0 ]; then
-      echo "Not found local 1st nvme"
-      exit 0
-  else
-      hex1=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
-      hex2=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
-      hex3=$(/usr/sbin/readlink /sys/class/nvme/nvme0 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
-      nvme1hex=$(echo "3a$hex1 $hex2/2e $hex3/00" | sed "s/\///g" )
-      echo $nvme1hex
-
-      nvme3hex=$(echo "$hex1$hex2 2e$hex3")
-      echo $nvme3hex
-  fi
-
-  echo ""
-  echo "Collecting 2nd nvme paths"
-  nvmepath2=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1)
-  echo "Found local 2nd nvme with path $nvmepath2"
-  if [ $(echo $nvmepath2 | wc -w) -eq 0 ]; then
-      echo "Not found local 2nd nvme"
-  else
-      hex4=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 1-1 | xxd  -c 256 -ps | sed "s/..$//")
-      hex5=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 2-2 | xxd  -c 256 -ps | sed "s/..$//")
-      hex6=$(/usr/sbin/readlink /sys/class/nvme/nvme1 | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1 | cut -d':' -f3 | cut -c 4-4 | xxd  -c 256 -ps | sed "s/..$//")
-      nvme2hex=$(echo "$hex4$hex5 2e$hex6")
-      echo $nvme2hex
-
-      nvme4hex=$(echo "3a$hex4 $hex5/2e $hex6/00" | sed "s/\///g" )
-      echo $nvme4hex
-  fi
-
-  REVISION="$(uname -a | cut -d ' ' -f4)"
-  echo "REVISION = ${REVISION}"
-  if [ $(uname -a | grep '4.4.302+' | wc -l) -gt 0 ]; then
-    #nvmefile="${libPath}/libsynonvme.so.7.2"
-    #if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
-    #  cp -vf ${nvmefile} /etc/libsynonvme.so.1
-    #fi
-    #if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
-      nvmefile="${libPath}/libsynonvme.so.7.2.xxd"
-    #fi
-  elif [ $(uname -a | grep '4.4.180+' | wc -l) -gt 0 ]; then
-    if [ ${REVISION} = "#42218" ]; then
-      nvmefile="${libPath}/libsynonvme.so.7.0"
-    else
-      nvmefile="${libPath}/libsynonvme.so.7.1"
-    fi  
-  fi  
-
-  echo "nvmefile = ${nvmefile}"
- 
-  if [ $(uname -a | grep '918+' | wc -l) -gt 0 ]; then
-    if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
-        xxd -c 256 ${nvmefile} | sed "s/3a31 332e 3100/$nvme1hex/" | sed "s/3133 2e32/$nvme2hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
-    else
-        xxd -c 256 ${nvmefile} | sed "s/3a31 332e 3100/$nvme1hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
-    fi
-  elif [ $(uname -a | grep '1019+' | wc -l) -gt 0 ]; then
-    xxd ${nvmefile} | sed "s/3134 2e31/$nvme3hex/" | xxd -r > /etc/libsynonvme.so.1
-  elif [ $(uname -a | grep '1621xs+' | wc -l) -gt 0 ]; then
-    if [ $(echo $nvmepath2 | wc -w) -gt 0 ]; then
-        xxd -c 256 ${nvmefile} | sed "s/3031 2e31/$nvme3hex/" | sed "s/3a30 312e 3000/$nvme4hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
-    else
-        xxd -c 256 ${nvmefile} | sed "s/3031 2e31/$nvme3hex/" | xxd -c 256 -r > /etc/libsynonvme.so.1
-    fi
-  else
-    rm -f /etc/extensionPorts
-    echo "[pci]" >/etc/extensionPorts
-    chmod 755 /etc/extensionPorts
-    
-    NVME_PORTS=$(ls /sys/class/nvme | wc -w)
-    for I in $(seq 0 $((${NVME_PORTS} - 1))); do  
-      _PATH=$(/usr/sbin/readlink /sys/class/nvme/nvme${I} | sed 's|^.*\(pci.*\)|\1|' | cut -d'/' -f2- | cut -d'/' -f1) 
-      COUNT=$((${I} + 1))
-      echo "pci${COUNT}=\"${_PATH}\"" >>/etc/extensionPorts ;   
-    done
-    cat /etc/extensionPorts
-  fi
-}
+MODELS="DS918+ RS1619xs+ DS419+ DS1019+ DS719+ DS1621xs+"
+MODEL=$(cat /proc/sys/kernel/syno_hw_version)
 
 function modify_synoinfo() {
-
 # add supportnvme="yes" , support_m2_pool="yes" to /etc/synoinfo.conf 2023.02.10
   if [ -f ${tmpRoot}/etc/synoinfo.conf ]; then
     echo 'add supportnvme="yes" to ${tmpRoot}/etc/synoinfo.conf'
@@ -139,50 +40,98 @@ function modify_synoinfo() {
     fi
     cat ${tmpRoot}/etc.defaults/synoinfo.conf | grep support_m2_pool
   fi
-
 }
 
-function run_modules() {
-  echo "nvme-cache-onthefly - modules"
-  if [ $dsmMode = "ON" ]; then
-      echo "Nothing to install in DSM mode"
+
+if [ "${1}" = "patches" ]; then
+  echo "Installing addon nvmecache - ${1}"
+
+  BOOTDISK=""
+  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
+  if [ "${devtype}" = "sd" ]; then
+    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
+  elif [ "${devtype}" = "sa" ]; then
+    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
+  elif [ "${devtype}" = "nv" ]; then
+    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
   else
-      echo "Installing NVMe cache enabler tools readlink"
-      cp -vf readlink /usr/sbin/
-      cp -vf xxd /usr/sbin/
-      chmod 755 /usr/sbin/readlink /usr/sbin/xxd
+    BOOTDISK="synoboot"
   fi
-  prepare_nvme
-}
+  [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
+  echo "BOOTDISK=${BOOTDISK}"
+  echo "BOOTDISK_PHYSDEVPATH=${BOOTDISK_PHYSDEVPATH}"
+  rm -f /etc/nvmePorts
+  for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
+    if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+      echo "bootloader: ${P}"
+      continue
+    fi
+    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'/' -f4)
+    if [ -n "${PCIEPATH}" ]; then
+      # TODO: Need check?
+      MULTIPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'/' -f5)
+      if [ -z "${MULTIPATH}" ]; then
+        echo "${PCIEPATH} does not support!"
+        continue
+      fi
+      echo "${PCIEPATH}" >>/etc/nvmePorts
+    fi
+  done
+  [ -f /etc/nvmePorts ] && cat /etc/nvmePorts
+  
+  if ! echo ${MODELS} | grep -q ${MODEL}; then
+    echo "${MODEL} use extensionPorts"
+    rm -f /etc/extensionPorts
+    echo "[pci]" >/etc/extensionPorts
+    chmod 755 /etc/extensionPorts
+    
+    num=1
+    for N in $(cat /etc/nvmePorts 2>/dev/null); do
+      echo "${num} - ${N}"
+      echo "pci${num}=\"${N}\"" >>/etc/extensionPorts
+      num=$((num + 1))
+    done
+    cat /etc/extensionPorts
+  fi
 
-function run_late() {
-  echo "nvme-cache-onthefly - late"
-  echo "Activate NVMe cache"
-  if [ $(uname -a | grep '918+\|1019+\|1621xs+' | wc -l) -gt 0 ]; then
-    echo "Copy libsynonvme.so.1 file to tmpRoot"
-    cp -vf /etc/libsynonvme.so.1 ${tmpRoot}/lib64/
-  else
-    #if [ $(uname -u | cut -d '_' -f2 | grep 'geminilake\|v1000\|r1000' | wc -l) -gt 0 ]; then
-    #  cp -vf /etc/libsynonvme.so.1 ${tmpRoot}/lib64/
-    #fi
+elif [ "${1}" = "late" ]; then
+  echo "Installing addon nvmecache - ${1}"
+
+  if ! echo ${MODELS} | grep -q ${MODEL}; then
+    echo "${MODEL} use extensionPorts"
     cat /etc/extensionPorts
     cp -vf /etc/extensionPorts ${tmpRoot}/etc/
     cp -vf /etc/extensionPorts ${tmpRoot}/etc.defaults/
+  else
+  #
+  # |       models      |     1st      |     2nd      |
+  # | DS918+            | 0000:00:13.1 | 0000:00:13.2 |
+  # | RS1619xs+         | 0000:00:03.2 | 0000:00:03.3 |
+  # | DS419+, DS1019+   | 0000:00:14.1 |              |
+  # | DS719+, DS1621xs+ | 0000:00:01.1 | 0000:00:01.0 |
+  #
+  # In the late stage, the /sys/ directory does not exist, and the device path cannot be obtained.
+  # (/dev/ does exist, but there is no useful information.)
+  # (The information obtained by lspci is incomplete and an error will be reported.)
+  # Therefore, the device path is obtained in the early stage and stored in /etc/nvmePorts.
+
+    SO_FILE="/tmpRoot/usr/lib/libsynonvme.so.1"
+    [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
+
+    cp -vf "${SO_FILE}.bak" "${SO_FILE}"
+
+    num=1
+    for N in $(cat /etc/nvmePorts 2>/dev/null); do
+      echo "${num} - ${N}"
+      if [ ${num} -eq 1 ]; then
+        sed -i "s/0000:00:13.1/${N}/; s/0000:00:03.2/${N}/; s/0000:00:14.1/${N}/; s/0000:00:01.1/${N}/" "${SO_FILE}"
+      elif [ ${num} -eq 2 ]; then
+        sed -i "s/0000:00:13.2/${N}/; s/0000:00:03.3/${N}/; s/0000:00:99.9/${N}/; s/0000:00:01.0/${N}/" "${SO_FILE}"
+      else
+        break
+      fi
+      num=$((num + 1))
+    done
   fi
   modify_synoinfo
-}
-
-if [ $dsmMode = "ON" ]; then
-  run_modules
-  run_late
-else
-  if [ "${1}" = "modules" ]; then
-    run_modules
-  elif [ "${1}" = "patches" ]; then
-    echo "nvme-cache - patches"
-    tmpRoot=""
-    run_late
-  elif [ "${1}" = "late" ]; then
-    run_late
-  fi
 fi
