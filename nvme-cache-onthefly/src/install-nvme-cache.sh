@@ -2,6 +2,7 @@
 
 MODELS="DS918+ RS1619xs+ DS419+ DS1019+ DS719+ DS1621xs+"
 MODEL=$(cat /proc/sys/kernel/syno_hw_version)
+tmpRoot="/tmpRoot"
 
 function modify_synoinfo() {
 # add supportnvme="yes" , support_m2_pool="yes" to /etc/synoinfo.conf 2023.02.10
