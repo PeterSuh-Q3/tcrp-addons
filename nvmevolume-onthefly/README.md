@@ -21,6 +21,7 @@
 | DS3622xs+    | Broadwellnk | DSM 7.2-64561            | yes |
 | DS3622xs+    | Broadwellnk | DSM 7.1.1-42962 Update 4 | yes |
 | DS3622xs+    | Broadwellnk | DSM 7.1.1-42962 Update 1 | **No** | Use newer DSM version |
+| RS4021xs+    | Broadwellnk | **DSM 7.2.1-69057 Update 4** | yes | M.2 panel missing in storage manager |
 | RS4021xs+    | Broadwellnk | DSM 7.2-64570 Update 3   | **No** | M.2 panel missing in storage manager |
 | RS4021xs+    | Broadwellnk | DSM 7.2-64561            | yes |
 | RS4021xs+    | Broadwellnk | DSM 7.1.1-42962 Update 2 | yes |
