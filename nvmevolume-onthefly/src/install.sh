@@ -22,5 +22,5 @@ fi
 if [ "${1}" = "late" ]; then
   echo "nvmevolume-onthefly - ${1}"
   cp -vf ${tmpRoot}${file} ${tmpRoot}${file}.bak
-  ${tmpRoot}/usr/bin/xxd -c ${cols} ${tmpRoot}${file}.bak | sed "s/803e 00b8 0100 0000 7524 488b/803e 00b8 0100 0000 9090 488b/" | xxd -c ${cols} -r > ${tmpRoot}${file}
+  sed -i "s/803e00b8010000007524488b/803e00b8010000009090488b/" "${tmpRoot}${file}"
 fi
