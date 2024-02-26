@@ -14,7 +14,7 @@
 
 SupportHyperConverged=$(/bin/get_key_value /etc.defaults/synoinfo.conf support_hyper_converged)
 IsVDSM=yes
-#IsAliDSM=no
+IsAliDSM=yes
 InstallableDisks=$(/usr/syno/bin/synodiskport -installable_disk_list)
 
 Sfdisk() { /sbin/sfdisk "$@"; }
