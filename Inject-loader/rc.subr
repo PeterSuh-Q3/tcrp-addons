@@ -1,0 +1,373 @@
+# Copyright (c) 2000-2012 Synology Inc. All rights reserved.
+
+. /usr/syno/share/mkfs.sh
+. /usr/syno/share/kernelversion.sh
+
+# According to LSB 3.1 (ISO/IEC 23360:2006), the `status` init-scripts
+# action should return the following exit status codes.
+#
+LSB_STAT_RUNNING=0      # program is running or service is OK
+LSB_STAT_DEAD_FPID=1    # program is dead and /var/run pid file exists
+LSB_STAT_DEAD_FLOCK=2   # program is dead and /var/lock lock file exists
+LSB_STAT_NOT_RUNNING=3  # program is not runnning
+LSB_STAT_UNKNOWN=4      # program or service status is unknown
+LSB_STAT_BROKEN=150	# program is broken
+LSB_STAT_MODULE_ERR=151 # kernel module is dead
+# 5-99                  # reserved for future LSB use
+# 100-149               # reserved for distribution use
+# 150-199               # reserved for application use
+# 200-254               # reserved
+
+# Non-status init-scripts actions should return an exit status of zero if
+# the action was successful. Otherwise, the exit status shall be non-zero.
+#
+LSB_SUCCESS=0           # successful
+LSB_ERR_GENERIC=1       # generic or unspecified error
+LSB_ERR_ARGS=2          # invalid or excess argument(s)
+LSB_ERR_UNIMPLEMENTED=3 # unimplemented feature (for example, `reload`)
+LSB_ERR_PERM=4          # user had insufficient privilege
+LSB_ERR_INSTALLED=5     # program is not installed
+LSB_ERR_CONFIGURED=6    # program is not configured
+LSB_NOT_RUNNING=7       # program is not running
+# 8-99                  # reserved for future LSB use
+# 100-149               # reserved for distribution use
+# 150-199               # reserved for application use
+# 200-254               # reserved
+
+_MsgInit()
+{
+	local _col=80
+
+	if [ ! -t 1 ]; then
+		COLORIZED=""
+	elif [ -t 0 -a -x /bin/stty ]; then
+		# stty will fail when stdin isn't a terminal
+		_col=$(/bin/stty size | /usr/bin/cut -d' ' -f2)
+	fi
+
+	MSG_PRE="::"
+	if [ "$COLORIZED" = "yes" ]; then
+		STAT_POS="\e[$(($_col - 8))G"
+
+		C_WARN="\e[1;33m"
+		C_BUSY="\e[0;32m"
+		C_DONE="\e[1;32m"
+		C_FAIL="\e[1;31m"
+		C_MISC="\e[;1m"
+		C_CLEAR="\e[m"
+	fi
+}
+
+: ${COLORIZED:=}
+_MsgInit
+
+MsgWarn()
+{
+	[ -n "${1:-}" ] && echo -en "${C_MISC:-}${MSG_PRE:-} ${C_CLEAR:-}${1}"
+	echo -en "${STAT_POS:- ... }["
+	echo -en "${C_WARN:-}  !!  "
+	echo -e "${C_CLEAR:-}]"
+}
+
+MsgBusy()
+{
+	[ -n "${1:-}" ] && echo -en "${C_MISC:-}${MSG_PRE:-} ${C_CLEAR:-}${1}"
+	echo -en "${STAT_POS:- ... }["
+	echo -en "${C_BUSY:-} BUSY "
+	echo -en "${C_CLEAR:-}]"
+}
+
+MsgDone()
+{
+	[ -n "${1:-}" ] && echo -en "${C_MISC:-}${MSG_PRE:-} ${C_CLEAR:-}${1}"
+	echo -en "${STAT_POS:- ... }["
+	echo -en "${C_DONE:-}  OK  "
+	echo -e  "${C_CLEAR:-}]"
+}
+
+MsgFail()
+{
+	[ -n "${1:-}" ] && echo -en "${C_MISC:-}${MSG_PRE:-} ${C_CLEAR:-}${1}"
+	echo -en "${STAT_POS:- ... }["
+	echo -en "${C_FAIL:-}FAILED"
+	echo -e  "${C_CLEAR:-}]"
+}
+
+RCMsg()
+{
+	echo -n "$MSG_PRE $1"
+	shift; [ $# -eq 0 ] && { echo; return; }
+	[ "$COLORIZED" = "yes" ] && MsgBusy
+
+	$@ 1> /dev/null 2>> /var/log/messages
+	local ret=$?
+
+	[ $ret -eq 0 ] && MsgDone || MsgFail
+	return $ret
+}
+
+PlatformGet()
+{
+	local _unique=$(/bin/get_key_value /etc.defaults/synoinfo.conf unique | cut -d"_" -f2)
+        /bin/echo ${_unique}
+}
+
+ModelGet()
+{
+	local _model=$(/bin/get_key_value /etc.defaults/synoinfo.conf unique | cut -d"_" -f3)
+        /bin/echo "${_model}"
+}
+
+SYNOCheckModule()
+{
+	if [ -n "$1" ]; then
+		[ -d /sys/module/${1//-/_} ]
+	else
+		false
+	fi
+}
+
+# Load kernel modules in sequence, and also pass arguments if specified
+# in /etc/modules.conf as the following format:
+#     module_iscsi_trgt_args_rs18016xsp="pretty high priority"
+#     module_iscsi_trgt_args_2_6_32_x86_64="high priority"
+#     module_iscsi_trgt_args_2_6_32="lower priority"
+#     module_iscsi_trgt_args_bromolow="this platform priority"
+#     module_iscsi_trgt_args="general use"
+SYNOLoadModules()
+{
+	local _mod= _modpath= _args= _env=
+	local _kv=$(KernelVersion)
+	local _pf=$(PlatformGet)
+	local _mach=$(/bin/uname -m)
+	local _model=$(ModelGet)
+	local _moddir=/lib/modules
+	local _suffix=".ko"
+
+	[ -f /etc.defaults/modules.conf ] && source /etc.defaults/modules.conf
+	[ -f /etc/modules.local.conf ] && source /etc/modules.local.conf # for customization
+
+	for _mod in "$@"; do
+		_modpath=${_moddir}/${_mod}${_suffix}
+
+		#use basename to grep the final module name of "_mod".
+		#	ex. if there is "/lib/modules/backports_dvb/xxx.ko", "xxx.ko" will be taken from "backports_dvb/xxx.ko".
+		local _basename_mod=`/usr/bin/basename $_mod`
+		SYNOCheckModule $_basename_mod && continue
+
+		if [ -f ${_modpath} ]; then
+			# try to find if there's any argument for this module
+			for _env in \
+				"_${_model//\+/p}" \
+				"_${_kv//./_}_${_mach}" \
+				"_${_kv//./_}" \
+				"_${_pf}" \
+				""
+			do
+				eval _args=\$module_${_basename_mod//-/_}_args${_env}
+				[ -n "$_args" ] && break;
+			done
+
+			RCMsg "Loading module $_mod" \
+			/sbin/insmod $_modpath $_args
+		fi
+	done
+}
+
+# Unload kernel modules in reverse sequence
+SYNOUnloadModules()
+{
+	local _mod= _list=
+
+	for _mod in "$@"; do
+		_list="$_mod $_list"
+	done
+
+	for _mod in $_list; do
+		#use basename to grep the final module name of "_mod".
+		#	ex. if there is "/lib/modules/backports_dvb/xxx.ko", "xxx.ko" will be taken from "backports_dvb/xxx.ko".
+	        local _basename_mod=`/usr/bin/basename $_mod`
+		SYNOCheckModule $_basename_mod || continue
+		RCMsg "Unloading module $_basename_mod" \
+		/sbin/rmmod $_basename_mod
+	done
+}
+
+# Remove the modules that have arg in /etc/modules.local.conf
+# For now , this is only used by USB drivers because they have been inserted in linuxrc.syno
+# And at that time , it can't see /etc/modules.local.conf
+SYNOCheckAndUnloadModules()
+{
+	for _mod in "$@"; do
+		if [ "" != "`awk -F"module_" '{print $2}' /etc/modules.local.conf | awk -F"_args" '{print $1}' | /bin/grep "^\<${_mod//-/_}\>"`" ]; then
+			SYNOUnloadModules "${_mod}"
+		fi
+	done
+}
+
+# Set error flag and exit
+# $1: ErrorStage
+# $2: ErrorNum
+# $3: ErrorFile
+IfErrorThenExit()
+{
+	local ret=${2:-1}
+
+	if [ $ret -gt 0 ]; then
+		echo "${1:-Unknown}:$ret" > ${3:-/tmp/installer.error}
+		exit $ret
+	fi
+}
+
+# Clean specified partition
+# $1: target
+# $2: disk
+CleanPartition()
+{
+	/sbin/sfdisk -N$1 -uS -q -f --no-reread -o0 -z0 -t0 -F -D $2
+}
+
+# Create partitions given partition number, size, and type
+# $1: partition number
+# $2: size in 512-byte sector
+# $3: partition type(id)
+# $4: skip size in 512-byte sector
+# $5: disk
+CreatePartition()
+{
+	/sbin/sfdisk -N$1 -uS -q -f --no-reread -j$4 -z$2 -t$3 -F $5
+}
+
+is_pid_alive() { # <pid> [proc name]
+	local pid=${1:?"error params"}
+	local procname="$2"
+
+	if [ ! -r "/proc" -o ! -r "/proc/$pid" -o -z ${procname:-} ]; then
+		kill -0 "$pid" &>/dev/null
+	else
+		[ -n "$(readlink "/proc/$pid/exe")" ] && [ "$(basename `readlink "/proc/$pid/exe"`)" = "$procname" ]
+	fi
+}
+
+# lsb util functions
+lsb_status() { # <proc name> [pid file]
+	local procname=${1:?"error params"}
+	local pidfile=${2:-"/var/run/$procname.pid"}
+
+	if [ -f "$pidfile" ]; then
+		local pid=`cat "$pidfile"`
+		if is_pid_alive "$pid" "$procname"; then
+			return $LSB_STAT_RUNNING
+		else
+			return $LSB_STAT_DEAD_FPID
+		fi
+	fi
+
+	return $LSB_STAT_NOT_RUNNING
+}
+
+detect_manufactory_device()
+{
+	local ID_SYNO="f401"
+	local ID_FDT="f402"
+
+	if [ "1621xs+" = "$UniqueModel" ]; then
+		local vid;
+		local pid;
+		local usb_list=`ls /sys/bus/usb/devices/`;
+
+		for dev in $usb_list; do
+			if [ ! -f /sys/bus/usb/devices/${dev}/device/idVendor ] || [ ! -f /sys/bus/usb/devices/${dev}/device/idProduct ]; then
+				continue;
+			fi
+			vid=`cat /sys/bus/usb/devices/${dev}/device/idVendor`;
+			pid=`cat /sys/bus/usb/devices/${dev}/device/idProduct`;
+
+			if [ $vid = $ID_SYNO -o $vid = $ID_FDT ]; then
+				if [ $pid = $vid ]; then
+					true;
+					return $?;
+				fi
+			fi
+		done
+	elif [ $KERNEL_VCODE -ge $(KernelVersionCode "3.6") ]; then
+		local path="/sys/kernel/debug/usb/devices"
+		local ret_ID_SYNO=`cat $path|grep "Vendor=${ID_SYNO} ProdID=${ID_SYNO}"`;
+		local ret_ID_FDT=`cat $path|grep "Vendor=${ID_FDT} ProdID=${ID_FDT}"`;
+
+		if [ "" != "$ret_ID_SYNO" -o "" != "$ret_ID_FDT" ]; then
+			true;
+			return $?;
+		fi
+	else
+
+		local vid;
+		local pid;
+		local usb_list=`ls /sys/class/usb_device/`;
+
+		for dev in $usb_list; do
+			vid=`cat /sys/class/usb_device/${dev}/device/idVendor`;
+			pid=`cat /sys/class/usb_device/${dev}/device/idProduct`;
+
+			if [ $vid = $ID_SYNO -o $vid = $ID_FDT ]; then
+				if [ $pid = $vid ]; then
+					true;
+					return $?;
+				fi
+			fi
+		done
+	fi
+
+	if [ "" != "$(cat /proc/sys/kernel/syno_hw_version | grep VS960HD-)" ]; then
+		if [ "1" = "$(cat /proc/manufacturing_gpio)" ]; then
+			true;
+			return $?;
+		fi
+	fi
+
+	false;
+	return $?;
+}
+
+support_buildin_storage()
+{
+	local value=`get_key_value $SYNOINFO_DEF support_buildin_storage`
+	[ "yes" = "$value" ]
+	return $?
+}
+
+should_burnin_test()
+{
+	# don't do burnin if request memtest (for US3)
+	if [ -f /.memtest ]; then
+		false;
+		return $?;
+	fi
+
+	if [ -f /.nodisk ]; then
+		true;
+		return $?;
+	fi
+
+	# built-in storage model with f401/FDT device connected can run burnin-test
+	if support_buildin_storage && detect_manufactory_device; then
+		true
+		return $?
+	fi
+
+	false;
+	return $?;
+}
+
+dump_D_process_call_stack()
+{
+	PIDS=$(ps -e -T -o stat,tid | grep ^D | awk '{print $2}')
+	for i in ${PIDS[@]}; do
+		echo "==========="
+		cmd=$(tr -d '\0' </proc/${i}/cmdline)
+		echo "PID: ${i}  cmdline:${cmd}"
+		cat /proc/${i}/stack
+	done
+}
+
+# vim:ft=sh
