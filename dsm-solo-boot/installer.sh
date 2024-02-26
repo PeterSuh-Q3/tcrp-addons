@@ -105,6 +105,9 @@ dd if=/dev/synoboot2 of=/dev/sda6
 DoOrExit CREATE CreatePartition 7 8087552 83 ${ROOT_SKIP} ${DISKNODE}
 dd if=/dev/synoboot3 of=/dev/sda7
 
+# boot on to /dev/sda5
+echo -e "a\n5\nw" | fdisk /dev/sda
+
 # We will write root compatible bit on DSM7.1
 # Before that, we can only reset it to default
 #DoOrExit RESETROOTCOMPATIBLEBIT /usr/syno/sbin/reset_root_compatiblie_bit.sh
