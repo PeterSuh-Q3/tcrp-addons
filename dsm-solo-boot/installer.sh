@@ -87,9 +87,9 @@ InitVDSMSysDisks ()
 		#fi
 	done
 
-	if [ "$IsAliDSM" != yes ]; then
+	#if [ "$IsAliDSM" != yes ]; then
 		DoOrExit CREATE CreatePartition ${PARTNO_ROOT} ${WRITEABLE_SIZE} ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
-	fi
+	#fi
 	DoOrExit CREATE CreatePartition ${PARTNO_SWAP} ${SWAP_SIZE} ${LINUX_SWAP_TYPE} ${SWAP_SKIP} ${DISKNODE}
 	Echo "1/1" > /tmp/synodd.sda
 }
