@@ -88,29 +88,34 @@ InitVDSMSysDisks ()
 	done
 
 	#if [ "$IsAliDSM" != yes ]; then
-		DoOrExit CREATE CreatePartition ${PARTNO_ROOT} ${WRITEABLE_SIZE} ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
+	DoOrExit CREATE CreatePartition ${PARTNO_ROOT} ${WRITEABLE_SIZE} ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
 	#fi
 	DoOrExit CREATE CreatePartition ${PARTNO_SWAP} ${SWAP_SIZE} ${LINUX_SWAP_TYPE} ${SWAP_SKIP} ${DISKNODE}
 	Echo "1/1" > /tmp/synodd.sda
 }
 
 
-InitVDSMSysDisks
+#InitVDSMSysDisks
+DISKNODE="/dev/sda"
+
+DoOrExit CREATE CreatePartition 5 147456 83 ${ROOT_SKIP} ${DISKNODE}
+DoOrExit CREATE CreatePartition 6 151552 83 ${ROOT_SKIP} ${DISKNODE}
+DoOrExit CREATE CreatePartition 7 8087552 83 ${ROOT_SKIP} ${DISKNODE}
 
 # We will write root compatible bit on DSM7.1
 # Before that, we can only reset it to default
-DoOrExit RESETROOTCOMPATIBLEBIT /usr/syno/sbin/reset_root_compatiblie_bit.sh
+#DoOrExit RESETROOTCOMPATIBLEBIT /usr/syno/sbin/reset_root_compatiblie_bit.sh
 
-if [ "static" = "$DiskSwap" ]; then
-    DoOrExit MKSWAP /sbin/mkswap "$SwapPartition"
-fi
+#if [ "static" = "$DiskSwap" ]; then
+#    DoOrExit MKSWAP /sbin/mkswap "$SwapPartition"
+#fi
 
 # Ext4 rootfs
-DoOrExit MKFS MakeFS "ext4" "$RootPartition"
+#DoOrExit MKFS MakeFS "ext4" "$RootPartition"
 
-Mount "$RootPartition" /mnt
-/bin/touch /mnt/.noroot
-Umount /mnt
+#Mount "$RootPartition" /mnt
+#/bin/touch /mnt/.noroot
+#Umount /mnt
 
 #if [ -x /usr/syno/bin/mantool ]; then
 #	/usr/syno/bin/mantool -auto_poweron_disable
