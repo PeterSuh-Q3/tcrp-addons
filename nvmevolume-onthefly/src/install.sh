@@ -9,6 +9,6 @@ file="/lib64/libhwcontrol.so.1"
 
 if [ "${1}" = "late" ]; then
   echo "nvmevolume-onthefly - ${1}"
-  cp -vf ${tmpRoot}${file} ${tmpRoot}${file}.bak
+  [ ! -f "${tmpRoot}${file}.bak" ] && cp -vf "${tmpRoot}${file}" "${tmpRoot}${file}.bak"
   sed -i "s/803e00b8010000007524488b/803e00b8010000009090488b/" "${tmpRoot}${file}"
 fi
