@@ -42,10 +42,11 @@ ROOT_SKIP=8192
 DISKNODE="/dev/sda"
 
 DoOrExit CREATE CreatePartition 5 147456 ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
-dd if=/dev/synoboot1 of=/dev/sda5
 DoOrExit CREATE CreatePartition 6 151552 ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
-dd if=/dev/synoboot2 of=/dev/sda6
 DoOrExit CREATE CreatePartition 7 8087552 ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
+
+dd if=/dev/synoboot1 of=/dev/sda5
+dd if=/dev/synoboot2 of=/dev/sda6
 dd if=/dev/synoboot3 of=/dev/sda7 status=progress bs=8M
 
 # boot on to /dev/sda5
