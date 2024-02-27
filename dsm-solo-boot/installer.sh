@@ -13,6 +13,10 @@ IsVDSM=yes
 IsAliDSM=yes
 InstallableDisks=$(/usr/syno/bin/synodiskport -installable_disk_list | head -1 )
 
+for DiskIdx in $InstallableDisks ; do
+    Device=/dev/${DiskIdx}
+done
+
 Sfdisk() { /sbin/sfdisk "$@"; }
 
 ErrorFile="/tmp/installer.error"
@@ -38,7 +42,7 @@ LINUX_FS_TYPE=83
 ROOT_SKIP=8192
 
 #InitVDSMSysDisks
-DISKNODE="/dev/${InstallableDisks}"
+DISKNODE="${Device}"
 
 DoOrExit CREATE CreatePartition 3 27000000 f ${ROOT_SKIP} ${DISKNODE}
 exit 0
@@ -56,7 +60,7 @@ echo -e "a\n5\nw" | fdisk ${DISKNODE}
 
 [ ! -d /mnt/tcrp-p1 ] && mkdir /mnt/tcrp-p1
 cd /dev/
-mount -t vfat ${InstallableDisks}5 /mnt/tcrp-p1
+mount -t vfat ${DiskIdx}5 /mnt/tcrp-p1
 cd /mnt/tcrp-p1
 sed -i "s/msdos3/msdos7/" /mnt/tcrp-p1/boot/grub/grub.cfg
 cd /mnt
