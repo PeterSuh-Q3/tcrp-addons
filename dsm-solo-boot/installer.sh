@@ -51,6 +51,14 @@ dd if=/dev/synoboot3 of=/dev/sda7 status=progress bs=8M
 # boot on to /dev/sda5
 echo -e "a\n5\nw" | fdisk /dev/sda
 
+[ ! -d /mnt/tcrp-p1 ] && mkdir /mnt/tcrp-p1
+cd /dev/
+mount -t vfat sda5 /mnt/tcrp-p1
+cd /mnt/tcrp-p1
+sed -i "s/msdos3/msdos7/" /mnt/tcrp-p1/boot/grub/grub.cfg
+cd /mnt
+umount /mnt/tcrp-p1
+
 # We will write root compatible bit on DSM7.1
 # Before that, we can only reset it to default
 #DoOrExit RESETROOTCOMPATIBLEBIT /usr/syno/sbin/reset_root_compatiblie_bit.sh
