@@ -43,6 +43,7 @@ DISKNODE="/dev/sda"
 
 #echo -e "n\n\n\n\nw" | fdisk /dev/sda
 
+DoOrExit CREATE CreatePartition 3 27000000 f ${ROOT_SKIP} ${DISKNODE}
 DoOrExit CREATE CreatePartition 5 147456 ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
 DoOrExit CREATE CreatePartition 6 151552 ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
 DoOrExit CREATE CreatePartition 7 8087552 ${LINUX_FS_TYPE} ${ROOT_SKIP} ${DISKNODE}
