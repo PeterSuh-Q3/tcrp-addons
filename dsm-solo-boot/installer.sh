@@ -4,14 +4,14 @@
 # must specify the install type (-r or/and -d)
 # -r: format root partition
 # -d: format data partition (only for 1-bay)
-#. /etc/rc.subr
-#. /usr/syno/share/environments.sh
-#. /usr/syno/share/mkfs.sh
+. /etc/rc.subr
+. /usr/syno/share/environments.sh
+. /usr/syno/share/mkfs.sh
 
-#SupportHyperConverged=$(GetKV /etc.defaults/synoinfo.conf support_hyper_converged)
-#IsVDSM=yes
-#IsAliDSM=yes
-#InstallableDisks=$(/usr/syno/bin/synodiskport -installable_disk_list)
+SupportHyperConverged=$(GetKV /etc.defaults/synoinfo.conf support_hyper_converged)
+IsVDSM=yes
+IsAliDSM=yes
+InstallableDisks=$(/usr/syno/bin/synodiskport -installable_disk_list)
 
 Sfdisk() { /sbin/sfdisk "$@"; }
 
@@ -32,17 +32,6 @@ DoOrExit() { # stage cmd...
 		Echo "$stage:$ret" > "$ErrorFile"
 		exit $ret
 	fi
-}
-
-# Create partitions given partition number, size, and type
-# $1: partition number
-# $2: size in 512-byte sector
-# $3: partition type(id)
-# $4: skip size in 512-byte sector
-# $5: disk
-CreatePartition()
-{
-	/sbin/sfdisk -N$1 -uS -q -f --no-reread -j$4 -z$2 -t$3 -F $5
 }
 
 LINUX_FS_TYPE=83
