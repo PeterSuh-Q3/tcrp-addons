@@ -87,11 +87,11 @@ if [ "${1}" = "patches" ]; then
     chmod 755 /etc/extensionPorts
     
     num=1
-    for N in $(cat /etc/nvmePorts 2>/dev/null); do
+    while read -r N; do
       echo "${num} - ${N}"
       echo "pci${num}=\"${N}\"" >>/etc/extensionPorts
       num=$((num + 1))
-    done
+    done < /etc/nvmePorts
     cat /etc/extensionPorts
   fi
 
@@ -122,7 +122,7 @@ elif [ "${1}" = "late" ]; then
     cp -vf "${SO_FILE}.bak" "${SO_FILE}"
 
     num=1
-    for N in $(cat /etc/nvmePorts 2>/dev/null); do
+    while read -r N; do
       echo "${num} - ${N}"
       if [ ${num} -eq 1 ]; then
         sed -i "s/0000:00:13.1/${N}/; s/0000:00:03.2/${N}/; s/0000:00:14.1/${N}/; s/0000:00:01.1/${N}/" "${SO_FILE}"
@@ -132,7 +132,7 @@ elif [ "${1}" = "late" ]; then
         break
       fi
       num=$((num + 1))
-    done
+    done < /etc/nvmePorts
   fi
   modify_synoinfo
 fi
