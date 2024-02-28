@@ -125,9 +125,23 @@ elif [ "${1}" = "late" ]; then
     while read -r N; do
       echo "${num} - ${N}"
       if [ ${num} -eq 1 ]; then
-        sed -i "s/0000:00:13.1/${N}/; s/0000:00:03.2/${N}/; s/0000:00:14.1/${N}/; s/0000:00:01.1/${N}/" "${SO_FILE}"
+        if [ ${MODEL} = "DS918+" ]; then 
+          sed -i "s/0000:00:13.1/${N}/" "${SO_FILE}"
+        elif [ ${MODEL} = "RS1619xs+" ]; then
+          sed -i "s/0000:00:03.2/${N}/" "${SO_FILE}"
+        elif [ ${MODEL} = "DS419+" ]||[ ${MODEL} = "DS1019+" ]; then
+          sed -i "s/0000:00:14.1/${N}/" "${SO_FILE}"
+        elif [ ${MODEL} = "DS719+" ]||[ ${MODEL} = "DS1621xs+" ]; then
+          sed -i "s/0000:00:01.1/${N}/" "${SO_FILE}"
+        fi  
       elif [ ${num} -eq 2 ]; then
-        sed -i "s/0000:00:13.2/${N}/; s/0000:00:03.3/${N}/; s/0000:00:99.9/${N}/; s/0000:00:01.0/${N}/" "${SO_FILE}"
+        if [ ${MODEL} = "DS918+" ]; then 
+          sed -i "s/0000:00:13.2/${N}/" "${SO_FILE}"
+        elif [ ${MODEL} = "RS1619xs+" ]; then
+          sed -i "s/0000:00:03.3/${N}/" "${SO_FILE}"        
+        elif [ ${MODEL} = "DS719+" ]||[ ${MODEL} = "DS1621xs+" ]; then
+          sed -i "s/0000:00:01.0/${N}/" "${SO_FILE}"        
+        fi  
       else
         break
       fi
