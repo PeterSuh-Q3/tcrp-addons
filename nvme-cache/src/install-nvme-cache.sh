@@ -115,38 +115,48 @@ elif [ "${1}" = "late" ]; then
   # (/dev/ does exist, but there is no useful information.)
   # (The information obtained by lspci is incomplete and an error will be reported.)
   # Therefore, the device path is obtained in the early stage and stored in /etc/nvmePorts.
-
+  
+    xxdpath="/tmpRoot/usr/bin/xxd" 
+    sohex="/etc/so.hex"
     SO_FILE="/tmpRoot/usr/lib/libsynonvme.so.1"
+
+    declare -A PCI1ST
+    PCI1ST[0]=$(echo -n "0000:00:13.1" | "${xxdpath}" -ps)
+    PCI1ST[1]=$(echo -n "0000:00:03.2" | "${xxdpath}" -ps)
+    PCI1ST[2]=$(echo -n "0000:00:14.1" | "${xxdpath}" -ps)
+    PCI1ST[3]=$(echo -n "0000:00:01.1" | "${xxdpath}" -ps)
+    declare -A PCI2ND
+    PCI2ND[0]=$(echo -n "0000:00:13.2" | "${xxdpath}" -ps)
+    PCI2ND[1]=$(echo -n "0000:00:03.3" | "${xxdpath}" -ps)
+    PCI2ND[2]=$(echo -n "0000:00:99.9" | "${xxdpath}" -ps) # dummy
+    PCI2ND[3]=$(echo -n "0000:00:01.0" | "${xxdpath}" -ps)
+
+    declare -A DUMMYA
+    DUMMYA[0]=$(echo -n "0000:99:99.0" | "${xxdpath}" -ps)
+    DUMMYA[1]=$(echo -n "0000:99:99.1" | "${xxdpath}" -ps)
+  
     [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
 
     cp -vf "${SO_FILE}.bak" "${SO_FILE}"
+    "${xxdpath}" -c $("${xxdpath}" -p "${SO_FILE}" | wc -c) -p "${SO_FILE}" >"${sohex}"
+    sed -i "s/${PCI1ST[0]}/${DUMMYA[0]}/; s/${PCI1ST[1]}/${DUMMYA[0]}/; s/${PCI1ST[2]}/${DUMMYA[0]}/; s/${PCI1ST[3]}/${DUMMYA[0]}/" "${sohex}"
+    sed -i "s/${PCI2ND[0]}/${DUMMYA[1]}/; s/${PCI2ND[1]}/${DUMMYA[1]}/; s/${PCI2ND[2]}/${DUMMYA[1]}/; s/${PCI2ND[3]}/${DUMMYA[1]}/" "${sohex}"
 
     num=1
     while read -r N; do
-      echo "${num} - ${N}"
+      LOCHEX=$(echo -n "${N}" | "${xxdpath}" -c 256 -ps)
+      echo "${num} - ${N} - ${LOCHEX}"
       if [ ${num} -eq 1 ]; then
-        if [ ${MODEL} = "DS918+" ]; then 
-          sed -i "s/0000:00:13.1/${N}/" "${SO_FILE}"
-        elif [ ${MODEL} = "RS1619xs+" ]; then
-          sed -i "s/0000:00:03.2/${N}/" "${SO_FILE}"
-        elif [ ${MODEL} = "DS419+" ]||[ ${MODEL} = "DS1019+" ]; then
-          sed -i "s/0000:00:14.1/${N}/" "${SO_FILE}"
-        elif [ ${MODEL} = "DS719+" ]||[ ${MODEL} = "DS1621xs+" ]; then
-          sed -i "s/0000:00:01.1/${N}/" "${SO_FILE}"
-        fi  
+        sed -i "s/${DUMMYA[0]}/${LOCHEX}/g" "${sohex}"
       elif [ ${num} -eq 2 ]; then
-        if [ ${MODEL} = "DS918+" ]; then 
-          sed -i "s/0000:00:13.2/${N}/" "${SO_FILE}"
-        elif [ ${MODEL} = "RS1619xs+" ]; then
-          sed -i "s/0000:00:03.3/${N}/" "${SO_FILE}"        
-        elif [ ${MODEL} = "DS719+" ]||[ ${MODEL} = "DS1621xs+" ]; then
-          sed -i "s/0000:00:01.0/${N}/" "${SO_FILE}"        
-        fi  
+        sed -i "s/${DUMMYA[1]}/${LOCHEX}/g" "${sohex}"
       else
         break
       fi
       num=$((num + 1))
     done < /etc/nvmePorts
+    "${xxdpath}" -r -p "${sohex}" "${SO_FILE}"
+    rm -f "${sohex}"
   fi
   modify_synoinfo
 fi
