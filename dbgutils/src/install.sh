@@ -23,16 +23,16 @@ function saveLogs() {
 [ -z "${1}" ] && echo "Usage: ${0} {early|jrExit|rcExit}" && exit 1
 
 if [ "${1}" = "early" ]; then
-  echo "dbgutils - early"
+  echo "dbgutils - ${1}"
   #echo "extract dbgutils.tgz to /usr/sbin/ "
   #tar xfz /exts/dbgutils/dbgutils.tgz -C /
   
   #echo "Starting ttyd..."
   #/usr/sbin/ttyd /usr/bin/ash -l &
-elif [ "${1}" = "jrExit" ]; then
-  echo "dbgutils - jrExit"
+elif [ "${1}" = "patches" ]; then
+  echo "dbgutils - ${1}"
   saveLogs "${1}"
 elif [ "${1}" = "rcExit" ]; then
-  echo "dbgutils - rcExit"
+  echo "dbgutils - ${1}"
   saveLogs "${1}"
 fi
