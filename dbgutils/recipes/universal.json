@@ -10,6 +10,7 @@
 
   "scripts": {
     "on_early": "install.sh",
+    "on_patches": "install.sh",
     "on_rcExit": "install.sh"
   }
 }
