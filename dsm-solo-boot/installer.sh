@@ -59,9 +59,12 @@ dd if=/dev/synoboot3 of=${DISKNODE}7 status=progress bs=8M
 echo -e "a\n5\nw" | fdisk ${DISKNODE}
 
 [ ! -d /mnt/tcrp-p1 ] && mkdir /mnt/tcrp-p1
-cd /dev/ && mount -t vfat "${DiskIdx}"5 /mnt/tcrp-p1
+cd /dev/ && mount -t vfat sdb5 /mnt/tcrp-p1
 #cd /mnt/tcrp-p1 && sed -i "s/msdos3/msdos7/" /mnt/tcrp-p1/boot/grub/grub.cfg
 #cd /mnt && umount /mnt/tcrp-p1
+
+[ ! -d /mnt/tcrp-p2 ] && mkdir /mnt/tcrp-p2
+cd /dev/ && mount -t vfat sdc5 /mnt/tcrp-p2
 
 [ ! -d /mnt/synoboot-p3 ] && mkdir /mnt/synoboot-p3
 cd /dev/ && mount -t vfat /dev/synoboot3 /mnt/synoboot-p3
