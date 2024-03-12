@@ -3,7 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dbgutils/src/install.sh",
-      "sha256": "dde0f3745438b6765e301d4bc2b17f10256e28a258e5fd14c3b2e887bc36b635",
+      "sha256": "dd5cdc76277cb684038ffa3ebf68f15f5e100c8318cf8adb91bbbcdb0f8feeb4",
       "packed": false
     }
   ],
