@@ -51,11 +51,11 @@ if [ "${1}" = "modules" ]; then
   chmod 755 /usr/sbin/blkid /usr/sbin/sed /lib64/libblkid.so.1
 
 elif [ "${1}" = "patches" ]; then
-  LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 1-8 | awk -F\/ '{print $3}')
+  LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 6-8 )
 
   BOOT_DISK="${LOADER_DISK}"
   if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}5 ]; then
-    for edisk in $(fdisk -l | grep "Disk /dev/sd" | awk '{print $2}' | sed 's/://' ); do
+    for edisk in $(fdisk -l | grep "Disk /dev/sd" | cut -c 6-13 ); do
         if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
             echo "This is BASIC Type Disk & Has Syno Boot Partition. $edisk"
             BOOT_DISK=$(echo "$edisk" | cut -c 6-8)
