@@ -3,6 +3,10 @@
 function saveLogs() {
   modprobe vfat
   echo 1 > /proc/sys/kernel/syno_install_flag
+  if [ ! -f /dev/synoboot1 ]; then
+    exit 0
+  fi  
+  
   mount /dev/synoboot1 /mnt
   mkdir -p /mnt/logs
 
