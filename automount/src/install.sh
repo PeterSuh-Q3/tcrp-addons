@@ -17,9 +17,19 @@ elif [ "${1}" = "patches" ]; then
   if [ "${devtype}" = "sd" ]; then
     LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 6-8 )
     echo "Found USB or HDD Disk loader!"
+    p1="5"
+    p2="6"
+    p3="5"
+    cutpos1="13"
+    cutpos2="8"
   elif [ "${devtype}" = "sa" ]; then
     LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 6-10 )
     echo "Found Sata Disk loader!"
+    p1="p5"
+    p2="p6"
+    p3="p5"
+    cutpos1="15"
+    cutpos2="10"
   else
     LOADER_DISK=""
   fi
@@ -30,28 +40,14 @@ elif [ "${1}" = "patches" ]; then
   fi
 
   BOOT_DISK="${LOADER_DISK}"
-  if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}5 ]; then
-    if [ "${devtype}" = "sd" ]; then
-        for edisk in $(fdisk -l | grep "Disk /dev/sd" | cut -c 6-13 ); do
-            if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
-                echo "This is BASIC Type Disk & Has Syno Boot Partition. $edisk"
-                BOOT_DISK=$(echo "$edisk" | cut -c 6-8)
-            fi
-        done
-        p1="5"
-        p2="6"
-        p3="5"
-    elif [ "${devtype}" = "sa" ]; then
-        for edisk in $(fdisk -l | grep "Disk /dev/sa" | cut -c 6-15 ); do
-            if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
-                echo "This is BASIC Type Disk & Has Syno Boot Partition. $edisk"
-                BOOT_DISK=$(echo "$edisk" | cut -c 6-10)
-            fi
-        done
-        p1="p5"
-        p2="p6"
-        p3="p5"
-    fi
+  if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}${p3} ]; then
+
+    for edisk in $(fdisk -l | grep "Disk /dev/${devtype}" | cut -c 6-${cutpos1} ); do
+        if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
+            echo "This is BASIC Type Disk & Has Syno Boot Partition. $edisk"
+            BOOT_DISK=$(echo "$edisk" | cut -c 6-${cutpos2})
+        fi
+    done
   
     if [ "${BOOT_DISK}" = "${LOADER_DISK}" ]; then
         echo "Failed to find boot Partition !!!"
