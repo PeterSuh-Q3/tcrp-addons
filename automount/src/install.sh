@@ -13,6 +13,11 @@ if [ "${1}" = "modules" ]; then
 
 elif [ "${1}" = "patches" ]; then
 
+  if [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
+    echo "Found synoboot1 / synoboot2 / synoboot3"
+    return
+  fi
+  
   devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
   if [ "${devtype}" = "sd" ]; then
     LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 6-8 )
