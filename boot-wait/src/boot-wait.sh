@@ -19,6 +19,9 @@ function checkSynoboot() {
   if [ "${devtype}" = "sd" ]; then
     BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
     echo "Found USB or HDD Disk loader!"
+  elif [ "${devtype}" = "us" ]; then
+    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-9 )"
+    echo "Found USB Disk loader!"
   elif [ "${devtype}" = "sa" ]; then
     BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
     echo "Found Sata Disk loader!"
@@ -52,7 +55,7 @@ function checkSynoboot() {
     return
   fi
   
-  # usbN, HddN, sataN, nvmeN
+  # usbN, sdN, sataN, nvmeN
   if [ ! -b /dev/synoboot1 -a -b /dev/${BOOTDISK}${p1} ]; then
     echo "synoboot1 Not Found, Make symbolic link"
     ln -s /dev/${BOOTDISK}${p1} /dev/synoboot1
