@@ -15,59 +15,59 @@ dump_all_partitions()
 # synoboot
 function checkSynoboot() {
 
-  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
-  if [ "${devtype}" = "sd" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
-    echo "Found USB or HDD Disk loader!"
-  elif [ "${devtype}" = "us" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-9 )"
-    echo "Found USB Disk loader!"
-  elif [ "${devtype}" = "sa" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
-    echo "Found Sata Disk loader!"
-  elif [ "${devtype}" = "nv" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-12 )"
-    echo "Found NVMe Disk loader!"
-  elif [ "${devtype}" = "mm" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-13 )"
-    echo "Found MMC Disk loader!"
-  else
-    BOOTDISK=""
-  fi
+    for devtype in $(fdisk -l | grep "Disk /dev/" | cut -c 11-12 ); do
 
-  if [ "${devtype}" = "sd" ]; then
-    p1="1"
-    p2="2"
-    p3="3"
-  else
-    p1="p1"
-    p2="p2"
-    p3="p3"
-  fi
+      if [ "${devtype}" = "sd" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-8 )"
+        echo "Found USB or HDD Disk loader!"
+      elif [ "${devtype}" = "us" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-9 )"
+        echo "Found USB Disk loader!"
+      elif [ "${devtype}" = "sa" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-10 )"
+        echo "Found Sata Disk loader!"
+      elif [ "${devtype}" = "nv" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-12 )"
+        echo "Found NVMe Disk loader!"
+      elif [ "${devtype}" = "mm" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-13 )"
+        echo "Found MMC Disk loader!"
+      else
+        BOOTDISK=""
+        echo "BOOTDISK value is empty or USB Stick Found!"
+        continue
+      fi
 
-  if [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
-    echo "Found synoboot1 / synoboot2 / synoboot3"
-    return
-  fi
-  
-  if [ -z "${BOOTDISK}" ]; then
-    echo "BOOTDISK value is empty or USB Stick Found!"
-    return
-  fi
-  
-  # usbN, sdN, sataN, nvmeN
-  if [ ! -b /dev/synoboot1 -a -b /dev/${BOOTDISK}${p1} ]; then
-    echo "synoboot1 Not Found, Make symbolic link"
-    ln -s /dev/${BOOTDISK}${p1} /dev/synoboot1
-  fi
-  if [ ! -b /dev/synoboot2 -a -b /dev/${BOOTDISK}${p2} ]; then
-    echo "synoboot2 Not Found, Make symbolic link"
-    ln -s /dev/${BOOTDISK}${p2} /dev/synoboot2
-  fi
-  if [ ! -b /dev/synoboot3 -a -b /dev/${BOOTDISK}${p3} ]; then
-    echo "synoboot3 Not Found, Make symbolic link"
-    ln -s /dev/${BOOTDISK}${p3} /dev/synoboot3
-  fi
+      if [ "${devtype}" = "sd" ]; then
+        p1="1"
+        p2="2"
+        p3="3"
+      else
+        p1="p1"
+        p2="p2"
+        p3="p3"
+      fi
+
+      if [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
+        echo "Found synoboot1 / synoboot2 / synoboot3"
+        return
+      fi
+      
+      # usbN, sdN, sataN, nvmeN
+      if [ ! -b /dev/synoboot1 -a -b /dev/${BOOTDISK}${p1} ]; then
+        echo "synoboot1 Not Found, Make symbolic link"
+        ln -s /dev/${BOOTDISK}${p1} /dev/synoboot1
+      fi
+      if [ ! -b /dev/synoboot2 -a -b /dev/${BOOTDISK}${p2} ]; then
+        echo "synoboot2 Not Found, Make symbolic link"
+        ln -s /dev/${BOOTDISK}${p2} /dev/synoboot2
+      fi
+      if [ ! -b /dev/synoboot3 -a -b /dev/${BOOTDISK}${p3} ]; then
+        echo "synoboot3 Not Found, Make symbolic link"
+        ln -s /dev/${BOOTDISK}${p3} /dev/synoboot3
+      fi
+      
+    done
 
 }
 
