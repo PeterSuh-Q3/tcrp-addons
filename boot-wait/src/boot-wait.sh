@@ -38,6 +38,12 @@ function checkSynoboot() {
         continue
       fi
 
+      if [ $(fdisk -l | grep "83 Linux" | grep "/dev/${BOOTDISK}" | wc -l ) -eq 3 ]; then
+        echo "USB Stick or vmdk bootloader disk Found!"
+      else
+        continue
+      fi
+
       if [ "${devtype}" = "sd" ]; then
         p1="1"
         p2="2"
