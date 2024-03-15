@@ -24,7 +24,7 @@ elif [ "${1}" = "patches" ]; then
     echo "Found USB or HDD Disk loader!"
     p1="5"
     p2="6"
-    p3="5"
+    p3="4"
     cutpos1="13"
     cutpos2="8"
   elif [ "${devtype}" = "sa" ]; then
@@ -32,7 +32,7 @@ elif [ "${1}" = "patches" ]; then
     echo "Found Sata Disk loader!"
     p1="p5"
     p2="p6"
-    p3="p5"
+    p3="p4"
     cutpos1="15"
     cutpos2="10"
   else
