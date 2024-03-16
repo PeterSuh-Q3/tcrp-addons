@@ -15,7 +15,6 @@ elif [ "${1}" = "patches" ]; then
 
   if [ -b /dev/synoboot4 ]; then
     echo "Found synoboot4 and more, Check abnormal synoboot mount, force delete and recreate..."
-    rm -rf /dev/synoboot*
   elif [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
     echo "Found normal synoboot1 / synoboot2 / synoboot3"
     return
@@ -50,19 +49,26 @@ elif [ "${1}" = "patches" ]; then
   BOOT_DISK="${LOADER_DISK}"
   if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}${p3} ]; then
 
-    for edisk in $(fdisk -l | grep "Disk /dev/${devtype}" | cut -c 6-${cutpos1} ); do
-        if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
-            echo "This is BASIC Type Disk & Has Syno Boot Partition. $edisk"
-            BOOT_DISK=$(echo "$edisk" | cut -c 6-${cutpos2})
-        fi
-    done
+    if [ -b /dev/synoboot4 ]; then
+        p1="5"
+        p2="6"
+        BOOT_DISK="synoboot"
+    else
+        for edisk in $(fdisk -l | grep "Disk /dev/${devtype}" | cut -c 6-${cutpos1} ); do
+            if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
+                echo "This is BASIC Type Disk & Has Syno Boot Partition. $edisk"
+                BOOT_DISK=$(echo "$edisk" | cut -c 6-${cutpos2})
+            fi
+        done
+    fi
   
     if [ "${BOOT_DISK}" = "${LOADER_DISK}" ]; then
         echo "Failed to find boot Partition !!!"
         exit 99
     fi
 
-    [ -b /dev/${BOOT_DISK} ] && ln -s /dev/${BOOT_DISK} /dev/synoboot
+    [ -b /dev/synoboot4 ] && rm -rf /dev/synoboot1 && rm -rf /dev/synoboot2 && rm -rf /dev/synoboot3
+    
     [ -b /dev/${BOOT_DISK}${p1} ] && ln -s /dev/${BOOT_DISK}${p1} /dev/synoboot1
     [ -b /dev/${BOOT_DISK}${p2} ] && ln -s /dev/${BOOT_DISK}${p2} /dev/synoboot2
     [ -b /dev/${LOADER_DISK}${p3} ] && ln -s /dev/${LOADER_DISK}${p3} /dev/synoboot3
