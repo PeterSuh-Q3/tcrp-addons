@@ -13,8 +13,11 @@ if [ "${1}" = "modules" ]; then
 
 elif [ "${1}" = "patches" ]; then
 
-  if [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
-    echo "Found synoboot1 / synoboot2 / synoboot3"
+  if [ -b /dev/synoboot4 ]; then
+    echo "Found synoboot4 and more, Check abnormal synoboot mount, force delete and recreate..."
+    rm -rf /dev/synoboot*
+  elif [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
+    echo "Found normal synoboot1 / synoboot2 / synoboot3"
     return
   fi
   
@@ -59,6 +62,7 @@ elif [ "${1}" = "patches" ]; then
         exit 99
     fi
 
+    [ -b /dev/${BOOT_DISK} ] && ln -s /dev/${BOOT_DISK} /dev/synoboot
     [ -b /dev/${BOOT_DISK}${p1} ] && ln -s /dev/${BOOT_DISK}${p1} /dev/synoboot1
     [ -b /dev/${BOOT_DISK}${p2} ] && ln -s /dev/${BOOT_DISK}${p2} /dev/synoboot2
     [ -b /dev/${LOADER_DISK}${p3} ] && ln -s /dev/${LOADER_DISK}${p3} /dev/synoboot3
