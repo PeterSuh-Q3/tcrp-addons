@@ -48,9 +48,12 @@ elif [ "${1}" = "patches" ]; then
   if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}${p3} ]; then
 
     for edisk in $(fdisk -l | grep "Disk /dev/${devtype}" | cut -c 6-${cutpos1} ); do
-        if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
+        if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -gt 2 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
             echo "This is BASIC Type Disk & Has Syno Boot Partition. $edisk"
             BOOT_DISK=$(echo "$edisk" | cut -c 6-${cutpos2})
+            if [ $(fdisk -l | grep "W95 Ext" | grep ${edisk} | wc -l ) -eq 1 ]; then
+                p1=$(echo ${p1} | sed 's#5#4#')
+            fi
         fi
     done
   
