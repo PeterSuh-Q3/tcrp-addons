@@ -411,7 +411,17 @@ function nondtModel() {
 }
 
 #
-if [ "${1}" = "patches" ]; then
+if [ "${1}" = "modules" ]; then
+  echo "Installing addon disks - ${1}"
+  cp -vf dtc /usr/sbin/
+  cp -vf readlink /usr/sbin/
+  cp -vf sed /usr/sbin/sed
+  cp -vf blkid /usr/sbin/blkid
+  cp -vf libblkid.so.1 /lib64/libblkid.so.1
+
+  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed /usr/sbin/blkid /lib64/libblkid.so.1
+
+elif [ "${1}" = "patches" ]; then
   echo "Installing addon disks - ${1}"
   BOOTDISK=""
   BOOTDISK_PART3=$(blkid -U "6234-C863" 2>/dev/null | sed 's/\/dev\///')
