@@ -9,7 +9,7 @@
 # Get values in synoinfo.conf K=V file
 # 1 - key
 function _get_conf_kv() {
-  grep "${1}=" /etc/synoinfo.conf | sed "s|^${1}=\"\(.*\)\"$|\1|g"
+  grep "${1}=" /etc/synoinfo.conf 2>/dev/null | sed "s|^${1}=\"\(.*\)\"$|\1|g"
 }
 
 # Replace/add values in synoinfo.conf K=V file
@@ -102,22 +102,39 @@ function _kernelVersion() {
 
 # synoboot
 function checkSynoboot() {
-  [ -b /dev/synoboot -a -b /dev/synoboot1 -a -b /dev/synoboot2 ] && return
+  [ -b /dev/synoboot -a -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ] && return
   [ -z "${BOOTDISK}" ] && return
 
-  [ ! -b /dev/synoboot -a -d /sys/block/${BOOTDISK} ] &&
+  if [ ! -b /dev/synoboot -a -d /sys/block/${BOOTDISK} ]; then
     /bin/mknod /dev/synoboot b $(cat /sys/block/${BOOTDISK}/dev | sed 's/:/ /') >/dev/null 2>&1
+    rm -vf /dev/${BOOTDISK}
+  fi
   # sataN, nvmeXnN, mmcblkN
-  [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p1 ] &&
+  if [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p1 ]; then
     /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p1/dev | sed 's/:/ /') >/dev/null 2>&1
-  [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p2 ] &&
+    rm -vf /dev/${BOOTDISK}p1
+  fi
+  if [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p2 ]; then
     /bin/mknod /dev/synoboot2 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p2/dev | sed 's/:/ /') >/dev/null 2>&1
+    rm -vf /dev/${BOOTDISK}p2
+  fi
+  if [ ! -b /dev/synoboot3 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p3 ]; then
+    /bin/mknod /dev/synoboot3 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p3/dev | sed 's/:/ /') >/dev/null 2>&1
+    rm -vf /dev/${BOOTDISK}p3
+  fi
   # sdN, vdN
-  [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}1 ] &&
+  if [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}1 ]; then
     /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}1/dev | sed 's/:/ /') >/dev/null 2>&1
-  [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}2 ] &&
+    rm -vf /dev/${BOOTDISK}1
+  fi
+  if [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}2 ]; then
     /bin/mknod /dev/synoboot2 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}2/dev | sed 's/:/ /') >/dev/null 2>&1
-
+    rm -vf /dev/${BOOTDISK}2
+  fi
+  if [ ! -b /dev/synoboot3 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}3 ]; then
+    /bin/mknod /dev/synoboot3 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}3/dev | sed 's/:/ /') >/dev/null 2>&1
+    rm -vf /dev/${BOOTDISK}3
+  fi
 }
 
 # USB ports
@@ -156,7 +173,7 @@ function getUsbPorts() {
 
 #
 function dtModel() {
-  DEST="/etc/model.dts"
+  DEST="/addons/model.dts"
   UNIQUE=$(_get_conf_kv unique)
   if [ ! -f "${DEST}" ]; then # Users can put their own dts.
     echo "/dts-v1/;" >${DEST}
@@ -211,13 +228,12 @@ function dtModel() {
           I=$((${I} + 1))
         done
       done
-      # 100 = SCSI, 104 = RAIDHBA, 107 = SAS
       for P in $(lspci -d ::107 2>/dev/null | cut -d' ' -f1) $(lspci -d ::104 2>/dev/null | cut -d' ' -f1) $(lspci -d ::100 2>/dev/null | cut -d' ' -f1); do
         J=1
         while true; do
           [ ! -d /sys/block/sata${J} ] && break
-          if cat /sys/block/sata${J}/uevent | grep 'PHYSDEVPATH' | grep -q "${P}"; then
-            if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+          if cat /sys/block/sata${J}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | grep -q "${P}"; then
+            if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
               echo "bootloader: /sys/block/sata${J}"
             else
               PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
@@ -240,21 +256,13 @@ function dtModel() {
     else
       I=1
       J=1
-      K=1
       while true; do
         [ ! -d /sys/block/sata${J} ] && break
-        if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+        if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
           echo "bootloader: /sys/block/sata${J}"
         else
           PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
           ATAPORT=$(grep 'ata_port_no' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
-          if [ -z "${PCIEPATH}" ]; then
-            PCIEPATH1=$(udevadm info -q path --name /dev/sata${J} | cut -d/ -f4)
-            PCIEPATH2=$(udevadm info -q path --name /dev/sata${J} | cut -d/ -f5 | cut -d: -f3)
-            PCIEPATH=${PCIEPATH1},${PCIEPATH2}
-            ATAPORT=$((${K} - 1))
-            K=$((${K} + 1))
-          fi
           if [ -n "${PCIEPATH}" -a -n "${ATAPORT}" ]; then
             echo "    internal_slot@${I} {" >>${DEST}
             echo "        protocol_type = \"sata\";" >>${DEST}
@@ -269,18 +277,22 @@ function dtModel() {
         J=$((${J} + 1))
       done
     fi
-    NUMPORTS=$((${I} - 1))
-    if [ $NUMPORTS -le 2 ]; then
+    MAXDISKS=$((${I} - 1))
+    if _check_post_k "rd" "maxdisks"; then
+      MAXDISKS=$(($(_get_conf_kv maxdisks)))
+      echo "get maxdisks=${MAXDISKS}"
+    else
       # fix isSingleBay issue: if maxdisks is 1, there is no create button in the storage panel
-      NUMPORTS=4
+      # [ ${MAXDISKS} -le 2 ] && MAXDISKS=4
+      [ ${MAXDISKS} -lt 26 ] && MAXDISKS=26
     fi
-    _set_conf_kv rd "maxdisks" "${NUMPORTS}"
-    echo "maxdisks=${NUMPORTS}"
+    _set_conf_kv rd "maxdisks" "${MAXDISKS}"
+    echo "maxdisks=${MAXDISKS}"
 
     # NVME ports
     COUNT=1
     for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
-      if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+      if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
         echo "bootloader: ${P}"
         continue
       fi
@@ -319,25 +331,30 @@ function nondtModel() {
   USBPORTCFG=0
   ESATAPORTCFG=0
   INTERNALPORTCFG=0
-  # 100 = SCSI, 104 = RAIDHBA, 107 = SAS
   HBA_NUMBER=$(($(lspci -d ::107 2>/dev/null | wc -l) + $(lspci -d ::104 2>/dev/null | wc -l) + $(lspci -d ::100 2>/dev/null | wc -l)))
-  
+
   for I in $(ls -d /sys/block/sd* 2>/dev/null); do
     IDX=$(_atoi ${I/\/sys\/block\/sd/})
     ISUSB="$(cat ${I}/uevent 2>/dev/null | grep PHYSDEVPATH | grep usb)"
     [ -n "${ISUSB}" ] && USBPORTCFG=$((${USBPORTCFG} | $((1 << ${IDX}))))
-    if [ "${3}" = "true" ] || [ -z "${ISUSB}" ]; then
-      [ $((${IDX} + 1)) -ge ${MAXDISKS} ] && MAXDISKS=$((${IDX} + 1))
-    fi
+    [ $((${IDX} + 1)) -ge ${MAXDISKS} ] && MAXDISKS=$((${IDX} + 1))
   done
 
   if _check_post_k "rd" "maxdisks"; then
     MAXDISKS=$(($(_get_conf_kv maxdisks)))
     echo "get maxdisks=${MAXDISKS}"
   else
-    #[ ${HBA_NUMBER} -gt 0 ] && MAXDISKS=26
-    [ ${MAXDISKS} -gt 26 ] && MAXDISKS=26
+    # fix isSingleBay issue: if maxdisks is 1, there is no create button in the storage panel
+    # [ ${MAXDISKS} -le 2 ] && MAXDISKS=4
+    [ ${MAXDISKS} -lt 26 ] && MAXDISKS=26
   fi
+
+  # Raidtool will read maxdisks, but when maxdisks is greater than 27, formatting error will occur 8%.
+  if ! _check_rootraidstatus && [ ${MAXDISKS} -gt 26 ]; then
+    MAXDISKS=26
+    echo "set maxdisks=26 [${MAXDISKS}]"
+  fi
+
   if _check_post_k "rd" "usbportcfg"; then
     USBPORTCFG=$(($(_get_conf_kv usbportcfg)))
     echo "get usbportcfg=${USBPORTCFG}"
@@ -356,23 +373,13 @@ function nondtModel() {
     INTERNALPORTCFG=$(($(_get_conf_kv internalportcfg)))
     echo "get internalportcfg=${INTERNALPORTCFG}"
   else
-      INTERNALPORTCFG=$((2 ** ${MAXDISKS} - 1))
-      _set_conf_kv rd "internalportcfg" "$(printf "0x%.2x" ${INTERNALPORTCFG})"
-      echo "set internalportcfg=${INTERNALPORTCFG}"
+    INTERNALPORTCFG=$(($((2 ** ${MAXDISKS} - 1)) ^ ${USBPORTCFG} ^ ${ESATAPORTCFG}))
+    _set_conf_kv rd "internalportcfg" "$(printf "0x%.2x" ${INTERNALPORTCFG})"
+    echo "set internalportcfg=${INTERNALPORTCFG}"
   fi
 
-  # Raidtool will read maxdisks, but when maxdisks is greater than 27, formatting error will occur 8%.
-  if ! _check_rootraidstatus && [ ${MAXDISKS} -gt 26 ]; then
-    _set_conf_kv rd "maxdisks" "26"
-    echo "set maxdisks=26 [${MAXDISKS}]"
-  # fix isSingleBay issue: if maxdisks is 1, there is no create button in the storage panel
-  elif ! _check_rootraidstatus && [ ${MAXDISKS} -le 2 ]; then
-    _set_conf_kv rd "maxdisks" "4"
-    echo "set maxdisks=4 [${MAXDISKS}]"
-  else
-    _set_conf_kv rd "maxdisks" "${MAXDISKS}"
-    echo "set maxdisks=${MAXDISKS}"
-  fi
+  _set_conf_kv rd "maxdisks" "${MAXDISKS}"
+  echo "set maxdisks=${MAXDISKS}"
 
   if [ "${1}" = "true" ]; then
     echo "TODO: no-DT's sort!!!"
@@ -382,7 +389,7 @@ function nondtModel() {
   COUNT=1
   echo "[pci]" >/etc/extensionPorts
   for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
-    if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+    if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
       echo "bootloader: ${P}"
       continue
     fi
@@ -404,36 +411,17 @@ function nondtModel() {
 }
 
 #
-if [ "${1}" = "modules" ]; then
-  echo "Installing addon disks - ${1}"
-
-  cp -vf dtc /usr/sbin/
-  cp -vf readlink /usr/sbin/
-  cp -vf sed /usr/sbin/sed
-  cp -vf blkid /usr/sbin/blkid
-  cp -vf libblkid.so.1 /lib64/libblkid.so.1
-
-  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed /usr/sbin/blkid /lib64/libblkid.so.1
-
-elif [ "${1}" = "patches" ]; then
+if [ "${1}" = "patches" ]; then
   echo "Installing addon disks - ${1}"
   BOOTDISK=""
-  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
-  if [ "${devtype}" = "sd" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
-  elif [ "${devtype}" = "sa" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
-  elif [ "${devtype}" = "nv" ]; then  
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
-  else
-    BOOTDISK="synoboot"
-  fi
-  [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
+  BOOTDISK_PART3=$(blkid -U "6234-C863" 2>/dev/null | sed 's/\/dev\///')
+  [ -n "${BOOTDISK_PART3}" ] && BOOTDISK=$(ls -d /sys/block/*/${BOOTDISK_PART3} 2>/dev/null | cut -d'/' -f4)
+  [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
   echo "BOOTDISK=${BOOTDISK}"
   echo "BOOTDISK_PHYSDEVPATH=${BOOTDISK_PHYSDEVPATH}"
   checkSynoboot
 
-  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "true" || nondtModel "false"
+  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "${2}" || nondtModel "${2}"
 
 elif [ "${1}" = "late" ]; then
   echo "Installing addon disks - ${1}"
@@ -445,17 +433,14 @@ elif [ "${1}" = "late" ]; then
   else
     echo "Adjust maxdisks and internalportcfg automatically"
     # sysfs is unpopulated here, get the values from junior synoinfo.conf
-    MAXDISKS=$(_get_conf_kv maxdisks)
     USBPORTCFG=$(_get_conf_kv usbportcfg)
     ESATAPORTCFG=$(_get_conf_kv esataportcfg)
     INTERNALPORTCFG=$(_get_conf_kv internalportcfg)
     # log
-    echo "maxdisks=${MAXDISKS}"
     echo "usbportcfg=${USBPORTCFG}"
     echo "esataportcfg=${ESATAPORTCFG}"
     echo "internalportcfg=${INTERNALPORTCFG}"
     # set
-    _set_conf_kv hd "maxdisks" "${MAXDISKS}"
     _set_conf_kv hd "usbportcfg" "${USBPORTCFG}"
     _set_conf_kv hd "esataportcfg" "${ESATAPORTCFG}"
     _set_conf_kv hd "internalportcfg" "${INTERNALPORTCFG}"
@@ -463,6 +448,10 @@ elif [ "${1}" = "late" ]; then
     cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
     cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
   fi
+
+  MAXDISKS=$(_get_conf_kv maxdisks)
+  echo "maxdisks=${MAXDISKS}"
+  _set_conf_kv hd "maxdisks" "${MAXDISKS}"
 
   SUPPORTNVME=$(_get_conf_kv supportnvme)
   SUPPORT_M2_POOL=$(_get_conf_kv support_m2_pool)
