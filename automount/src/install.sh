@@ -40,8 +40,8 @@ elif [ "${1}" = "patches" ]; then
   fi
   
   if [ -z ${LOADER_DISK} ]; then
-    echo "Failed to find loader Partition !!!"
-    exit 99
+    echo "Not Supported Device Type for loader Partition !!!"
+    return
   fi
 
   BOOT_DISK="${LOADER_DISK}"
