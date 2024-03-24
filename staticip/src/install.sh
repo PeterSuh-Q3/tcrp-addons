@@ -22,12 +22,12 @@ function setnetwork() {
 if [ "${1}" = "patches" ]; then
   echo "Install staticip - ${1}"
   if [ -b /dev/synoboot3 ]; then
-    mkdir /mnt/tctp
-    mount /dev/synoboot3 /mnt/tctp
+    mkdir /mnt/tcrp
+    mount /dev/synoboot3 /mnt/tcrp
     if [ "$(jq -r -e .ipsettings.ipset /mnt/tcrp/user_config.json)" = "static" ]; then
       setnetwork
     fi
-    umount /mnt/tctp
+    umount /mnt/tcrp
   else
     return
   fi
