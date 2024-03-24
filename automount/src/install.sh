@@ -17,9 +17,13 @@ elif [ "${1}" = "patches" ]; then
     echo "Found normal synoboot1 / synoboot2 / synoboot3"
     return
   fi
-  
+#/dev/sda3: UUID="6234-C863"
+#/dev/sata1p3: UUID="6234-C863" 
   devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
   if [ "${devtype}" = "sd" ]; then
+    partnochk=$(blkid | grep "6234-C863" | cut -c 9 )
+    [ "${partnochk}" -eq 3 ] && return
+
     LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 6-8 )
     echo "Found USB or HDD Disk loader!"
     p1="5"
@@ -28,6 +32,9 @@ elif [ "${1}" = "patches" ]; then
     cutpos1="13"
     cutpos2="8"
   elif [ "${devtype}" = "sa" ]; then
+    partnochk=$(blkid | grep "6234-C863" | cut -c 12 )
+    [ "${partnochk}" -eq 3 ] && return
+
     LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 6-10 )
     echo "Found Sata Disk loader!"
     p1="p5"
@@ -63,7 +70,7 @@ elif [ "${1}" = "patches" ]; then
   
     if [ "${BOOT_DISK}" = "${LOADER_DISK}" ]; then
         echo "Failed to find boot Partition !!!"
-        exit 99
+        return
     fi
     
     [ -b /dev/${BOOT_DISK}${p1} ] && ln -s /dev/${BOOT_DISK}${p1} /dev/synoboot1
