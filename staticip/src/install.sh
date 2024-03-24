@@ -2,7 +2,7 @@
 
 function setnetwork() {
 
-    ethdev=$(ip a | grep UP | grep -v LOOP | head -1 | awk '{print $2}' | sed -e 's/://g')
+    ethdev=$(ip a | grep UP | grep -v LOOP | head -1 | cut -d : -f 2 | sed -e 's/ //g')
 
     echo "Network settings are set to static proceeding setting static IP settings ${ethdev}"
     staticip="$(jq -r -e .ipsettings.ipaddr /mnt/tcrp/user_config.json)"
