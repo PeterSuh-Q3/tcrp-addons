@@ -8,17 +8,12 @@ if [ "${1}" = "patches" ]; then
   echo "Installing addon nvmecache - ${1}"
 
   BOOTDISK=""
-  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
-  if [ "${devtype}" = "sd" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-8 )"
-  elif [ "${devtype}" = "sa" ]||[ "${devtype}" = "nv" ]||[ "${devtype}" = "mm" ]; then
-    BOOTDISK="$(blkid | grep "6234-C863" | cut -c 6-10 )"
-  else
-    BOOTDISK="synoboot"
-  fi
-  [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
+  BOOTDISK_PART3=$(blkid -U "6234-C863" 2>/dev/null | sed 's/\/dev\///')
+  [ -n "${BOOTDISK_PART3}" ] && BOOTDISK=$(ls -d /sys/block/*/${BOOTDISK_PART3} 2>/dev/null | cut -d'/' -f4)
+  [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
   echo "BOOTDISK=${BOOTDISK}"
   echo "BOOTDISK_PHYSDEVPATH=${BOOTDISK_PHYSDEVPATH}"
+  
   rm -f /etc/nvmePorts
   for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
     if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
