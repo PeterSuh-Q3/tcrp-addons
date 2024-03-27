@@ -9,6 +9,7 @@
   ],
 
   "scripts": {
+    "on_patches": "install-nvme-cache.sh",
     "on_os_load": "install-nvme-cache.sh"
   }
 }
