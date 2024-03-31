@@ -125,6 +125,8 @@ fixacpibutton() {
 
 if [ "${1}" = "late" ]; then
     echo "Script for fixing missing HW features dependencies"
+
+    fixacpibutton
     
     case "${PLATFORM}" in
 
