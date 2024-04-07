@@ -6,30 +6,22 @@ function saveLogs() {
   [ ! -b /dev/synoboot1 ] && exit 0
 
   [ ! -d /mnt/synoboot1 ] && mkdir -p /mnt/synoboot1
-  mount /dev/synoboot1 /mnt/synoboot1
-  [ $? -ne 0 ] && exit 0
+  mount /dev/synoboot1 /mnt/synoboot1 || true
   mkdir -p /mnt/synoboot1/logs
 
   rm -rf "/mnt/synoboot1/logs/${1}"
   mkdir -p "/mnt/synoboot1/logs/${1}"
-  cp -vfR "/var/log/"* "/mnt/synoboot1/logs/${1}"
-  [ $? -ne 0 ] && exit 0
+  cp -vfR "/var/log/"* "/mnt/synoboot1/logs/${1}" || true
 
-  dmesg >"/mnt/synoboot1/logs/${1}/dmesg.log"
-  [ $? -ne 0 ] && exit 0
-  lsmod >"/mnt/synoboot1/logs/${1}/lsmod.log"
-  [ $? -ne 0 ] && exit 0
+  dmesg >"/mnt/synoboot1/logs/${1}/dmesg.log" || true
+  lsmod >"/mnt/synoboot1/logs/${1}/lsmod.log" || true
   lspci -Qnnk >"/mnt/synoboot1/logs/${1}/lspci.log" || true
-  [ $? -ne 0 ] && exit 0
   ls -l /dev/ >"/mnt/synoboot1/logs/${1}/disk-dev.log" || true
-  [ $? -ne 0 ] && exit 0
   ls -l /sys/class/scsi_host >"/mnt/synoboot1/logs/${1}/disk-scsi_host.log" || true
-  [ $? -ne 0 ] && exit 0
   ls -l /sys/class/net/*/device/driver >"/mnt/synoboot1/logs/${1}/net-driver.log" || true
-  [ $? -ne 0 ] && exit 0
   
-  umount /mnt/synoboot1
-  [ $? -ne 0 ] && exit 0
+  umount /mnt/synoboot1 || true
+
 }
 
 [ -z "${1}" ] && echo "Usage: ${0} {early|jrExit|rcExit}" && exit 1
