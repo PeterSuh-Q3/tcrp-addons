@@ -3,25 +3,26 @@
 function saveLogs() {
   modprobe vfat
   echo 1 > /proc/sys/kernel/syno_install_flag
-  if [ ! -f /dev/synoboot1 ]; then
-    exit 0
-  fi  
-  
-  mount /dev/synoboot1 /mnt
-  mkdir -p /mnt/logs
+  [ ! -b /dev/synoboot1 ] && exit 0
 
-  rm -rf "/mnt/logs/${1}"
-  mkdir -p "/mnt/logs/${1}"
-  cp -vfR "/var/log/"* "/mnt/logs/${1}"
+  [ ! -d /mnt/synoboot1 ] && mkdir -p /mnt/synoboot1
+  mount /dev/synoboot1 /mnt/synoboot1
+  [ $? -ne 0 ] && exit 0
+  mkdir -p /mnt/synoboot1/logs
+
+  rm -rf "/mnt/synoboot1/logs/${1}"
+  mkdir -p "/mnt/synoboot1/logs/${1}"
+  cp -vfR "/var/synoboot1/log/"* "/mnt/synoboot1/logs/${1}"
   
-  dmesg >"/mnt/logs/${1}/dmesg.log"
-  lsmod >"/mnt/logs/${1}/lsmod.log"
-  lspci -Qnnk >"/mnt/logs/${1}/lspci.log" || true
-  ls -l /dev/ >"/mnt/logs/${1}/disk-dev.log" || true
-  ls -l /sys/class/scsi_host >"/mnt/logs/${1}/disk-scsi_host.log" || true
-  ls -l /sys/class/net/*/device/driver >"/mnt/logs/${1}/net-driver.log" || true
+  dmesg >"/mnt/synoboot1/logs/${1}/dmesg.log"
+  lsmod >"/mnt/synoboot1/logs/${1}/lsmod.log"
+  lspci -Qnnk >"/mnt/synoboot1/logs/${1}/lspci.log" || true
+  ls -l /dev/ >"/mnt/synoboot1/logs/${1}/disk-dev.log" || true
+  ls -l /sys/class/scsi_host >"/mnt/synoboot1/logs/${1}/disk-scsi_host.log" || true
+  ls -l /sys/class/net/*/device/driver >"/mnt/synoboot1/logs/${1}/net-driver.log" || true
   
-  umount /mnt
+  umount /mnt/synoboot1
+  [ $? -ne 0 ] && exit 0
 }
 
 [ -z "${1}" ] && echo "Usage: ${0} {early|jrExit|rcExit}" && exit 1
