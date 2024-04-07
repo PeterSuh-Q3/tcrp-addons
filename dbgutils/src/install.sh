@@ -12,7 +12,7 @@ function saveLogs() {
 
   rm -rf "/mnt/synoboot1/logs/${1}"
   mkdir -p "/mnt/synoboot1/logs/${1}"
-  cp -vfR "/var/synoboot1/log/"* "/mnt/synoboot1/logs/${1}"
+  cp -vfR "/var/log/"* "/mnt/synoboot1/logs/${1}"
   
   dmesg >"/mnt/synoboot1/logs/${1}/dmesg.log"
   lsmod >"/mnt/synoboot1/logs/${1}/lsmod.log"
