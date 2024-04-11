@@ -27,6 +27,11 @@
                         "mCheckSum": "bda93b275177bba7bc1da6f5e75a992f"
                     },
                     {
+                        "mUnique": "synology_apollolake_218+",
+                        "mLink": "https:\/\/global.synologydownload.com\/download\/DSM\/release\/7.2.1\/69057\/DSM_DS218%2B_69057.pat",
+                        "mCheckSum": "67f05845194e8066380b40b6998615fc"
+                    },
+                    {
                         "mUnique": "synology_apollolake_918+",
                         "mLink": "https:\/\/global.synologydownload.com\/download\/DSM\/release\/7.2.1\/69057\/DSM_DS918%2B_69057.pat",
                         "mCheckSum": "72ab2f5e35f23be4b4b0d70ec2e9a157"
