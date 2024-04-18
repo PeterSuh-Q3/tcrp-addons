@@ -11,8 +11,8 @@ if [ "${1}" = "late" ]; then
   cp -vf hdddb.sh /tmpRoot/usr/sbin/hdddb.sh
   chmod +x /tmpRoot/usr/sbin/hdddb.sh
 
-  mkdir -p "/tmpRoot/usr/lib/systemd/system"
-  DEST="/tmpRoot/usr/lib/systemd/system/hdddb.service"
+  mkdir -p "/tmpRoot/etc/systemd/system"
+  DEST="/tmpRoot/etc/systemd/system/hdddb.service"
   echo "[Unit]"                                    >${DEST}
   echo "Description=HDDs/SSDs drives databases"   >>${DEST}
   echo "After=multi-user.target"                  >>${DEST}
@@ -25,6 +25,6 @@ if [ "${1}" = "late" ]; then
   echo "[Install]"                                >>${DEST}
   echo "WantedBy=multi-user.target"               >>${DEST}
 
-  mkdir -vp /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
-  ln -vsf /usr/lib/systemd/system/hdddb.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/hdddb.service
+  mkdir -vp /tmpRoot/etc/systemd/system/multi-user.target.wants
+  ln -vsf /etc/systemd/system/hdddb.service /tmpRoot/etc/systemd/system/multi-user.target.wants/hdddb.service
 fi
