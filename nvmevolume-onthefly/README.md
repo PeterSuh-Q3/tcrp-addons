@@ -61,4 +61,5 @@
 | DS423+       | Geminilake | DSM 7.1.1-42962 Update 5  | yes |
 | DS3617xs     | Broadwell | DSM 7.x                    | **No** | Not working with any DSM version |
 | DS3615xs     | Bromolow  | DSM 7.x, Supports only up to DSM 7.1.1 (EOS) | **No** | Not working with any DSM version |
+| DVA1622      | Geminilake | DSM 7.2.1-69057 Update 5  | yes |
 | DVA3221      | Denverton | DSM 7.x                    | **No** | Not working with any DSM version |
