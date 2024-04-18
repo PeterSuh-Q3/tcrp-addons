@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddb/src/install.sh",
+      "sha256": "3524fb4496f4bb8ba9c62f13b635bf558d7bbfc6b4f41d0f5d681c549ac9b526",
+      "packed": false
+    },
+    {
+      "name": "hdddb.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddb/src/hdddb.sh",
+      "sha256": "9171b9d6503145284f727071547c855ad0a9f4433b54a9d938db8a40ac8aee94",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
