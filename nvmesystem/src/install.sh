@@ -11,8 +11,10 @@
 if [ "${1}" = "early" ]; then
   echo "Installing addon nvmesystem - ${1}"
 
-  [ ! -f "/usr/sbin/xxd" ] && cp -vf sed /usr/sbin/xxd
+  [ ! -f "/usr/sbin/xxd" ] && cp -vf xxd /usr/sbin/xxd
   chmod +x /usr/sbin/xxd
+  [ ! -f "/usr/sbin/sed" ] && cp -vf sed /usr/sbin/sed
+  chmod +x /usr/sbin/sed
 
   # [CREATE][failed] Raidtool initsys
   SO_FILE="/usr/syno/bin/scemd"
