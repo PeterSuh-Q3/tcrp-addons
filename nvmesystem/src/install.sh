@@ -11,13 +11,17 @@
 if [ "${1}" = "early" ]; then
   echo "Installing addon nvmesystem - ${1}"
 
-  [ ! -f "/usr/sbin/sed" ] && cp -vf sed /usr/sbin/sed
-  chmod +x /usr/sbin/sed
+  [ ! -f "/usr/sbin/xxd" ] && cp -vf sed /usr/sbin/xxd
+  chmod +x /usr/sbin/xxd
 
   # [CREATE][failed] Raidtool initsys
   SO_FILE="/usr/syno/bin/scemd"
   [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
-  sed -i "s/4584ed74b7488b4c24083b01/4584ed75b7488b4c24083b01/" "${SO_FILE}"
+  cp -f "${SO_FILE}" "${SO_FILE}.tmp"
+  xxd -c $(xxd -p "${SO_FILE}.tmp" 2>/dev/null | wc -c) -p "${SO_FILE}.tmp" 2>/dev/null |
+    sed "s/4584ed74b7488b4c24083b01/4584ed75b7488b4c24083b01/" |
+    xxd -r -p >"${SO_FILE}" 2>/dev/null
+  rm -f "${SO_FILE}.tmp"
 
 elif [ "${1}" = "late" ]; then
   echo "Installing addon nvmesystem - ${1}"
@@ -29,7 +33,11 @@ elif [ "${1}" = "late" ]; then
   SO_FILE="/tmpRoot/usr/lib/libhwcontrol.so.1"
   [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
 
-  sed -i "s/0f95c00fb6c0488b9424081000006448/0f94c00fb6c0488b9424081000006448/; s/ffff89c18944240c8b44240809e84409/ffff89c18944240c8b44240890904409/" "${SO_FILE}"
+  cp -vf "${SO_FILE}" "${SO_FILE}.tmp"
+  xxd -c $(xxd -p "${SO_FILE}.tmp" 2>/dev/null | wc -c) -p "${SO_FILE}.tmp" 2>/dev/null |
+    sed "s/0f95c00fb6c0488b9424081000006448/0f94c00fb6c0488b9424081000006448/; s/ffff89c18944240c8b44240809e84409/ffff89c18944240c8b44240890904409/" |
+    xxd -r -p >"${SO_FILE}" 2>/dev/null
+  rm -f "${SO_FILE}.tmp"
 
   # Create storage pool page without RAID type.
   cp -vf nvmesystem.sh /tmpRoot/usr/sbin/nvmesystem.sh
