@@ -11,6 +11,9 @@
 if [ "${1}" = "early" ]; then
   echo "Installing addon nvmesystem - ${1}"
 
+  [ ! -f "/usr/sbin/sed" ] && cp -vf sed /usr/sbin/sed
+  chmod +x /usr/sbin/sed
+
   # [CREATE][failed] Raidtool initsys
   SO_FILE="/usr/syno/bin/scemd"
   [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
@@ -32,8 +35,8 @@ elif [ "${1}" = "late" ]; then
   cp -vf nvmesystem.sh /tmpRoot/usr/sbin/nvmesystem.sh
   chmod +x /tmpRoot/usr/sbin/nvmesystem.sh
 
-  [ ! -f "/tmpRoot/usr/bin/gzip" ] && cp -vf gzip /tmpRoot/usr/bin/gzip
-  chmod +x /tmpRoot/usr/bin/gzip
+#  [ ! -f "/tmpRoot/usr/bin/gzip" ] && cp -vf gzip /tmpRoot/usr/bin/gzip
+#  chmod +x /tmpRoot/usr/bin/gzip
 
   cat > /tmpRoot/etc/systemd/system/nvmesystem.service <<'EOF'
 [Unit]
