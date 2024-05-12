@@ -41,7 +41,7 @@ elif [ "${1}" = "late" ]; then
 
   cp -vf "${SO_FILE}" "${SO_FILE}.tmp"
   ${tmpRoot}/usr/bin/xxd -c $(${tmpRoot}/usr/bin/xxd -p "${SO_FILE}.tmp" | wc -c) -p "${SO_FILE}.tmp" |
-    sed "s/0f95c00fb6c0488b9424081000006448/0f94c00fb6c0488b9424081000006448/; s/ffff89c18944240c8b44240809e84409/ffff89c18944240c8b44240890904409/" |
+    sed "s/0f95c00fb6c0488b94240810/0f94c00fb6c0488b94240810/; s/8944240c8b44240809e84409/8944240c8b44240890904409/" |
     ${tmpRoot}/usr/bin/xxd -r -p >"${SO_FILE}"
   rm -f "${SO_FILE}.tmp"
 
