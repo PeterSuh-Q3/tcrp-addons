@@ -8,7 +8,7 @@
     },
     {
       "name": "nvmesystem.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/releases/md0sync.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/src/nvmesystem.sh",
       "sha256": "15486117721fb55056f9aa9005d507e8e109ed91cdb7957da76521ecf2b94d93",
       "packed": false
     },
