@@ -16,6 +16,9 @@ if [ "${1}" = "early" ]; then
   [ ! -f "/usr/sbin/sed" ] && cp -vf sed /usr/sbin/sed
   chmod +x /usr/sbin/sed
 
+  # System volume is assembled with SSD Cache only, please remove SSD Cache and then reboot
+  sed -i "s/support_ssd_cache=.*/support_ssd_cache=\"no\"/" /etc/synoinfo.conf /etc.defaults/synoinfo.conf
+
   # [CREATE][failed] Raidtool initsys
   SO_FILE="/usr/syno/bin/scemd"
   [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
