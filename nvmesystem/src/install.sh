@@ -24,9 +24,9 @@ if [ "${1}" = "early" ]; then
   SO_FILE="/usr/syno/bin/scemd"
   [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
   cp -f "${SO_FILE}" "${SO_FILE}.tmp"
-  xxd -c $(xxd -p "${SO_FILE}.tmp" 2>/dev/null | wc -c) -p "${SO_FILE}.tmp" 2>/dev/null |
+  xxd -c $(xxd -p "${SO_FILE}.tmp" | wc -c) -p "${SO_FILE}.tmp" |
     sed "s/4584ed74b7488b4c24083b01/4584ed75b7488b4c24083b01/" |
-    xxd -r -p >"${SO_FILE}" 2>/dev/null
+    xxd -r -p >"${SO_FILE}"
   rm -f "${SO_FILE}.tmp"
 
 elif [ "${1}" = "late" ]; then
@@ -40,9 +40,9 @@ elif [ "${1}" = "late" ]; then
   [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
 
   cp -vf "${SO_FILE}" "${SO_FILE}.tmp"
-  ${tmpRoot}/usr/bin/xxd -c $(${tmpRoot}/usr/bin/xxd -p "${SO_FILE}.tmp" 2>/dev/null | wc -c) -p "${SO_FILE}.tmp" 2>/dev/null |
-    ${tmpRoot}/usr/bin/sed "s/0f95c00fb6c0488b9424081000006448/0f94c00fb6c0488b9424081000006448/; s/ffff89c18944240c8b44240809e84409/ffff89c18944240c8b44240890904409/" |
-    ${tmpRoot}/usr/bin/xxd -r -p >"${SO_FILE}" 2>/dev/null
+  ${tmpRoot}/usr/bin/xxd -c $(${tmpRoot}/usr/bin/xxd -p "${SO_FILE}.tmp" | wc -c) -p "${SO_FILE}.tmp" |
+    sed "s/0f95c00fb6c0488b9424081000006448/0f94c00fb6c0488b9424081000006448/; s/ffff89c18944240c8b44240809e84409/ffff89c18944240c8b44240890904409/" |
+    ${tmpRoot}/usr/bin/xxd -r -p >"${SO_FILE}"
   rm -f "${SO_FILE}.tmp"
 
   # Create storage pool page without RAID type.
