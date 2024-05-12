@@ -1,0 +1,27 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/src/install.sh",
+      "sha256": "af5320e41b7a3930f48c5f4f2a8afb19c05a8461d4a28b51fb880d0dc0748bc6",
+      "packed": false
+    },
+    {
+      "name": "nvmesystem.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/releases/md0sync.sh",
+      "sha256": "15486117721fb55056f9aa9005d507e8e109ed91cdb7957da76521ecf2b94d93",
+      "packed": false
+    },
+    {
+      "name": "xxd",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/releases/xxd",
+      "sha256": "8c5276692602de7b0ff53b7ac787d31538e3cd9f49234f6ccd58dd01aca59712",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_early": "install.sh",
+    "on_os_load": "install.sh"
+  }
+}
