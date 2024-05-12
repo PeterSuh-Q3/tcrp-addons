@@ -32,8 +32,4 @@ gzip -dc "${FILE_GZ}" >"${FILE_JS}"
 sed -i "s/e.portType||e.isCacheTray()/e.portType||false/" "${FILE_JS}"
 gzip -c "${FILE_JS}" >"${FILE_GZ}"
 
-xxd -c $(xxd -p "/usr/lib/libhwcontrol.so.1.bak" 2>/dev/null | wc -c) -p "/usr/lib/libhwcontrol.so.1.bak" 2>/dev/null |
-  sed "s/0f95c00fb6c0488b9424081000006448/0f94c00fb6c0488b9424081000006448/; s/ffff89c18944240c8b44240809e84409/ffff89c18944240c8b44240890904409/" |
-  xxd -r -p >"/usr/lib/libhwcontrol.so.1" 2>/dev/null
-  
 exit 0
