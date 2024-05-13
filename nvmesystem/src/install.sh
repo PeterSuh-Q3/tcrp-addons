@@ -65,4 +65,10 @@ EOF
   mkdir -vp ${tmpRoot}/etc/systemd/system/multi-user.target.wants
   ln -vsf /etc/systemd/system/nvmesystem.service ${tmpRoot}/etc/systemd/system/multi-user.target.wants/nvmesystem.service
 
+elif [ "${1}" = "rcExit" ]; then
+  echo "Installing addon nvmesystem - ${1}"
+  echo "Modifying /linuxrc.syno.impl nvmesystem - ${1}"
+  sed -i 's/WithInternal=0/WithInternal=1/' /linuxrc.syno.impl
+  cat /linuxrc.syno.impl | grep WithInternal
+
 fi
