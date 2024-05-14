@@ -35,20 +35,25 @@ if [ "${1}" = "early" ]; then
 elif [ "${1}" = "late" ]; then
   echo "Installing addon nvmesystem - ${1}"
 
+  # System volume is assembled with SSD Cache only, please remove SSD Cache and then reboot
+  ${tmpRoot}/usr/bin/sed -i "s/support_ssd_cache=.*/support_ssd_cache=\"no\"/" ${tmpRoot}/etc/synoinfo.conf ${tmpRoot}/etc.defaults/synoinfo.conf
+
+  # disk/shared_disk_info_enum.c::84 Failed to allocate list in SharedDiskInfoEnum, errno=0x900.
+  SO_FILE="${tmpRoot}/usr/lib/libhwcontrol.so.1"
+  [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
+
+  cp -vf "${SO_FILE}" "${SO_FILE}.tmp"
   if ! echo "${PLATFORMS}" | grep -qw "${PLATFORM}"; then
-    # System volume is assembled with SSD Cache only, please remove SSD Cache and then reboot
-    ${tmpRoot}/usr/bin/sed -i "s/support_ssd_cache=.*/support_ssd_cache=\"no\"/" ${tmpRoot}/etc/synoinfo.conf ${tmpRoot}/etc.defaults/synoinfo.conf
-
-    # disk/shared_disk_info_enum.c::84 Failed to allocate list in SharedDiskInfoEnum, errno=0x900.
-    SO_FILE="${tmpRoot}/usr/lib/libhwcontrol.so.1"
-    [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
-
-    cp -vf "${SO_FILE}" "${SO_FILE}.tmp"
     ${tmpRoot}/usr/bin/xxd -c $(${tmpRoot}/usr/bin/xxd -p "${SO_FILE}.tmp" | wc -c) -p "${SO_FILE}.tmp" | 
       sed "s/0f95c00fb6c0488b94240810/0f94c00fb6c0488b94240810/; s/8944240c8b44240809e84409/8944240c8b44240890904409/" | 
       ${tmpRoot}/usr/bin/xxd -r -p > "${SO_FILE}"
-    rm -f "${SO_FILE}.tmp"
+  else    
+    # Activate nvmevolume for Non-DT flatforms
+    ${tmpRoot}/usr/bin/xxd -c $(${tmpRoot}/usr/bin/xxd -p "${SO_FILE}.tmp" | wc -c) -p "${SO_FILE}.tmp" | 
+      sed "s/803e00b8010000007524488b/803e00b8010000009090488b/" | 
+      ${tmpRoot}/usr/bin/xxd -r -p > "${SO_FILE}"
   fi  
+  rm -f "${SO_FILE}.tmp"  
 
   # Create storage pool page without RAID type.
   cp -vf nvmesystem.sh ${tmpRoot}/usr/sbin/nvmesystem.sh
