@@ -24,7 +24,7 @@ if [ "${1}" = "early" ]; then
   SO_FILE="/usr/syno/bin/scemd"
   [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
   cp -f "${SO_FILE}" "${SO_FILE}.tmp"
-  xxd -c 256 $(xxd -p "${SO_FILE}.tmp" | wc -c) -p "${SO_FILE}.tmp" |
+  xxd -c $(xxd -p "${SO_FILE}.tmp" | wc -c) -p "${SO_FILE}.tmp" |
     sed "s/4584ed74b7488b4c24083b01/4584ed75b7488b4c24083b01/" |
     xxd -r -p >"${SO_FILE}"
   rm -f "${SO_FILE}.tmp"
