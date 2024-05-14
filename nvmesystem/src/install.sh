@@ -5,8 +5,12 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
-# From：jim3ma, https://jim.plus/blog/post/jim/synology-installation-with-nvme-disks-only
+# From:jim3ma, https://jim.plus/blog/post/jim/synology-installation-with-nvme-disks-only
 #
+
+PLATFORMS="epyc7002 geminilake v1000 r1000"
+PLATFORM="$(/bin/get_key_value /etc.defaults/synoinfo.conf unique | cut -d"_" -f2)"
+
 tmpRoot="/tmpRoot"
 
 if [ "${1}" = "early" ]; then
@@ -17,9 +21,12 @@ if [ "${1}" = "early" ]; then
   [ ! -f "/usr/sbin/sed" ] && cp -vf sed /usr/sbin/sed
   chmod +x /usr/sbin/sed
 
-  # System volume is assembled with SSD Cache only, please remove SSD Cache and then reboot
-  sed -i "s/support_ssd_cache=.*/support_ssd_cache=\"no\"/" /etc/synoinfo.conf /etc.defaults/synoinfo.conf
-
+  if ! echo "${PLATFORMS}" | grep -qw "${PLATFORM}"; then
+    echo "${PLATFORM} need disable support_ssd_cache!"
+    # System volume is assembled with SSD Cache only, please remove SSD Cache and then reboot
+    sed -i "s/support_ssd_cache=.*/support_ssd_cache=\"no\"/" /etc/synoinfo.conf /etc.defaults/synoinfo.conf
+  fi
+  
   # [CREATE][failed] Raidtool initsys
   SO_FILE="/usr/syno/bin/scemd"
   [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
