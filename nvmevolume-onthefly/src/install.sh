@@ -1,5 +1,10 @@
 #!/usr/bin/env ash
 
+if [ -d "/exts/nvmesystem" ]; then
+  echo "nvmevolume is not required if nvmesystem exists!, Skip process!"
+  exit 0
+fi
+
 # | status      | Hexa value                    |
 # | original    | 803e 00b8 0100 0000 7524 488b |
 # | patched     | 803e 00b8 0100 0000 9090 488b |
