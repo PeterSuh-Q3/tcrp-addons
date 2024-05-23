@@ -6,7 +6,8 @@ if [ -d "/exts/nvmesystem" ]; then
 fi
 
 # | status      | Hexa value                    |
-# | original    | 803e 00b8 0100 0000 7524 488b |
+# | original    | 803e 00b8 0100 0000 7520 488b | 7.1.X
+# | original    | 803e 00b8 0100 0000 7524 488b | 7.2.X
 # | patched     | 803e 00b8 0100 0000 9090 488b |
 
 MODEL=$(cat /proc/sys/kernel/syno_hw_version)
@@ -20,5 +21,5 @@ if [ "${1}" = "late" ]; then
     exit 0
   fi
   [ ! -f "${tmpRoot}${file}.bak" ] && cp -vf "${tmpRoot}${file}" "${tmpRoot}${file}.bak"
-  ${tmpRoot}/usr/bin/xxd -c $(${tmpRoot}/usr/bin/xxd -p "${tmpRoot}${file}.bak" | wc -c) -p "${tmpRoot}${file}.bak" | sed "s/803e00b8010000007524488b/803e00b8010000009090488b/" | ${tmpRoot}/usr/bin/xxd -r -p > "${tmpRoot}${file}"
+  ${tmpRoot}/usr/bin/xxd -c $(${tmpRoot}/usr/bin/xxd -p "${tmpRoot}${file}.bak" | wc -c) -p "${tmpRoot}${file}.bak" | sed "s/803e00b801000000752.488b/803e00b8010000009090488b/" | ${tmpRoot}/usr/bin/xxd -r -p > "${tmpRoot}${file}"
 fi
