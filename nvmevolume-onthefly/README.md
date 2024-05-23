@@ -53,8 +53,7 @@
 | DS920+       | Geminilake | DSM 7.2-64570 Update 3    | yes |
 | DS920+       | Geminilake | DSM 7.2-64570 Update 1    | yes |
 | DS920+       | Geminilake | DSM 7.2-64561             | yes |
-| DS920+       | Geminilake | **DSM 7.1.1-42962 Update 5**  | yes |
-| DS920+       | Geminilake | **DSM 7.1.1-42962 Update 4**  | **No** | Use newer DSM version |
+| DS920+       | Geminilake | **DSM 7.1.1-42962 Update 6**  | **No** | Use newer DSM version |
 | DS720+       | Geminilake | DSM 7.2.1-69057           | yes |
 | DS720+       | Geminilake | DSM 7.2-64570 Update 3    | yes |
 | DS720+       | Geminilake | DSM 7.2-64561             | yes |
