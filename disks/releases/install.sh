@@ -6,10 +6,6 @@
 # See /LICENSE for more information.
 #
 
-MODELS="DS918+ RS1619xs+ DS419+ DS1019+ DS719+ DS1621xs+"
-MODEL=$(cat /proc/sys/kernel/syno_hw_version)
-tmpRoot="/tmpRoot"
-
 # Get values in synoinfo.conf K=V file
 # 1 - key
 function _get_conf_kv() {
@@ -51,7 +47,7 @@ function _check_rootraidstatus() {
   if [ ! "$(_get_conf_kv supportraid)" = "yes" ]; then
     return 0
   fi
-  STATE=$(cat /sys/block/md0/md/array_state 2>/dev/null)
+  STATE="$(cat /sys/block/md0/md/array_state 2>/dev/null)"
   if [ $? -ne 0 ]; then
     return 1
   fi
@@ -70,7 +66,7 @@ function _atoi() {
   while [ ${IDX} -lt ${#DISKNAME} ]; do
     N=$(($(printf '%d' "'${DISKNAME:${IDX}:1}") - $(printf '%d' "'a") + 1))
     BIT=$((${#DISKNAME} - 1 - ${IDX}))
-    [ ${BIT} -eq 0 ] && NUM=$((${NUM} + ${N})) || NUM=$((${NUM} + 26 ** ${BIT} * ${N}))
+    [ ${BIT} -eq 0 ] && NUM=$((${NUM} + ${N:-0})) || NUM=$((${NUM} + 26 ** ${BIT} * ${N:-0}))
     IDX=$((${IDX} + 1))
   done
   echo $((${NUM} - 1))
@@ -113,32 +109,13 @@ function checkSynoboot() {
     /bin/mknod /dev/synoboot b $(cat /sys/block/${BOOTDISK}/dev | sed 's/:/ /') >/dev/null 2>&1
     rm -vf /dev/${BOOTDISK}
   fi
-  # sataN, nvmeXnN, mmcblkN
-  if [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p1 ]; then
-    /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p1/dev | sed 's/:/ /') >/dev/null 2>&1
-    rm -vf /dev/${BOOTDISK}p1
-  fi
-  if [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p2 ]; then
-    /bin/mknod /dev/synoboot2 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p2/dev | sed 's/:/ /') >/dev/null 2>&1
-    rm -vf /dev/${BOOTDISK}p2
-  fi
-  if [ ! -b /dev/synoboot3 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}p3 ]; then
-    /bin/mknod /dev/synoboot3 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}p3/dev | sed 's/:/ /') >/dev/null 2>&1
-    rm -vf /dev/${BOOTDISK}p3
-  fi
-  # sdN, vdN
-  if [ ! -b /dev/synoboot1 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}1 ]; then
-    /bin/mknod /dev/synoboot1 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}1/dev | sed 's/:/ /') >/dev/null 2>&1
-    rm -vf /dev/${BOOTDISK}1
-  fi
-  if [ ! -b /dev/synoboot2 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}2 ]; then
-    /bin/mknod /dev/synoboot2 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}2/dev | sed 's/:/ /') >/dev/null 2>&1
-    rm -vf /dev/${BOOTDISK}2
-  fi
-  if [ ! -b /dev/synoboot3 -a -d /sys/block/${BOOTDISK}/${BOOTDISK}3 ]; then
-    /bin/mknod /dev/synoboot3 b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}3/dev | sed 's/:/ /') >/dev/null 2>&1
-    rm -vf /dev/${BOOTDISK}3
-  fi
+  # 1,2,3 for sdN,vdN; p1,p2,p3 for sataN,nvmeXnN,mmcblkN.
+  for i in 1 2 3 p1 p2 p3; do
+    if [ ! -b /dev/synoboot${i/p/} -a -d /sys/block/${BOOTDISK}/${BOOTDISK}${i} ]; then
+      /bin/mknod /dev/synoboot${i/p/} b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}${i}/dev | sed 's/:/ /') >/dev/null 2>&1
+      rm -vf /dev/${BOOTDISK}${i}
+    fi
+  done
 }
 
 # USB ports
@@ -185,20 +162,8 @@ function dtModel() {
     echo "    compatible = \"Synology\";" >>${DEST}
     echo "    model = \"${UNIQUE}\";" >>${DEST}
     echo "    version = <0x01>;" >>${DEST}
+    echo "    power_limit = \"\";" >>${DEST}
 
-    # NVME power_limit
-    POWER_LIMIT=""
-    NVME_PORTS=$(ls /sys/class/nvme 2>/dev/null | wc -w)
-    for I in $(seq 0 $((${NVME_PORTS} - 1))); do
-      [ ${I} -eq 0 ] && POWER_LIMIT="100" || POWER_LIMIT="${POWER_LIMIT},100"
-    done
-    if [ -n "${POWER_LIMIT}" ]; then
-      echo "    power_limit = \"${POWER_LIMIT}\";" >>${DEST}
-    fi
-    if [ ${NVME_PORTS} -gt 0 ]; then
-      _set_conf_kv rd "supportnvme" "yes"
-      _set_conf_kv rd "support_m2_pool" "yes"
-    fi
     # SATA ports
     if [ "${1}" = "true" ]; then
       I=1
@@ -290,11 +255,17 @@ function dtModel() {
       # [ ${MAXDISKS} -le 2 ] && MAXDISKS=4
       [ ${MAXDISKS} -lt 26 ] && MAXDISKS=26
     fi
+    # Raidtool will read maxdisks, but when maxdisks is greater than 27, formatting error will occur 8%.
+    if ! _check_rootraidstatus && [ ${MAXDISKS} -gt 26 ]; then
+      MAXDISKS=26
+      echo "set maxdisks=26 [${MAXDISKS}]"
+    fi
     _set_conf_kv rd "maxdisks" "${MAXDISKS}"
     echo "maxdisks=${MAXDISKS}"
 
     # NVME ports
-    COUNT=1
+    COUNT=0
+    POWER_LIMIT=""
     for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
       if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
         echo "bootloader: ${P}"
@@ -302,17 +273,24 @@ function dtModel() {
       fi
       PCIEPATH=$(grep 'pciepath' ${P}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
       if [ -n "${PCIEPATH}" ]; then
+        COUNT=$((${COUNT} + 1))
         echo "    nvme_slot@${COUNT} {" >>${DEST}
         echo "        pcie_root = \"${PCIEPATH}\";" >>${DEST}
         echo "        port_type = \"ssdcache\";" >>${DEST}
         echo "    };" >>${DEST}
-        COUNT=$((${COUNT} + 1))
+        POWER_LIMIT="${POWER_LIMIT},100"
       fi
     done
+    [ -n "${POWER_LIMIT:1}" ] && sed -i "s/power_limit = .*/power_limit = \"${POWER_LIMIT:1}\";/" ${DEST} || sed -i '/power_limit/d' ${DEST}
+    if [ ${COUNT} -gt 0 ]; then
+      _set_conf_kv rd "supportnvme" "yes"
+      _set_conf_kv rd "support_m2_pool" "yes"
+    fi
 
     # USB ports
-    COUNT=1
+    COUNT=0
     for I in $(getUsbPorts); do
+      COUNT=$((${COUNT} + 1))
       echo "    usb_slot@${COUNT} {" >>${DEST}
       echo "      usb2 {" >>${DEST}
       echo "        usb_port =\"${I}\";" >>${DEST}
@@ -321,7 +299,6 @@ function dtModel() {
       echo "        usb_port =\"${I}\";" >>${DEST}
       echo "      };" >>${DEST}
       echo "    };" >>${DEST}
-      COUNT=$((${COUNT} + 1))
     done
     echo "};" >>${DEST}
   fi
@@ -335,55 +312,70 @@ function nondtModel() {
   USBPORTCFG=0
   ESATAPORTCFG=0
   INTERNALPORTCFG=0
-  HBA_NUMBER=$(($(lspci -d ::107 2>/dev/null | wc -l) + $(lspci -d ::104 2>/dev/null | wc -l) + $(lspci -d ::100 2>/dev/null | wc -l)))
 
+  hasUSB=false
+  USBMINIDX=20
+  USBMAXIDX=20
   for I in $(ls -d /sys/block/sd* 2>/dev/null); do
     IDX=$(_atoi ${I/\/sys\/block\/sd/})
-    ISUSB="$(cat ${I}/uevent 2>/dev/null | grep PHYSDEVPATH | grep usb)"
-    [ -n "${ISUSB}" ] && USBPORTCFG=$((${USBPORTCFG} | $((1 << ${IDX}))))
     [ $((${IDX} + 1)) -ge ${MAXDISKS} ] && MAXDISKS=$((${IDX} + 1))
+    ISUSB="$(cat ${I}/uevent 2>/dev/null | grep PHYSDEVPATH | grep usb)"
+    if [ -n "${ISUSB}" ]; then
+      ([ ${IDX} -lt ${USBMINIDX} ] || [ "${hasUSB}" = "false" ]) && USBMINIDX=${IDX}
+      ([ ${IDX} -gt ${USBMAXIDX} ] || [ "${hasUSB}" = "false" ]) && USBMAXIDX=${IDX}
+      hasUSB=true
+    fi
   done
+  # Define 6 is the minimum number of USB disks
+  if [ "${hasUSB}" = "false" ]; then
+    USBMINIDX=$((${MAXDISKS} - 1))
+    USBMAXIDX=$((${USBMINIDX} + 6))
+  else
+    [ $((${USBMAXIDX} - ${USBMINIDX})) -lt 6 ] && USBMAXIDX=$((${USBMINIDX} + 6))
+  fi
+  [ $((${USBMAXIDX} + 1)) -gt ${MAXDISKS} ] && MAXDISKS=$((${USBMAXIDX} + 1))
 
   if _check_post_k "rd" "maxdisks"; then
     MAXDISKS=$(($(_get_conf_kv maxdisks)))
-    echo "get maxdisks=${MAXDISKS}"
+    printf "get maxdisks=%d\n" "${MAXDISKS}"
   else
     # fix isSingleBay issue: if maxdisks is 1, there is no create button in the storage panel
     # [ ${MAXDISKS} -le 2 ] && MAXDISKS=4
-    [ ${MAXDISKS} -lt 26 ] && MAXDISKS=26
+    printf "cal maxdisks=%d\n" "${MAXDISKS}"
   fi
 
-  # Raidtool will read maxdisks, but when maxdisks is greater than 27, formatting error will occur 8%.
-  if ! _check_rootraidstatus && [ ${MAXDISKS} -gt 26 ]; then
-    MAXDISKS=26
-    echo "set maxdisks=26 [${MAXDISKS}]"
-  fi
 
   if _check_post_k "rd" "usbportcfg"; then
     USBPORTCFG=$(($(_get_conf_kv usbportcfg)))
-    echo "get usbportcfg=${USBPORTCFG}"
+    printf 'get usbportcfg=0x%.2x\n' "${USBPORTCFG}"
   else
+    USBPORTCFG=$(($((2 ** $((${USBMAXIDX} + 1)) - 1)) ^ $((2 ** $((${USBMINIDX} + 1)) - 1))))
     _set_conf_kv rd "usbportcfg" "$(printf '0x%.2x' ${USBPORTCFG})"
-    echo "set usbportcfg=${USBPORTCFG}"
+    printf 'set usbportcfg=0x%.2x\n' "${USBPORTCFG}"
   fi
   if _check_post_k "rd" "esataportcfg"; then
     ESATAPORTCFG=$(($(_get_conf_kv esataportcfg)))
-    echo "get esataportcfg=${ESATAPORTCFG}"
+    printf 'get esataportcfg=0x%.2x\n' "${ESATAPORTCFG}"
   else
     _set_conf_kv rd "esataportcfg" "$(printf "0x%.2x" ${ESATAPORTCFG})"
-    echo "set esataportcfg=${ESATAPORTCFG}"
+    printf 'set esataportcfg=0x%.2x\n' "${ESATAPORTCFG}"
   fi
   if _check_post_k "rd" "internalportcfg"; then
     INTERNALPORTCFG=$(($(_get_conf_kv internalportcfg)))
-    echo "get internalportcfg=${INTERNALPORTCFG}"
+    printf 'get internalportcfg=0x%.2x\n' "${INTERNALPORTCFG}"
   else
     INTERNALPORTCFG=$(($((2 ** ${MAXDISKS} - 1)) ^ ${USBPORTCFG} ^ ${ESATAPORTCFG}))
     _set_conf_kv rd "internalportcfg" "$(printf "0x%.2x" ${INTERNALPORTCFG})"
-    echo "set internalportcfg=${INTERNALPORTCFG}"
+    printf 'set internalportcfg=0x%.2x\n' "${INTERNALPORTCFG}"
   fi
-
+  
+  # Raidtool will read maxdisks, but when maxdisks is greater than 27, formatting error will occur 8%.
+  if ! _check_rootraidstatus && [ ${MAXDISKS} -gt 26 ]; then
+    MAXDISKS=26
+    printf "set maxdisks=26 [%d]\n" "${MAXDISKS}"
+  fi
   _set_conf_kv rd "maxdisks" "${MAXDISKS}"
-  echo "set maxdisks=${MAXDISKS}"
+  printf "set maxdisks=%d\n" "${MAXDISKS}"
 
   if [ "${1}" = "true" ]; then
     echo "TODO: no-DT's sort!!!"
@@ -427,10 +419,14 @@ if [ "${1}" = "modules" ]; then
 
 elif [ "${1}" = "patches" ]; then
   echo "Installing addon disks - ${1}"
-  BOOTDISK=""
+
   BOOTDISK_PART3=$(blkid -U "6234-C863" 2>/dev/null | sed 's/\/dev\///')
-  [ -n "${BOOTDISK_PART3}" ] && BOOTDISK=$(ls -d /sys/block/*/${BOOTDISK_PART3} 2>/dev/null | cut -d'/' -f4)
+  [ -n "${BOOTDISK_PART3_PATH}" ] && BOOTDISK_PART3_MAJORMINOR="$((0x$(stat -c '%t' "${BOOTDISK_PART3_PATH}"))):$((0x$(stat -c '%T' "${BOOTDISK_PART3_PATH}")))" || BOOTDISK_PART3_MAJORMINOR=""
+  [ -n "${BOOTDISK_PART3_MAJORMINOR}" ] && BOOTDISK_PART3="$(cat /sys/dev/block/${BOOTDISK_PART3_MAJORMINOR}/uevent 2>/dev/null | grep 'DEVNAME' | cut -d'=' -f2)" || BOOTDISK_PART3=""
+
+  [ -n "${BOOTDISK_PART3}" ] && BOOTDISK="$(ls -d /sys/block/*/${BOOTDISK_PART3} 2>/dev/null | cut -d'/' -f4)" || BOOTDISK=""
   [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
+
   echo "BOOTDISK=${BOOTDISK}"
   echo "BOOTDISK_PHYSDEVPATH=${BOOTDISK_PHYSDEVPATH}"
 
@@ -453,13 +449,17 @@ elif [ "${1}" = "patches" ]; then
     fi
   done
   [ -f /etc/nvmePorts ] && cat /etc/nvmePorts
-  
+
   checkSynoboot
 
   [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "${2}" || nondtModel "${2}"
 
 elif [ "${1}" = "late" ]; then
   echo "Installing addon disks - ${1}"
+
+  MODELS="DS918+ RS1619xs+ DS419+ DS1019+ DS719+ DS1621xs+"
+  MODEL=$(cat /proc/sys/kernel/syno_hw_version)
+  tmpRoot="/tmpRoot"
 
   # NVMe cache handling for models using libsynonvme.so.1
   if echo ${MODELS} | grep -q ${MODEL}; then
@@ -511,6 +511,7 @@ elif [ "${1}" = "late" ]; then
   if [ "$(_get_conf_kv supportportmappingv2)" = "yes" ]; then
     echo "Copying /etc.defaults/model.dtb"
     # copy file
+    cp -vf /usr/bin/dtc /tmpRoot/usr/bin/dtc
     cp -vf /etc/model.dtb /tmpRoot/etc/model.dtb
     cp -vf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
   else
