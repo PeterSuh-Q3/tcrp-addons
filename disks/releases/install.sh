@@ -382,11 +382,6 @@ function nondtModel() {
     echo "set internalportcfg=${INTERNALPORTCFG}"
   fi
 
-  # Raidtool will read maxdisks, but when maxdisks is greater than 27, formatting error will occur 8%.
-  if ! _check_rootraidstatus && [ ${MAXDISKS} -gt 26 ]; then
-    MAXDISKS=26
-    printf "set maxdisks=26 [%d]\n" "${MAXDISKS}"
-  fi
   _set_conf_kv rd "maxdisks" "${MAXDISKS}"
   echo "set maxdisks=${MAXDISKS}"
 
