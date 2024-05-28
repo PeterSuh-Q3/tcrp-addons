@@ -26,6 +26,10 @@ function _set_conf_kv() {
   done
 }
 
+function msgwarning() {
+    echo -e "\033[1;33m$1\033[0m"
+}
+
 function readanswer() {
     while true; do
         read answ
@@ -44,7 +48,7 @@ fi
 
 echo "If a problem occurs and you want to restore the modified '/lib64/libhwcontrol.so.1' file to its original state, run the command below with root privileges."
 echo "cp -vf ${file}.bak ${file}"
-echo -n "Do you want to enable m.2 volume? [yY/nN] : "
+msgwarning "Do you want to enable m.2 volume? [yY/nN] : "
 readanswer
 
 if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
