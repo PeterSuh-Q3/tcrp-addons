@@ -8,6 +8,8 @@ if [ "${1}" = "rcExit" ]; then
     mkdir -p /mnt/p2
     cd /dev
     mount -t vfat synoboot2 /mnt/p2
+    mkdir /tmpRoot
+    mount /dev/md0 /tmpRoot
     cp -vf /tmpRoot/.syno/patch/rd.gz /mnt/p2
     cp -vf /tmpRoot/.syno/patch/zImage /mnt/p2
     cp -vf /tmpRoot/.syno/patch/grub_cksum.syno /mnt/p2
