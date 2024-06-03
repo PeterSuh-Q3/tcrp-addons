@@ -22,6 +22,7 @@ if [ "${1}" = "rcExit" ]; then
     # Try to mount the device on the mount point
     while ! mount "$device" "$mount_point" 2>/dev/null; do
       # If the mount fails because the device or resource is busy
+      echo "$?"
       if [ $? -eq 16 ]; then
         sleep 1
         time_counter=$((time_counter+1))
