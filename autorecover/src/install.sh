@@ -14,6 +14,6 @@ if [ "${1}" = "rcExit" ]; then
     cp -vf /tmpRoot/.syno/patch/zImage /mnt/p2
     cp -vf /tmpRoot/.syno/patch/grub_cksum.syno /mnt/p2
     echo "The copy process is complete, Reboot Now..."
-    reboot
+    #reboot
   fi
 fi
