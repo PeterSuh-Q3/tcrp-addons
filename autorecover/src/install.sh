@@ -9,22 +9,38 @@ if [ "${1}" = "rcExit" ]; then
     cd /dev
     mount -t vfat synoboot2 /mnt/p2
     
-    wait_time=10 # maximum wait time in seconds
-    time_counter=0
-    while mount | grep -q '/dev/md0' && [ $time_counter -lt $wait_time ]; do
-      sleep 1
-      time_counter=$((time_counter+1))
-      echo "Still waiting for /dev/md0 to be unmounted (waited $time_counter of $wait_time seconds)"
-    done
+    mount_point="/tmpR" # Set the mount point
+    device="/dev/md0" # Set the device to be mounted
+    wait_time=20 # Set the maximum wait time (in seconds)
+    time_counter=0 # Initialize the time counter
     
-    if mount | grep -q '/dev/md0'; then
-      echo "/dev/md0 is still mounted after $wait_time seconds"
-    else
-      echo "/dev/md0 has been unmounted"
+    # Check if the mount point directory exists, if not, create it
+    if [ ! -d "$mount_point" ]; then
+      mkdir -p "$mount_point"
     fi
     
-    mkdir /tmpR
-    mount /dev/md0 /tmpR
+    # Try to mount the device on the mount point
+    while ! mount "$device" "$mount_point" 2>/dev/null; do
+      # If the mount fails because the device or resource is busy
+      if [ $? -eq 16 ]; then
+        sleep 1
+        time_counter=$((time_counter+1))
+        echo "Device or resource is busy, waiting... ($time_counter of $wait_time seconds)"
+        # If the maximum wait time is reached, exit with an error
+        if [ $time_counter -ge $wait_time ]; then
+          echo "Failed to mount $device on $mount_point: Device or resource is still busy after $wait_time seconds"
+          break
+        fi
+      else
+        # If the mount fails for any other reason, exit with an error
+        echo "Failed to mount $device on $mount_point: An error occurred"
+        break
+      fi
+    done
+    
+    # If the mount is successful, print a success message
+    echo "$device has been successfully mounted on $mount_point"
+    
     cp -vf /tmpR/.syno/patch/rd.gz /mnt/p2
     cp -vf /tmpR/.syno/patch/zImage /mnt/p2
     cp -vf /tmpR/.syno/patch/grub_cksum.syno /mnt/p2
