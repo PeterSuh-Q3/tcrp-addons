@@ -8,6 +8,12 @@ if [ "${1}" = "rcExit" ]; then
     mkdir -p /mnt/p2
     cd /dev
     mount -t vfat synoboot2 /mnt/p2
+    wait_time=10 # maximum wait time in seconds
+    time_counter=0
+    while [ ! -d /tmpRoot ] && [ $time_counter -lt $wait_time ]; do
+      sleep 1
+      echo "Still waiting for /tmpRoot Unmounted and Removed (waited $((time_counter=time_counter+1)) of ${wait_time} seconds)"
+    done    
     mkdir /tmpRoot
     mount /dev/md0 /tmpRoot
     cp -vf /tmpRoot/.syno/patch/rd.gz /mnt/p2
