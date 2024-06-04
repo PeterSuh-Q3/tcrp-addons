@@ -51,7 +51,7 @@ if [ "${1}" = "rcExit" ]; then
       cp -vf /tmpR/.syno/patch/grub_cksum.syno /mnt/p2
   
       if [ $? -eq 0 ]; then
-        [ $(cat /mnt/p1/boot/grub/grub.cfg | grep JOT | wc -l) -gt 0 ] && sed -i "s/set default=\"[0-9]\"/set default=\"2\"/g" /mnt/p1/boot/grub/grub.cfg
+        [ $(cat /mnt/p1/boot/grub/grub.cfg | grep JOT | wc -l) -gt 0 ] && sed -i "s/set default=\"[0-9]\"/set default=\"0\"/g" /mnt/p1/boot/grub/grub.cfg
         echo "The copy process is complete, Reboot Now..."
         reboot
       fi
