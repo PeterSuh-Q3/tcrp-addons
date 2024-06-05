@@ -11,6 +11,10 @@ if [ "${1}" = "rcExit" ]; then
     cd /dev
     mount -t vfat synoboot1 /mnt/p1
     mount -t vfat synoboot2 /mnt/p2
+    if [ $( mount | grep /mnt/p2 | wc -l ) -eq 0 ]; then
+      echo "Failed to mount /dev/synoboot2 on /mnt/p2 : An error occurred"
+      exit 0
+    fi
     
     mount_point="/tmpR" # Set the mount point
     device="/dev/md0" # Set the device to be mounted
@@ -33,12 +37,8 @@ if [ "${1}" = "rcExit" ]; then
         # If the maximum wait time is reached, exit with an error
         if [ $time_counter -ge $wait_time ]; then
           echo "Failed to mount $device on $mount_point: Device or resource is still busy after $wait_time seconds"
-          break
+          exit 0
         fi
-      else
-        # If the mount fails for any other reason, exit with an error
-        echo "Failed to mount $device on $mount_point: An error occurred"
-        break
       fi
     done
 
