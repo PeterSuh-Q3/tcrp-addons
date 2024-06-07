@@ -72,6 +72,7 @@ function checkSynoboot() {
         echo "synoboot3 Not Found, Make symbolic link"
         ln -s /dev/${BOOTDISK}${p3} /dev/synoboot3
       fi
+      rm -vf /dev/${BOOTDISK}
       
     done
 
