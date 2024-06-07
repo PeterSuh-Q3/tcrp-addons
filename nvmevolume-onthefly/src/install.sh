@@ -16,7 +16,7 @@ file="/lib64/libhwcontrol.so.1"
 
 if [ "${1}" = "late" ]; then
   echo "nvmevolume-onthefly - ${1}"
-  if [ "${MODEL}" = "DS3622xs+" ] || [ "${MODEL}" = "DS1019+" ]; then
+  if [ "${MODEL}" = "DS3622xs+" ]; then
     echo "nvmevolume-onthefly - ${1}, Skip DS3622xs+ (Not Supported)"
     exit 0
   fi
