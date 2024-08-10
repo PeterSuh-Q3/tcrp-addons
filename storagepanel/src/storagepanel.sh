@@ -70,6 +70,9 @@ if [ "${1}" = "-r" ]; then
   exit
 fi
 
+HDD_BAY="${1:-RACK_24_Bay}"
+SSD_BAY="${2:-1X8}"
+
 HDD_BAY="${1}"
 if [ -n "${1}" ] && ! echo "${HDD_BAY_LIST[@]}" | grep -wq "${1}"; then
   echo "parameter 1 error"
