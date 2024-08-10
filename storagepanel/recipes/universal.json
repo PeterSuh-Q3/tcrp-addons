@@ -3,13 +3,13 @@
     {
       "name": "storagepanel.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/src/storagepanel.sh",
-      "sha256": "a1e5104492c3494c2f8dc3356b62d4788b82adfa1b098782b0e871b12c74032a",
+      "sha256": "f4f0798997792d0df1e162e9fad157e252d9f43f82ee43ae91fc92810b5c8eee",
       "packed": false
     },
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/storagepanel/src/install.sh",
-      "sha256": "c524aeed07f8aa91a97735d31cf0c5014e67900ed60f643e929e0cee1b8cb060",
+      "sha256": "dff92d99dfaef54b9365015672cce7081ae0a4b82477502d88582f99eaf379b4",
       "packed": false
     }
   ],
