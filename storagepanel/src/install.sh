@@ -35,8 +35,8 @@ if [ "${1}" = "late" ]; then
 HDD_BAY="RACK_60_Bay"
 SSD_BAY="1X4"
 
-_UNIQUE="$(/tmpRoot/bin/get_key_value /etc.defaults/synoinfo.conf unique)"
-_BUILD="$(/tmpRoot/bin/get_key_value /etc.defaults/VERSION buildnumber)"
+_UNIQUE="$(uname -u)"
+_BUILD="$(uname -v | cut -d ' ' -f 1 | grep -o '[0-9]*')"
 
 echo "_UNIQUE=${_UNIQUE}"
 echo "_BUILD=${_BUILD}"
