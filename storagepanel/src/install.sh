@@ -35,13 +35,16 @@ if [ "${1}" = "late" ]; then
 HDD_BAY="RACK_60_Bay"
 SSD_BAY="1X4"
 
-_UNIQUE="$(/bin/get_key_value /etc.defaults/synoinfo.conf unique)"
-_BUILD="$(/bin/get_key_value /etc.defaults/VERSION buildnumber)"
+_UNIQUE="$(/tmpRoot/bin/get_key_value /etc.defaults/synoinfo.conf unique)"
+_BUILD="$(/tmpRoot/bin/get_key_value /etc.defaults/VERSION buildnumber)"
+
+echo "_UNIQUE=${_UNIQUE}"
+echo "_BUILD=${_BUILD}"
 
 if [ ${_BUILD:-64570} -gt 64570 ]; then
-  FILE_JS="/usr/local/packages/@appstore/StorageManager/ui/storage_panel.js"
+  FILE_JS="/tmpRoot/usr/local/packages/@appstore/StorageManager/ui/storage_panel.js"
 else
-  FILE_JS="/usr/syno/synoman/webman/modules/StorageManager/storage_panel.js"
+  FILE_JS="/tmpRoot/usr/syno/synoman/webman/modules/StorageManager/storage_panel.js"
 fi
 FILE_GZ="${FILE_JS}.gz"
 [ -f "${FILE_JS}" -a ! -f "${FILE_GZ}" ] && gzip -c "${FILE_JS}" >"${FILE_GZ}"
