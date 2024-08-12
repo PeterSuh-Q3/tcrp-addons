@@ -16,10 +16,10 @@ if [ "${1}" = "rcExit" ]; then
       mount -t vfat synoboot1 /mnt/p1
       mount -t vfat synoboot2 /mnt/p2
     else
-      BOOTDISK=$(cat /tmp/bootdisk)
+      BOOTDISK=$(cat /.bootdisk)
       echo "BOOTDISK is ${BOOTDISK}"
-      P1=$(cat /tmp/p1)
-      P2=$(cat /tmp/p2)
+      P1=$(cat /.p1)
+      P2=$(cat /.p2)
       mount -t vfat ${BOOTDISK}${p1} /mnt/p1
       mount -t vfat ${BOOTDISK}${p2} /mnt/p2
     fi
