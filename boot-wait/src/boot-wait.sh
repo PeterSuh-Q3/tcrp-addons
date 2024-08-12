@@ -73,10 +73,11 @@ function checkSynoboot() {
         ln -s /dev/${BOOTDISK}${p3} /dev/synoboot3
       fi
       rm -vf /dev/${BOOTDISK}
-      echo ${BOOTDISK} > /tmp/bootdisk
-      echo ${p1} > /tmp/p1
-      echo ${p2} > /tmp/p2
-      echo ${p3} > /tmp/p3
+      touch /.bootdisk
+      echo "${BOOTDISK}" > /.bootdisk
+      echo "${p1}" > /.p1
+      echo "${p2}" > /.p2
+      echo "${p3}" > /.p3
     done
 
 }
