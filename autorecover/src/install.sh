@@ -56,7 +56,9 @@ if [ "${1}" = "rcExit" ]; then
     mkdir -p /mnt/p2    
     cd /dev
 
-    if [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
+    file_type=$(ls -l /dev/synoboot1 | cut -c 1)
+
+    if [ "$file_type" == "b" ]; then
       mount -t vfat synoboot1 /mnt/p1
       mount -t vfat synoboot2 /mnt/p2
     else
