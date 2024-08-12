@@ -1,5 +1,51 @@
 #!/usr/bin/env ash
 
+# synoboot
+function checkSynoboot() {
+
+    for devtype in $(fdisk -l | grep "Disk /dev/" | cut -c 11-12 ); do
+
+      if [ "${devtype}" = "sd" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-8 )"
+        echo "Found USB or HDD Disk loader!"
+      elif [ "${devtype}" = "us" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-9 )"
+        echo "Found USB Disk loader!"
+      elif [ "${devtype}" = "sa" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-10 )"
+        echo "Found Sata Disk loader!"
+      elif [ "${devtype}" = "nv" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-12 )"
+        echo "Found NVMe Disk loader!"
+      elif [ "${devtype}" = "mm" ]; then
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-13 )"
+        echo "Found MMC Disk loader!"
+      else
+        BOOTDISK=""
+        echo "BOOTDISK value is empty or USB Stick Found!"
+        continue
+      fi
+
+      if [ $(fdisk -l | grep "83 Linux" | grep "/dev/${BOOTDISK}" | wc -l ) -eq 3 ]; then
+        echo "USB Stick or vmdk bootloader disk Found!"
+      else
+        continue
+      fi
+
+      if [ "${devtype}" = "sd" ]; then
+        p1="1"
+        p2="2"
+        p3="3"
+      else
+        p1="p1"
+        p2="p2"
+        p3="p3"
+      fi
+      
+    done
+
+}
+
 if [ "${1}" = "rcExit" ]; then
   echo "autorecover - ${1}"
   if [ $(cat /var/log/linuxrc.syno.log | grep smallfixnumber | wc -l) -gt 0 ] && [ $(cat /var/log/junior_reason | grep -e error -e [7] | wc -l) -gt 0 ]; then
@@ -9,8 +55,16 @@ if [ "${1}" = "rcExit" ]; then
     mkdir -p /mnt/p1
     mkdir -p /mnt/p2    
     cd /dev
-    mount -t vfat synoboot1 /mnt/p1
-    mount -t vfat synoboot2 /mnt/p2
+
+    if [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
+      mount -t vfat synoboot1 /mnt/p1
+      mount -t vfat synoboot2 /mnt/p2
+    else
+      checkSynoboot
+      mount -t vfat ${BOOTDISK}${p1} /mnt/p1
+      mount -t vfat ${BOOTDISK}${p2} /mnt/p2
+    fi
+    
     if [ $( mount | grep /mnt/p2 | wc -l ) -eq 0 ]; then
       echo "Failed to mount /dev/synoboot2 on /mnt/p2 : An error occurred"
       exit 0
