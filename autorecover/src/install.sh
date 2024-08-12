@@ -20,8 +20,8 @@ if [ "${1}" = "rcExit" ]; then
       echo "BOOTDISK is ${BOOTDISK}"
       P1=$(cat /.p1)
       P2=$(cat /.p2)
-      mount -t vfat ${BOOTDISK}${p1} /mnt/p1
-      mount -t vfat ${BOOTDISK}${p2} /mnt/p2
+      mount -t vfat ${BOOTDISK}${P1} /mnt/p1
+      mount -t vfat ${BOOTDISK}${P2} /mnt/p2
     fi
     
     if [ $( mount | grep /mnt/p2 | wc -l ) -eq 0 ]; then
