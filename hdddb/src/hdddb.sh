@@ -14,21 +14,13 @@
 #  or
 # sudo -i /volume1/scripts/syno_hdd_db.sh -force -showedits
 #--------------------------------------------------------------------------------------------------
- 
-# CHANGES
-# Changed disabling memory compatibility for older models. Issue #272
-#
-# Hard coded /usr/syno/bin/<command> for Synology commands (to prevent $PATH issues).
-#
-# Now enables creating storage pools in Storage Manager for M.2 drives in PCIe adaptor cards.
-#  - E10M20-T1, M2D20, M2D18 and M2D17
-#
-# Added new vendor ids for Apacer, aigo, Lexar and Transcend NVMe drives.
-#
-# Now includes syno_hdd_vendor_ids.txt so users can add their NVMe drive's vendor id.
-#   - syno_hdd_vendor_ids.txt needs to be in the same folder as syno_hdd_db.sh
-#
-# Now warns if script is located on an M.2 volume.
+# https://smarthdd.com/database/
+
+# RECENT CHANGES
+# Make DSM read md0 and md1 from SSD drive(s) if internal SSD and HDD are installed.
+# https://github.com/007revad/Synology_HDD_db/issues/318
+# https://www.techspark.de/speed-up-synology-dsm-with-hdd-ssd/
+# https://raid.wiki.kernel.org/index.php/Write-mostly
 
 # TODO
 # Enable SMART Attributes button on Storage Manager
@@ -37,7 +29,7 @@
 # /var/packages/StorageManager/target/ui/storage_panel.js
 
 
-scriptver="v3.5.88"
+scriptver="v3.5.101"
 script=Synology_HDD_db
 repo="007revad/Synology_HDD_db"
 scriptname=syno_hdd_db
@@ -50,7 +42,7 @@ if [ ! "$(basename "$BASH")" = bash ]; then
 fi
 
 # Check script is running on a Synology NAS
-if ! /usr/bin/uname -a | grep -i synology >/dev/null; then
+if ! /usr/bin/uname -a | grep -q -i synology; then
     echo "This script is NOT running on a Synology NAS!"
     echo "Copy the script to a folder on the Synology"
     echo "and run it from there."
@@ -79,8 +71,18 @@ Options:
   -w, --wdda            Disable WD Device Analytics to prevent DSM showing
                         a false warning for WD drives that are 3 years old
                           DSM 7.2.1 already has WDDA disabled
+  -p, --pcie            Enable creating volumes on M2 in unknown PCIe adaptor
   -e, --email           Disable colored text in output scheduler emails
-      --restore         Undo all changes made by the script
+  -S, --ssd=DRIVE       Enable write_mostly on internal HDDs so DSM primary 
+                        reads from internal SSDs or your specified drives
+                          -S automatically sets internal SSDs as DSM preferred
+                          --ssd=DRIVE requires the fast drive(s) as argument,
+                          or restore as the argument to reset drives to default
+                          --ssd=sata1 or --ssd=sata1,sata2 or --ssd=sda etc
+                          --ssd=restore
+      --restore         Undo all changes made by the script (except -S --ssd)
+                        To restore all changes including write_mostly use
+                          --restore --ssd=restore
       --autoupdate=AGE  Auto update script (useful when script is scheduled)
                           AGE is how many days old a release must be before
                           auto-updating. AGE must be a number: 0 or greater
@@ -105,20 +107,42 @@ EOF
 # Save options used
 args=("$@")
 
-
 # Check for flags with getopt
-if options="$(getopt -o abcdefghijklmnopqrstuvwxyz0123456789 -l \
-    restore,showedits,noupdate,nodbupdate,m2,force,incompatible,ram,wdda,email,autoupdate:,help,version,debug \
+if options="$(getopt -o Sabcdefghijklmnopqrstuvwxyz0123456789 -l \
+    ssd:,restore,showedits,noupdate,nodbupdate,m2,force,incompatible,ram,pcie,wdda,email,autoupdate:,help,version,debug \
     -- "$@")"; then
     eval set -- "$options"
     while true; do
-        case "${1,,}" in
+        case "$1" in
+            -d|--debug)         # Show and log debug info
+                debug=yes
+                ;;
+            -e|--email)         # Disable colour text in task scheduler emails
+                color=no
+                ;;
             --restore)          # Restore changes from backups
                 restore=yes
-                break
+                if $(echo "${args[@]}" | grep -q -- '--ssd=restore'); then
+                    ssd_restore=yes
+                fi
+                #break
                 ;;
             -s|--showedits)     # Show edits done to host db file
                 showedits=yes
+                ;;
+            -S)                 # Enable writemostly for md0 and md1
+                ssd=yes
+                ;;
+            --ssd)              # Enable writemostly for md0 and md1
+                ssd=yes
+                if [[ ${2,,} == "restore" ]]; then
+                    ssd_restore=yes
+                else
+                    IFS=$','
+                    for d in $2; do ssds_writemostly+=("${d,,}"); done
+                    unset IFS
+                fi
+                shift
                 ;;
             -n|--nodbupdate|--noupdate)  # Disable disk compatibility db updates
                 nodbupdate=yes
@@ -138,8 +162,8 @@ if options="$(getopt -o abcdefghijklmnopqrstuvwxyz0123456789 -l \
             -w|--wdda)          # Disable "support_wdda"
                 wdda=no
                 ;;
-            -e|--email)         # Disable colour text in task scheduler emails
-                color=no
+            -p|--pcie)          # Enable creating volumes on M2 in unknown PCIe adaptor
+                forcepci=yes
                 ;;
             --autoupdate)       # Auto update script
                 autoupdate=yes
@@ -155,9 +179,6 @@ if options="$(getopt -o abcdefghijklmnopqrstuvwxyz0123456789 -l \
                 ;;
             -v|--version)       # Show script version
                 scriptversion
-                ;;
-            -d|--debug)         # Show and log debug info
-                debug=yes
                 ;;
             --)
                 shift
@@ -344,8 +365,9 @@ echo "Running from: ${scriptpath}/$scriptfile"
 scriptvol=$(echo "$scriptpath" | cut -d"/" -f2)
 vg=$(lvdisplay | grep /volume_"${scriptvol#volume}" | cut -d"/" -f3)
 md=$(pvdisplay | grep -B 1 -E '[ ]'"$vg" | grep /dev/ | cut -d"/" -f3)
-if cat /proc/mdstat | grep "$md" | grep nvme >/dev/null; then
-    echo -e "${Yellow}WARNING${Off} Don't store this script on an NVMe volume!"
+# shellcheck disable=SC2002  # Don't warn about "Useless cat"
+if cat /proc/mdstat | grep "$md" | grep -q nvme; then
+    echo -e "\n${Yellow}WARNING${Off} Don't store this script on an NVMe volume!"
 fi
 
 
@@ -371,7 +393,7 @@ cleanup_tmp(){
     fi
 
     # Add warning to DSM log
-    if [[ -z $cleanup_err ]]; then
+    if [[ $cleanup_err ]]; then
         syslog_set warn "$script update failed to delete tmp files"
     fi
 }
@@ -535,9 +557,55 @@ adapter_cards="/usr/syno/etc.defaults/adapter_cards.conf"
 adapter_cards2="/usr/syno/etc/adapter_cards.conf"
 dbpath=/var/lib/disk-compatibility/
 synoinfo="/etc.defaults/synoinfo.conf"
-strgmgr="/var/packages/StorageManager/target/ui/storage_panel.js"
+
+if [[ $buildnumber -gt 64570 ]]; then
+    # DSM 7.2.1 and later
+    #strgmgr="/var/packages/StorageManager/target/ui/storage_panel.js"
+    strgmgr="/usr/local/packages/@appstore/StorageManager/ui/storage_panel.js"
+elif [[ $buildnumber -ge 64561 ]]; then
+    # DSM 7.2
+    strgmgr="/usr/syno/synoman/webman/modules/StorageManager/storage_panel.js"
+fi
 vidfile="/usr/syno/etc.defaults/pci_vendor_ids.conf"
 vidfile2="/usr/syno/etc/pci_vendor_ids.conf"
+
+
+set_writemostly(){ 
+    # $1 is writemostly or -writemostly
+    # $2 is sata1 or sas1 or sda etc
+    local model
+    # Show drive model
+    model="$(cat /sys/block/"${2}"/device/model | xargs)"
+    echo -e "${Yellow}$model${Off}"
+
+    if [[ ${1::2} == "sd" ]]; then
+        # sda etc
+        # md0 DSM system partition
+        echo "$1" > /sys/block/md0/md/dev-"${2}"1/state
+        # Show setting
+        echo -n "  $2 DSM partition:  "
+        cat /sys/block/md0/md/dev-"${2}"1/state
+
+        # md1 DSM swap partition
+        echo "$1" > /sys/block/md1/md/dev-"${2}"2/state
+        # Show setting
+        echo -n "  $2 Swap partition: "
+        cat /sys/block/md1/md/dev-"${2}"2/state
+    else
+        # sata1 or sas1 etc
+        # md0 DSM system partition
+        echo "$1" > /sys/block/md0/md/dev-"${2}"p1/state
+        # Show setting
+        echo -n "  $2 DSM partition:  "
+        cat /sys/block/md0/md/dev-"${2}"p1/state
+
+        # md1 DSM swap partition
+        echo "$1" > /sys/block/md1/md/dev-"${2}"p2/state
+        # Show setting
+        echo -n "  $2 Swap partition: "
+        cat /sys/block/md1/md/dev-"${2}"p2/state
+    fi
+}
 
 
 #------------------------------------------------------------------------------
@@ -616,7 +684,13 @@ if [[ $restore == "yes" ]]; then
         fi
 
         # Restore storage_panel.js from backup
-        strgmgrver="$(/usr/syno/bin/synopkg version StorageManager)"
+        if [[ $buildnumber -gt 64570 ]]; then
+            # DSM 7.2.1 and later
+            strgmgrver="$(/usr/syno/bin/synopkg version StorageManager)"
+        elif [[ $buildnumber -ge 64561 ]]; then
+            # DSM 7.2
+            strgmgrver="${buildnumber}${smallfixnumber}"
+        fi
         if [[ -f "${strgmgr}.$strgmgrver" ]]; then
             if cp -p "${strgmgr}.$strgmgrver" "$strgmgr"; then
                 echo "Restored $(basename -- "$strgmgr")"
@@ -655,17 +729,44 @@ if [[ $restore == "yes" ]]; then
         # Update .db files from Synology
         /usr/syno/bin/syno_disk_db_update --update
 
-        # Enable SynoMemCheck.service for DVA models
-        if [[ ${model:0:3} == "dva" ]]; then
-            memcheck="/usr/lib/systemd/system/SynoMemCheck.service"
-            if [[ $(/usr/syno/bin/synogetkeyvalue "$memcheck" ExecStart) == "/bin/true" ]]; then
-                /usr/syno/bin/synosetkeyvalue "$memcheck" ExecStart /usr/syno/bin/syno_mem_check
-            fi
+        # Enable SynoMemCheck.service if disabled
+        memcheck="/usr/lib/systemd/system/SynoMemCheck.service"
+        if [[ $(/usr/syno/bin/synogetkeyvalue "$memcheck" ExecStart) == "/bin/true" ]]; then
+            /usr/syno/bin/synosetkeyvalue "$memcheck" ExecStart /usr/syno/bin/syno_mem_check
         fi
 
         if [[ -z $restoreerr ]]; then
             echo -e "\nRestore successful."
         fi
+
+        # Restore writemostly if set
+        if [[ $ssd_restore == "yes" ]]; then
+            # Get array of internal drives
+            readarray -t internal_drives < <(synodisk --enum -t internal | grep 'Disk path' | cut -d"/" -f3)
+
+            # Restore all internal drives to just in_sync
+            echo -e "\nRestoring internal drive's state"
+            for idrive in "${internal_drives[@]}"; do
+                md0="/sys/block/md0/md/dev-"
+                md1="/sys/block/md1/md/dev-"
+                if [[ ${idrive::2} == "sd" ]]; then
+                    # sda etc
+                    # Check DSM system and swap partitions
+                    if grep -q "write_mostly" "${md0}$idrive"1/state ||\
+                        grep -q "write_mostly" "${md1}$idrive"2/state; then 
+                        set_writemostly -writemostly "$idrive"
+                    fi
+                else
+                    # sata1 or sas1 etc
+                    # Check DSM system and swap partitions
+                    if grep -q "write_mostly" "${md0}$idrive"p1/state ||\
+                        grep -q "write_mostly" "${md1}$idrive"p2/state; then 
+                        set_writemostly -writemostly "$idrive"
+                    fi
+                fi
+            done
+        fi
+
     else
         echo "Nothing to restore."
     fi
@@ -729,7 +830,7 @@ set_vendor(){
     if [[ $vendor ]]; then
         # DS1817+, DS1517+, RS1219+, RS818+ don't have pci_vendor_ids.conf
         if [[ "$vidfile" ]]; then
-            if ! grep "$vid" "$vidfile" >/dev/null; then
+            if ! grep -q "$vid" "$vidfile"; then
                 /usr/syno/bin/synosetkeyvalue "$vidfile" "${vid,,}" "$vendor"
                 val=$(/usr/syno/bin/synogetkeyvalue "$vidfile" "${vid,,}")
                 if [[ $val == "${vendor}" ]]; then
@@ -738,9 +839,21 @@ set_vendor(){
                     echo -e "\nFailed to add $vendor to pci_vendor_ids!" >&2
                 fi
             fi
-            if ! grep "$vid" "$vidfile2" >/dev/null; then
+            if ! grep -q "$vid" "$vidfile2"; then
                 /usr/syno/bin/synosetkeyvalue "$vidfile2" "${vid,,}" "$vendor"
             fi
+
+            # Add leading 0 to short vid (change 0x5dc to 0x05dc)
+            if [[ ${#vid} -eq "5" ]]; then
+                vid="0x0${vid: -3}"
+            fi
+            if ! grep -q "$vid" "$vidfile"; then
+                /usr/syno/bin/synosetkeyvalue "$vidfile" "${vid,,}" "$vendor"
+            fi
+            if ! grep -q "$vid" "$vidfile2"; then
+                /usr/syno/bin/synosetkeyvalue "$vidfile2" "${vid,,}" "$vendor"
+            fi
+
         fi
     fi
 }
@@ -781,6 +894,15 @@ fixdrivemodel(){
     fi
 }
 
+get_size_gb(){ 
+    # $1 is /sys/block/sata1 or /sys/block/nvme0n1 etc
+    local float
+    local int
+    float=$(synodisk --info /dev/"$(basename -- "$1")" | grep 'Total capacity' | awk '{print $4 * 1.0737}')
+    int="${float%.*}"
+    echo "$int"
+}
+
 getdriveinfo(){ 
     # $1 is /sys/block/sata1 etc
 
@@ -799,13 +921,28 @@ getdriveinfo(){
         #fwrev=$(cat "$1/device/rev")
         #fwrev=$(printf "%s" "$fwrev" | xargs)  # trim leading and trailing white space
 
-        device="/dev/$(basename -- "$1")"
+        device=/dev/"$(basename -- "$1")"
         #fwrev=$(/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $2}')      # GitHub issue #86, 87
         # Account for SSD drives with spaces in their model name/number
         fwrev=$(/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $(NF-3)}')  # GitHub issue #86, 87
 
+        # Get M.2 SATA SSD firmware version
+        if [[ -z $fwrev ]]; then
+            dev=/dev/"$(basename -- "$1")"
+            fwrev=$(smartctl -a -d sat -T permissive "$dev" | grep -i firmware | awk '{print $NF}')
+        fi
+
+        # Get drive GB size
+        size_gb=$(get_size_gb "$1")
+
         if [[ $hdmodel ]] && [[ $fwrev ]]; then
-            hdlist+=("${hdmodel},${fwrev}")
+            if /usr/syno/bin/synodisk --enum -t cache | grep -q /dev/"$(basename -- "$1")"; then
+                # Is SATA M.2 SSD
+                nvmelist+=("${hdmodel},${fwrev},${size_gb}")
+            else
+                hdlist+=("${hdmodel},${fwrev},${size_gb}")
+            fi
+            drivelist+=("${hdmodel}")
         fi
     fi
 }
@@ -821,8 +958,12 @@ getm2info(){
     fi
     nvmefw=$(printf "%s" "$nvmefw" | xargs)  # trim leading and trailing white space
 
+    # Get drive GB size
+    size_gb=$(get_size_gb "$1")
+
     if [[ $nvmemodel ]] && [[ $nvmefw ]]; then
-        nvmelist+=("${nvmemodel},${nvmefw}")
+        nvmelist+=("${nvmemodel},${nvmefw},${size_gb}")
+        drivelist+=("${nvmemodel}")
     fi
 }
 
@@ -854,9 +995,37 @@ getcardmodel(){
 }
 
 m2_pool_support(){ 
-    # M.2 drives in M2 adaptor card do not support storage pools
+    # M.2 drives in M2 adaptor card do not officially support storage pools
     if [[ -f /run/synostorage/disks/"$(basename -- "$1")"/m2_pool_support ]]; then  # GitHub issue #86, 87
         echo -n 1 > /run/synostorage/disks/"$(basename -- "$1")"/m2_pool_support
+    fi
+}
+
+m2_drive(){ 
+    # $1 is nvme1 etc
+    # $2 is drive type (nvme or nvc)
+    if [[ $m2 != "no" ]]; then
+        # Check if is NVMe or SATA M.2 SSD
+        if /usr/syno/bin/synodisk --enum -t cache | grep -q /dev/"$(basename -- "$1")"; then
+
+            if [[ $2 == "nvme" ]] || [[ $2 == "nvc" ]]; then
+                # Fix unknown vendor id if needed. GitHub issue #161
+                # "Failed to get disk vendor" from synonvme --vendor-get
+                # causes "Unsupported firmware version" warning.
+                get_vid /dev/"$(basename -- "$1")"
+
+                # Get M2 model and firmware version
+                getm2info "$1" "$2"
+            fi
+
+            # Get M.2 card model if in M.2 card
+            getcardmodel /dev/"$(basename -- "$1")"
+
+            # Enable creating M.2 storage pool and volume in Storage Manager
+            m2_pool_support "$1"
+
+            rebootmsg=yes  # Show reboot message at end
+        fi
     fi
 }
 
@@ -865,47 +1034,31 @@ for d in /sys/block/*; do
     case "$(basename -- "${d}")" in
         sd*|hd*)
             if [[ $d =~ [hs]d[a-z][a-z]?$ ]]; then
-                # Get drive model and firmware version
                 getdriveinfo "$d"
             fi
         ;;
-        sata*|sas*)
-            if [[ $d =~ (sas|sata)[0-9][0-9]?[0-9]?$ ]]; then
-                # Get drive model and firmware version
+        sas*)
+            if [[ $d =~ sas[0-9][0-9]?[0-9]?$ ]]; then
                 getdriveinfo "$d"
+            fi
+        ;;
+        sata*)
+            if [[ $d =~ sata[0-9][0-9]?[0-9]?$ ]]; then
+                getdriveinfo "$d"
+
+                # In case it's a SATA M.2 SSD in device tree model NAS
+                # M.2 SATA drives in M2D18 or M2S17
+                m2_drive "$d"
             fi
         ;;
         nvme*)
             if [[ $d =~ nvme[0-9][0-9]?n[0-9][0-9]?$ ]]; then
-                if [[ $m2 != "no" ]]; then
-                    # Fix unknown vendor id if needed. GitHub issue #161
-                    # "Failed to get disk vendor" from synonvme --vendor-get
-                    # causes "Unsupported firmware version" warning.
-                    get_vid "/dev/$(basename -- "${d}")"
-
-                    getm2info "$d" "nvme"
-                    # Get M.2 card model if in M.2 card
-                    getcardmodel "/dev/$(basename -- "${d}")"
-
-                    # Enable creating M.2 storage pool and volume in Storage Manager
-                    m2_pool_support "$d"
-
-                    rebootmsg=yes  # Show reboot message at end
-                fi
+                m2_drive "$d" "nvme"
             fi
         ;;
-        nvc*)  # M.2 SATA drives (in PCIe card only?)
+        nvc*)  # M.2 SATA drives (in PCIe M2D18 or M2S17 only?)
             if [[ $d =~ nvc[0-9][0-9]?$ ]]; then
-                if [[ $m2 != "no" ]]; then
-                    getm2info "$d" "nvc"
-                    # Get M.2 card model if in M.2 card
-                    getcardmodel "/dev/$(basename -- "${d}")"
-
-                    # Enable creating M.2 storage pool and volume in Storage Manager
-                    m2_pool_support "$d"
-
-                    rebootmsg=yes  # Show reboot message at end
-                fi
+                m2_drive "$d" "nvc"
             fi
         ;;
     esac
@@ -919,15 +1072,14 @@ if [[ ${#hdlist[@]} -gt "0" ]]; then
     done < <(printf "%s\0" "${hdlist[@]}" | sort -uz)        
 fi
 
-# Check hdds array isn't empty
+# Show hdds if hdds array isn't empty
 if [[ ${#hdds[@]} -eq "0" ]]; then
-    ding
-    echo -e "\n${Error}ERROR${Off} No drives found!" && exit 2
+    echo -e "No SATA or SAS drives found\n"
 else
     echo -e "\nHDD/SSD models found: ${#hdds[@]}"
     num="0"
     while [[ $num -lt "${#hdds[@]}" ]]; do
-        echo "${hdds[num]}"
+        echo "${hdds[num]} GB"
         num=$((num +1))
     done
     echo
@@ -941,7 +1093,7 @@ if [[ ${#nvmelist[@]} -gt "0" ]]; then
     done < <(printf "%s\0" "${nvmelist[@]}" | sort -uz)        
 fi
 
-# Check nvmes array isn't empty
+# Show nvmes if nvmes array isn't empty
 if [[ $m2 != "no" ]]; then
     if [[ ${#nvmes[@]} -eq "0" ]]; then
         echo -e "No M.2 drives found\n"
@@ -950,11 +1102,18 @@ if [[ $m2 != "no" ]]; then
         echo "M.2 drive models found: ${#nvmes[@]}"
         num="0"
         while [[ $num -lt "${#nvmes[@]}" ]]; do
-            echo "${nvmes[num]}"
+            echo "${nvmes[num]} GB"
             num=$((num +1))
         done
         echo
     fi
+fi
+
+
+# Exit if no drives found
+if [[ ${#hdds[@]} -eq "0" ]] && [[ ${#nvmes[@]} -eq "0" ]]; then
+    ding
+    echo -e "\n${Error}ERROR${Off} No drives found!" && exit 2
 fi
 
 
@@ -1029,17 +1188,25 @@ fi
 # Host db files
 db1list=($(find "$dbpath" -maxdepth 1 -name "*_host*.db"))
 db2list=($(find "$dbpath" -maxdepth 1 -name "*_host*.db.new"))
+#db1list=($(find "$dbpath" -maxdepth 1 -regextype posix-extended\
+#    -iregex ".*_host(_v7)?.db"))
+#db2list=($(find "$dbpath" -maxdepth 1 -regextype posix-extended\
+#    -iregex ".*_host(_v7)?.db.new"))
 
 # Expansion Unit db files
 for i in "${!eunits[@]}"; do
-    eunitdb1list=($(find "$dbpath" -maxdepth 1 -name "${eunits[i],,}*.db"))
-    eunitdb2list=($(find "$dbpath" -maxdepth 1 -name "${eunits[i],,}*.db.new"))
+    #eunitdb1list+=($(find "$dbpath" -maxdepth 1 -name "${eunits[i],,}*.db"))
+    eunitdb1list+=($(find "$dbpath" -maxdepth 1 -regextype posix-extended\
+        -iregex ".*${eunits[i],,}(_v7)?.db"))
+    #eunitdb2list+=($(find "$dbpath" -maxdepth 1 -name "${eunits[i],,}*.db.new"))
+    eunitdb2list+=($(find "$dbpath" -maxdepth 1 -regextype posix-extended\
+        -iregex ".*${eunits[i],,}(_v7)?.db.new"))
 done
 
 # M.2 Card db files
 for i in "${!m2cards[@]}"; do
-    m2carddb1list=($(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db"))
-    m2carddb2list=($(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db.new"))
+    m2carddb1list+=($(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db"))
+    m2carddb2list+=($(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db.new"))
 done
 
 
@@ -1053,14 +1220,20 @@ fi
 getdbtype(){ 
     # Detect drive db type
     # Synology misspelt compatibility as compatbility
-    if grep -F '{"disk_compatbility_info":' "$1" >/dev/null; then
+    if grep -q -F '{"disk_compatbility_info":' "$1"; then
         # DSM 7 drive db files start with {"disk_compatbility_info":
         dbtype=7
-    elif grep -F '{"success":1,"list":[' "$1" >/dev/null; then
+    elif grep -q -F '{"success":1,"list":[' "$1"; then
         # DSM 6 drive db files start with {"success":1,"list":[
         dbtype=6
+    elif [[ ! $1 =~ .*'.db.new' ]]; then
+        if [[ $(stat -c%s "$1") -eq "0" ]]; then
+            echo -e "${Error}ERROR${Off} $(basename -- "${1}") is 0 bytes!" >&2
+        else
+            echo -e "${Error}ERROR${Off} Unknown database type $(basename -- "${1}")!" >&2
+        fi
+        dbtype=1
     else
-        echo -e "${Error}ERROR${Off} Unknown database type $(basename -- "${1}")!" >&2
         dbtype=1
     fi
     #echo "db type: $dbtype" >&2  # debug
@@ -1160,6 +1333,7 @@ editdb7(){
 updatedb(){ 
     hdmodel=$(printf "%s" "$1" | cut -d"," -f 1)
     fwrev=$(printf "%s" "$1" | cut -d"," -f 2)
+    size_gb=$(printf "%s" "$1" | cut -d"," -f 3)
 
     #echo arg1 "$1" >&2           # debug
     #echo arg2 "$2" >&2           # debug
@@ -1171,27 +1345,35 @@ updatedb(){
 
     if [[ $dbtype -gt "6" ]]; then
         # db type 7 used from DSM 7.1 and later
-        if grep "$hdmodel"'":{"'"$fwrev" "$2" >/dev/null; then
+        if grep -q "$hdmodel"'":{"'"$fwrev" "$2"; then
             echo -e "${Yellow}$hdmodel${Off} already exists in ${Cyan}$(basename -- "$2")${Off}" >&2
         else
-            fwstrng=\"$fwrev\"
-            fwstrng="$fwstrng":{\"compatibility_interval\":[{\"compatibility\":\"support\",\"not_yet_rolling_status\"
-            fwstrng="$fwstrng":\"support\",\"fw_dsm_update_status_notify\":false,\"barebone_installable\":true,
-            fwstrng="$fwstrng"\"smart_test_ignore\":false,\"smart_attr_ignore\":false}]},
+            common_string=\"size_gb\":$size_gb,
+            common_string="$common_string"\"compatibility_interval\":[{
+            common_string="$common_string"\"compatibility\":\"support\",
+            common_string="$common_string"\"not_yet_rolling_status\":\"support\",
+            common_string="$common_string"\"fw_dsm_update_status_notify\":false,
+            common_string="$common_string"\"barebone_installable\":true,
+            common_string="$common_string"\"barebone_installable_v2\":\"auto\",
+            common_string="$common_string"\"smart_test_ignore\":false,
+            common_string="$common_string"\"smart_attr_ignore\":false
 
-            default=\"default\"
-            default="$default":{\"compatibility_interval\":[{\"compatibility\":\"support\",\"not_yet_rolling_status\"
-            default="$default":\"support\",\"fw_dsm_update_status_notify\":false,\"barebone_installable\":true,
-            default="$default"\"smart_test_ignore\":false,\"smart_attr_ignore\":false}]}}}
+            fwstrng=\"$fwrev\":{
+            fwstrng="$fwstrng$common_string"
+            fwstrng="$fwstrng"}]},
+
+            default=\"default\":{
+            default="$default$common_string"
+            default="$default"}]}}}
 
             # Synology misspelt compatibility as compatbility
-            if grep '"disk_compatbility_info":{}' "$2" >/dev/null; then
+            if grep -q '"disk_compatbility_info":{}' "$2"; then
                 # Replace "disk_compatbility_info":{} with
                 # "disk_compatbility_info":{"WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}}
                 #echo "Edit empty db file:"  # debug
                 editdb7 "empty" "$2"
 
-            elif grep '"'"$hdmodel"'":' "$2" >/dev/null; then
+            elif grep -q '"'"$hdmodel"'":' "$2"; then
                 # Replace "WD40PURX-64GVNY0":{ with "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
                 #echo "Insert firmware version:"  # debug
                 editdb7 "insert" "$2"
@@ -1204,25 +1386,25 @@ updatedb(){
         fi
 
         # Edit existing drives in db with compatibility:unverified  # Issue #224
-        if grep 'unverified' "$2" >/dev/null; then
+        if grep -q 'unverified' "$2"; then
             sed -i 's/unverified/support/g' "$2"
-            if ! grep 'unverified' "$2" >/dev/null; then
+            if ! grep -q 'unverified' "$2"; then
                 echo -e "Edited unverified drives in ${Cyan}$(basename -- "$2")${Off}" >&2
             fi
         fi
 
         # Edit existing drives in db with compatibility:not_support
         if [[ $incompatible == "yes" ]]; then
-            if grep 'not_support' "$2" >/dev/null; then
+            if grep -q 'not_support' "$2"; then
                 sed -i 's/not_support/support/g' "$2"
-                if ! grep 'not_support' "$2" >/dev/null; then
+                if ! grep -q 'not_support' "$2"; then
                     echo -e "Edited incompatible drives in ${Cyan}$(basename -- "$2")${Off}" >&2
                 fi
             fi
         fi
     elif [[ $dbtype -eq "6" ]]; then
         # db type 6 used up to DSM 7.0.1
-        if grep "$hdmodel" "$2" >/dev/null; then
+        if grep -q "$hdmodel" "$2"; then
             echo -e "${Yellow}$hdmodel${Off} already exists in ${Cyan}$(basename -- "$2")${Off}" >&2
         else
             # example:
@@ -1323,7 +1505,7 @@ enable_card(){
         backupdb "$adapter_cards2" long
 
         # Check if section exists
-        if ! grep '^\['"$2"'\]$' "$1" >/dev/null; then
+        if ! grep -q '^\['"$2"'\]$' "$1"; then
             echo -e "Section [$2] not found in $(basename -- "$1")!" >&2
             return
         fi
@@ -1453,6 +1635,33 @@ EOM2D17
 fi
 }
 
+is_schedule_running(){ 
+    # $1 is script's filename. e.g. syno_hdd_db.sh etc
+    local file="/usr/syno/etc/esynoscheduler/esynoscheduler.db"
+    local rows offset task status pid result
+
+    # Get number of rows in database
+    rows=$(sqlite3 "${file}" <<ECNT
+SELECT COUNT(*) from task;
+.quit
+ECNT
+)
+    # Check if script is running from task scheduler
+    offset="0"
+    while [[ $rows != "$offset" ]]; do
+        task=$(sqlite3 "$file" "SELECT operation FROM task WHERE rowid = (SELECT rowid FROM task LIMIT 1 OFFSET ${offset});")
+        if echo "$task" | grep -q "$1"; then
+            status=$(sqlite3 "$file" "SELECT status FROM task WHERE rowid = (SELECT rowid FROM task LIMIT 1 OFFSET ${offset});")
+            pid=$(echo "$status" | cut -d"[" -f2 | cut -d"]" -f1)
+            if [[ $pid -gt "0" ]]; then
+                result=$((result +pid))
+            fi
+        fi
+        offset=$((offset +1))
+    done
+    [ -n "$result" ] || return 1
+}
+
 install_binfile(){ 
     # install_binfile <file> <file-url> <destination> <chmod> <bundled-path> <hash>
     # example:
@@ -1468,6 +1677,8 @@ install_binfile(){
     else
         # Download binfile
         if [[ $autoupdate == "yes" ]]; then
+            reply=y
+        elif is_schedule_running "$(basename -- "$0")"; then
             reply=y
         else
             echo -e "\nNeed to download ${1}"
@@ -1529,7 +1740,7 @@ edit_modeldtb(){
             # Edit model.dts
             for c in "${cards[@]}"; do
                 # Edit model.dts if needed
-                if ! grep "$c" "$dtb_file" >/dev/null; then
+                if ! grep -q "$c" "$dtb_file"; then
                     dts_m2_card "$c" "$dts_file"
                     echo -e "Added ${Yellow}$c${Off} to ${Cyan}model${hwrev}.dtb${Off}" >&2
                 else
@@ -1583,6 +1794,58 @@ for c in "${m2cards[@]}"; do
     esac
 done
 
+
+#------------------------------------------------------------------------------
+# Set or restore writemostly
+
+if [[ $ssd == "yes" ]]; then
+    # Get array of internal drives
+    readarray -t internal_drives < <(synodisk --enum -t internal | grep 'Disk path' | cut -d"/" -f3)
+
+    if [[ $ssd_restore == "yes" ]]; then
+        # Restore all internal drives to just in_sync
+        echo -e "\nRestoring internal drive's state"
+        for idrive in "${internal_drives[@]}"; do
+            #if ! grep -q "write_mostly"; then 
+                set_writemostly -writemostly "$idrive"
+            #fi
+        done
+
+    elif [[ ${#ssds_writemostly[@]} -gt "0" ]]; then
+        # User specified their fast drive(s)
+        echo -e "\nSetting slow internal HDDs state to write_mostly"
+        for idrive in "${internal_drives[@]}"; do
+            if [[ ! ${ssds_writemostly[*]} =~ $idrive ]]; then
+                set_writemostly writemostly "$idrive"
+            fi
+        done
+
+    else
+        # Get list of internal HDDs and qty of SSDs
+        internal_ssd_qty="0"
+        for idrive in "${internal_drives[@]}"; do
+            if synodisk --isssd /dev/"${idrive:?}" >/dev/null; then
+                # exit code 0 = is not SSD
+                # exit code 1 = is SSD
+
+                # Add internal HDDs to array
+                internal_hdds+=("$idrive")
+            else
+                # Count number of internal 2.5 inch SSDs
+                internal_ssd_qty=$((internal_ssd_qty +1))
+            fi
+        done
+
+        # Set HDDs to writemostly if there's also internal SSDs
+        if [[ $internal_ssd_qty -gt "0" ]] && [[ ${#internal_hdds[@]} -gt "0" ]]; then
+            # There are internal SSDs and HDDs
+            echo -e "\nSetting internal HDDs state to write_mostly"
+            for idrive in "${internal_hdds[@]}"; do
+                set_writemostly writemostly "$idrive"
+            done
+        fi
+    fi
+fi
 
 
 #------------------------------------------------------------------------------
@@ -1711,7 +1974,7 @@ if [[ $dsm -gt "6" ]]; then  # DSM 6 as has no dmidecode
         fi
         # Set mem_max_mb to the amount of installed memory
         setting="$(/usr/syno/bin/synogetkeyvalue $synoinfo mem_max_mb)"
-        settingbak="$(/usr/syno/bin/synogetkeyvalue ${synoinfo}.bak mem_max_mb)"                      # GitHub issue #107
+        settingbak="$(/usr/syno/bin/synogetkeyvalue ${synoinfo}.bak mem_max_mb)"      # GitHub issue #107
         if [[ $ramtotal =~ ^[0-9]+$ ]]; then   # Check $ramtotal is numeric
             if [[ $ramtotal -gt "$setting" ]]; then
                 /usr/syno/bin/synosetkeyvalue "$synoinfo" mem_max_mb "$ramtotal"
@@ -1756,7 +2019,8 @@ fi
 
 
 # Enable nvme support
-if ls /dev | grep nvme >/dev/null ; then
+# shellcheck disable=SC2010  # Don't warn about "Don't use ls | grep"
+if ls /dev | grep -q nvme; then
     if [[ $m2 != "no" ]]; then
         # Check if nvme support is enabled
         setting="$(/usr/syno/bin/synogetkeyvalue $synoinfo supportnvme)"
@@ -1787,7 +2051,8 @@ fi
 
 
 # Enable m2 volume support
-if ls /dev | grep nv[em] >/dev/null ; then
+# shellcheck disable=SC2010  # Don't warn about "Don't use ls | grep"
+if ls /dev | grep -q "nv[cm]"; then
     if [[ $m2 != "no" ]]; then
         if [[ $m2exists == "yes" ]]; then
             # Check if m2 volume support is enabled
@@ -1886,13 +2151,21 @@ fi
 
 
 # Enable creating pool on drives in M.2 adaptor card
-if [[ -f "$strgmgr" ]]; then
-    # StorageManager package is installed
-    if [[ ${#m2cards[@]} -gt "0" ]]; then
+if [[ -f "$strgmgr" ]] && [[ $buildnumber -gt 42962 ]]; then
+    # DSM 7.2 and later
+    if [[ ${#m2cards[@]} -gt "0" ]] || [[ $forcepci == "yes" ]]; then
 
-        if grep 'notSupportM2Pool_addOnCard' "$strgmgr" >/dev/null; then
+        if grep -q 'notSupportM2Pool_addOnCard' "$strgmgr"; then
             # Backup storage_panel.js"
-            strgmgrver="$(synopkg version StorageManager)"
+
+            if [[ $buildnumber -gt 64570 ]]; then
+                # DSM 7.2.1 and later
+                strgmgrver="$(/usr/syno/bin/synopkg version StorageManager)"
+            elif [[ $buildnumber -ge 64561 ]]; then
+                # DSM 7.2
+                strgmgrver="${buildnumber}${smallfixnumber}"
+            fi
+
             echo ""
             if [[ ! -f "${strgmgr}.$strgmgrver" ]]; then
                 if cp -p "$strgmgr" "${strgmgr}.$strgmgrver"; then
@@ -1905,7 +2178,7 @@ if [[ -f "$strgmgr" ]]; then
             sed -i 's/notSupportM2Pool_addOnCard:this.T("disk_info","disk_reason_m2_add_on_card"),//g' "$strgmgr"
             sed -i 's/},{isConditionInvalid:0<this.pciSlot,invalidReason:"notSupportM2Pool_addOnCard"//g' "$strgmgr"
             # Check if we edited file
-            if ! grep 'notSupportM2Pool_addOnCard' "$strgmgr" >/dev/null; then
+            if ! grep -q 'notSupportM2Pool_addOnCard' "$strgmgr"; then
                 echo -e "Enabled creating pool on drives in M.2 adaptor card."
             else
                 echo -e "${Error}ERROR${Off} Failed to enable creating pool on drives in M.2 adaptor card!"
@@ -1920,34 +2193,25 @@ fi
 #------------------------------------------------------------------------------
 # Finished
 
+show_changes(){  
+    # $1 is drive_model,firmware_version,size_gb
+    drive_model="$(printf "%s" "$1" | cut -d"," -f 1)"
+    echo -e "\n$drive_model:"
+    jq -r --arg drive_model "$drive_model" '.disk_compatbility_info[$drive_model]' "${db1list[0]}"
+}
+
 # Show the changes
 if [[ ${showedits,,} == "yes" ]]; then
-    if [[ ${#db1list[@]} -gt "0" ]]; then
-        getdbtype "${db1list[0]}"
-        if [[ $dbtype -gt "6" ]]; then
-            # Show 11 lines after hdmodel line
-            lines=11
-        elif [[ $dbtype -eq "6" ]]; then
-            # Show 2 lines after hdmodel line
-            lines=2
-        fi
+    # HDDs/SSDs
+    for d in "${hdds[@]}"; do
+        show_changes "$d"
+    done
 
-        # HDDs/SSDs
-        for i in "${!hdds[@]}"; do
-            hdmodel=$(printf "%s" "${hdds[i]}" | cut -d"," -f 1)
-            echo
-            jq . "${db1list[0]}" | grep -A "$lines" "$hdmodel"
-        done
-
-        # NVMe drives
-        for i in "${!nvmes[@]}"; do
-            hdmodel=$(printf "%s" "${nvmes[i]}" | cut -d"," -f 1)
-            echo
-            jq . "${db1list[0]}" | grep -A "$lines" "$hdmodel"
-        done
-    fi
+    # NVMe drives
+    for d in "${nvmes[@]}"; do
+        show_changes "$d"
+    done
 fi
-
 
 # Make Synology check disk compatibility
 if [[ -f /usr/syno/sbin/synostgdisk ]]; then  # DSM 6.2.3 does not have synostgdisk
