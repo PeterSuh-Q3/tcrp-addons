@@ -1,37 +1,33 @@
 #!/usr/bin/env ash
 
 if [ "${1}" = "modules" ]; then
-. /etc/VERSION
+  echo "Installing addon localrss - ${1}"
 
-# Assuming the JSON data is stored in a file called "rss.json"
+  # Using jq to filter and extract the values based on "mUnique" key
+  MLINK=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mLink' rss${major}.${minor}.${micro}.json)
+  MCHECKSUM=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mCheckSum' rss${major}.${minor}.${micro}.json)
+  
+  echo "${MLINK}"
+  echo "${MCHECKSUM}"
+  
+  # External incoming required ${MLINK} and ${MCHECKSUM}
+  if [ -z "${MLINK}" -o -z "${MCHECKSUM}" ]; then
+    echo "MLINK or MCHECKSUM is null"
+    return
+  fi
 
-# Using jq to filter and extract the values based on "mUnique" key
-MLINK=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mLink' rss${major}.${minor}.${micro}.json)
-MCHECKSUM=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mCheckSum' rss${major}.${minor}.${micro}.json)
+  # MajorVersion=`/bin/get_key_value /etc.defaults/VERSION majorversion`
+  # MinorVersion=`/bin/get_key_value /etc.defaults/VERSION minorversion`
+  . /etc.defaults/VERSION
 
-echo "${MLINK}"
-echo "${MCHECKSUM}"
-
-# External incoming required ${MLINK} and ${MCHECKSUM}
-if [ -z "${MLINK}" -o -z "${MCHECKSUM}" ]; then
-  echo "MLINK or MCHECKSUM is null"
-  return
-fi
-
-echo "make localrss - modules"
-
-# MajorVersion=`/bin/get_key_value /etc.defaults/VERSION majorversion`
-# MinorVersion=`/bin/get_key_value /etc.defaults/VERSION minorversion`
-. /etc.defaults/VERSION
-
-cat > /usr/syno/web/localrss.json << EOF
+  cat >/usr/syno/web/localrss.json <<EOF
 {
   "version": "2.0",
   "channel": {
     "title": "RSS for DSM Auto Update",
     "link": "https://update.synology.com/autoupdate/v2/getList",
-    "pubDate": "Sat Aug 6 0:18:39 CST 2022",
-    "copyright": "Copyright 2022 Synology Inc",
+    "pubDate": "Sat May 4 20:30:02 CST 2024",
+    "copyright": "Copyright 2024 Synology Inc",
     "item": [
       {
         "title": "DSM ${productversion}-${buildnumber}",
@@ -60,14 +56,14 @@ cat > /usr/syno/web/localrss.json << EOF
 }
 EOF
 
-cat > /usr/syno/web/localrss.xml << EOF
+  cat >/usr/syno/web/localrss.xml <<EOF
 <?xml version="1.0"?>
 <rss version="2.0">
   <channel>
       <title>RSS for DSM Auto Update</title>
       <link>http://update.synology.com/autoupdate/genRSS.php</link>
-      <pubDate>Tue May 9 11:52:15 CST 2023</pubDate>
-      <copyright>Copyright 2023 Synology Inc</copyright>
+      <pubDate>Wed May 1 12:02:35 CST 2024</pubDate>
+      <copyright>Copyright 2024 Synology Inc</copyright>
     <item>
       <title>DSM ${productversion}-${buildnumber}</title>
       <MajorVer>${major}</MajorVer>
@@ -90,13 +86,15 @@ cat > /usr/syno/web/localrss.xml << EOF
 </rss>
 EOF
 
-if [ -f /usr/syno/web/localrss.xml ]; then 
-  #cat /usr/syno/web/localrss.xml
-  sed -i "s|rss_server=.*$|rss_server=\"http://localhost:5000/localrss.xml\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
-  sed -i "s|rss_server_ssl=.*$|rss_server_ssl=\"http://localhost:5000/localrss.xml\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
-fi
-if [ -f /usr/syno/web/localrss.json ]; then 
-  #cat /usr/syno/web/localrss.json
-  sed -i "s|rss_server_v2=.*$|rss_server_v2=\"http://localhost:5000/localrss.json\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
-fi
+  if [ -f /usr/syno/web/localrss.xml ]; then
+    # cat /usr/syno/web/localrss.xml
+    sed -i "s|rss_server=.*$|rss_server=\"http://localhost:5000/localrss.xml\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
+    sed -i "s|rss_server_ssl=.*$|rss_server_ssl=\"http://localhost:5000/localrss.xml\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
+  fi
+  if [ -f /usr/syno/web/localrss.json ]; then
+    # cat /usr/syno/web/localrss.json
+    sed -i "s|rss_server_v2=.*$|rss_server_v2=\"http://localhost:5000/localrss.json\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
+  fi
+  grep "rss_server" "/etc.defaults/synoinfo.conf"
+  
 fi
