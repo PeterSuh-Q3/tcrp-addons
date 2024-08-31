@@ -87,12 +87,12 @@ EOF
 EOF
 
   if [ -f /usr/syno/web/localrss.xml ]; then
-    # cat /usr/syno/web/localrss.xml
+    cat /usr/syno/web/localrss.xml
     sed -i "s|rss_server=.*$|rss_server=\"http://localhost:5000/localrss.xml\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
     sed -i "s|rss_server_ssl=.*$|rss_server_ssl=\"http://localhost:5000/localrss.xml\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
   fi
   if [ -f /usr/syno/web/localrss.json ]; then
-    # cat /usr/syno/web/localrss.json
+    cat /usr/syno/web/localrss.json
     sed -i "s|rss_server_v2=.*$|rss_server_v2=\"http://localhost:5000/localrss.json\"|g" "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"
   fi
   grep "rss_server" "/etc.defaults/synoinfo.conf"
