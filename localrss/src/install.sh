@@ -3,6 +3,10 @@
 if [ "${1}" = "modules" ]; then
   echo "Installing addon localrss - ${1}"
 
+  # MajorVersion=`/bin/get_key_value /etc.defaults/VERSION majorversion`
+  # MinorVersion=`/bin/get_key_value /etc.defaults/VERSION minorversion`
+  . /etc.defaults/VERSION
+  
   # Using jq to filter and extract the values based on "mUnique" key
   MLINK=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mLink' rss${major}.${minor}.${micro}.json)
   MCHECKSUM=$(jq -r --arg var "$unique" '.channel.item[].model[] | select(.mUnique == $var).mCheckSum' rss${major}.${minor}.${micro}.json)
@@ -15,10 +19,6 @@ if [ "${1}" = "modules" ]; then
     echo "MLINK or MCHECKSUM is null"
     return
   fi
-
-  # MajorVersion=`/bin/get_key_value /etc.defaults/VERSION majorversion`
-  # MinorVersion=`/bin/get_key_value /etc.defaults/VERSION minorversion`
-  . /etc.defaults/VERSION
 
   cat >/usr/syno/web/localrss.json <<EOF
 {
