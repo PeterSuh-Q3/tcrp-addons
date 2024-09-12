@@ -3,7 +3,7 @@
     {
       "name": "install-all.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install-all.sh",
-      "sha256": "f15a077452082f586ec9300ff95f8bd3ebba942e14044e684729f77148be764f",
+      "sha256": "d9ab17d77e4a05c9b7533edc98e2aa3890e35ebaa287ae32c67a7ce693247c40",
       "packed": false
     },
     {
@@ -38,10 +38,7 @@
     }    
   ],
   "scripts": {
-    "on_early": "install-all.sh",	  
     "on_boot": "install_rd.sh",
-    "on_patches": "install-all.sh",
-    "on_rcExit": "install-all.sh",
     "on_os_load": "install-all.sh"	  
   }
 }
