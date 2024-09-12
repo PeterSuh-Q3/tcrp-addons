@@ -1,5 +1,10 @@
-#!/bin/sh
-
+#!/usr/bin/env ash
+#
+# Copyright (C) 2022 Ing <https://github.com/wjz304>
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
 PLATFORM="$(uname -u | cut -d '_' -f2)"
 
 cp -vf /exts/misc/sed /tmpRoot/usr/bin/sed
@@ -131,7 +136,95 @@ fixacpibutton() {
 
 }
 
-if [ "${1}" = "late" ]; then
+if [ "${1}" = "early" ]; then
+  echo "Installing addon misc - ${1}"
+
+  # [CREATE][failed] Raidtool initsys
+  SO_FILE="/usr/syno/bin/scemd"
+  [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
+  cp -f "${SO_FILE}" "${SO_FILE}.tmp"
+  ${XXD_PATH} -c $(${XXD_PATH} -p "${SO_FILE}.tmp" 2>/dev/null | wc -c) -p "${SO_FILE}.tmp" 2>/dev/null |
+    ${SED_PATH} "s/2d6520302e39/2d6520312e32/" |
+    ${XXD_PATH} -r -p >"${SO_FILE}" 2>/dev/null
+  rm -f "${SO_FILE}.tmp"
+
+elif [ "${1}" = "rcExit" ]; then
+  echo "Installing addon misc - ${1}"
+
+  mkdir -p /usr/syno/web/webman
+  # clear system disk space
+  cat >/usr/syno/web/webman/clean_system_disk.cgi <<EOF
+#!/bin/sh
+
+echo -ne "Content-type: text/plain; charset=\"UTF-8\"\r\n\r\n"
+if [ -b /dev/md0 ]; then
+  mkdir -p /mnt/md0
+  mount /dev/md0 /mnt/md0/
+  rm -rf /mnt/md0/@autoupdate/*
+  rm -rf /mnt/md0/upd@te/*
+  rm -rf /mnt/md0/.log.junior/*
+  umount /mnt/md0/
+  rm -rf /mnt/md0/
+  echo '{"success": true}'
+else
+  echo '{"success": false}'
+fi
+EOF
+  chmod +x /usr/syno/web/webman/clean_system_disk.cgi
+
+  # reboot to loader
+  cat >/usr/syno/web/webman/reboot_to_loader.cgi <<EOF
+#!/bin/sh
+
+echo -ne "Content-type: text/plain; charset=\"UTF-8\"\r\n\r\n"
+if [ -f /usr/bin/loader-reboot.sh ]; then
+  /usr/bin/loader-reboot.sh config
+  echo '{"success": true}'
+else
+  echo '{"success": false}'
+fi
+EOF
+  chmod +x /usr/syno/web/webman/reboot_to_loader.cgi
+
+  # get logs
+  cat >/usr/syno/web/webman/get_logs.cgi <<EOF
+#!/bin/sh
+
+echo -ne "Content-type: text/plain; charset=\"UTF-8\"\r\n\r\n"
+echo "==== proc cmdline ===="
+cat /proc/cmdline 
+echo "==== SynoBoot log ===="
+cat /var/log/linuxrc.syno.log
+echo "==== Installerlog ===="
+cat /tmp/installer_sh.log
+echo "==== Messages log ===="
+cat /var/log/messages
+EOF
+  chmod +x /usr/syno/web/webman/get_logs.cgi
+
+  # error message
+  if [ ! -b /dev/synoboot ] || [ ! -b /dev/synoboot1 ] || [ ! -b /dev/synoboot2 ] || [ ! -b /dev/synoboot3 ]; then
+    ${SED_PATH} -i 's/c("welcome","desc_install")/"Error: The bootloader disk is not successfully mounted, the installation will fail."/' /usr/syno/web/main.js
+  fi
+
+elif [ "${1}" = "patches" ]; then
+  # getty
+  for I in $(cat /proc/cmdline 2>/dev/null | grep -oE 'getty=[^ ]+' | ${SED_PATH} 's/getty=//'); do
+    TTYN="$(echo "${I}" | cut -d',' -f1)"
+    BAUD="$(echo "${I}" | cut -d',' -f2 | cut -d'n' -f1)"
+    echo "ttyS0 ttyS1 ttyS2" | grep -qw "${TTYN}" && continue
+    if [ -n "${TTYN}" ] && [ -e "/dev/${TTYN}" ]; then
+      echo "Starting getty on ${TTYN}"
+      if [ -n "${BAUD}" ]; then
+        /usr/sbin/getty -L "${TTYN}" "${BAUD}" linux &
+      else
+        /usr/sbin/getty -L "${TTYN}" linux &
+      fi
+    fi
+  done
+  
+elif [ "${1}" = "late" ]; then
+    echo "Installing addon misc - ${1}"
     echo "Script for fixing missing HW features dependencies"
 
     fixacpibutton
