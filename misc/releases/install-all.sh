@@ -203,7 +203,8 @@ if [ "${1}" = "late" ]; then
     epyc7002)
         fixcpufreq
         fixcrypto
-        fixnvidia 
+        fixnvidia
+        ;;
     *)
         fixcpufreq
         fixcrypto
