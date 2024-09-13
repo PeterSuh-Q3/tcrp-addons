@@ -131,6 +131,33 @@ fixacpibutton() {
 
 }
 
+fixservice() {
+# service
+  SERVICE_PATH="/tmpRoot/usr/lib/systemd/system"
+  ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno-oob-check-status.service ${SERVICE_PATH}/SynoInitEth.service ${SERVICE_PATH}/syno_update_disk_logs.service
+}
+
+fixnetwork() {
+  # network
+  rm -vf /tmpRoot/usr/lib/modules-load.d/70-network*.conf
+  mkdir -p /tmpRoot/etc/sysconfig/network-scripts
+  mkdir -p /tmpRoot/etc.defaults/sysconfig/network-scripts
+  for I in $(ls /etc/sysconfig/network-scripts/ifcfg-eth*); do
+    [ ! -f "/tmpRoot/${I}" ] && cp -vf "${I}" "/tmpRoot/${I}"
+    [ ! -f "/tmpRoot/${I/etc/etc.defaults}" ] && cp -vf "${I}" "/tmpRoot/${I/etc/etc.defaults}"
+  done
+  if grep -q 'network.' /proc/cmdline && [ -f "/etc/ifcfgs" ]; then
+    for ETH in $(cat /etc/ifcfgs); do
+      echo "Copy ifcfg-${ETH}"
+      if [ -f "/etc/sysconfig/network-scripts/ifcfg-${ETH}" ]; then
+        rm -vf /tmpRoot/etc/sysconfig/network-scripts/ifcfg-*${ETH} /tmpRoot/etc.defaults/sysconfig/network-scripts/ifcfg-*${ETH}
+        cp -vf /etc/sysconfig/network-scripts/ifcfg-${ETH} /tmpRoot/etc/sysconfig/network-scripts/
+        cp -vf /etc/sysconfig/network-scripts/ifcfg-${ETH} /tmpRoot/etc.defaults/sysconfig/network-scripts/
+      fi
+    done
+  fi
+}
+
 if [ "${1}" = "late" ]; then
     echo "Script for fixing missing HW features dependencies"
 
@@ -183,4 +210,7 @@ if [ "${1}" = "late" ]; then
         ;;
 
     esac
+
+    fixservice
+    fixnetwork
 fi
