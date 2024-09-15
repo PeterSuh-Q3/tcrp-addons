@@ -71,7 +71,6 @@ fixintelgpu() {
   echo "replace ingel gpu info for i915le10th"
 
   GPU="$(lspci -n 2>/dev/null | grep 0300 | grep 8086 | cut -d' ' -f3 | sed 's/://g')"
-  echo "${GPU}" >/tmpRoot/root/i915.GPU
   [ -z "${GPU}" -o $(echo -n "${GPU}" | wc -c) -ne 8 ] && echo "GPU is not detected" && exit 0
 
   KO_FILE="/usr/lib/modules/i915.ko"
@@ -142,6 +141,9 @@ fixnetwork() {
 
 if [ "${1}" = "patches" ]; then
     echo "Installing addon misc - ${1}"
+
+    cp -vf /exts/misc/xxd /usr/bin/xxd
+    chmod +x /usr/bin/xxd
 
     cp -vf /exts/misc/sed /usr/bin/sed
     chmod +x /usr/bin/sed
