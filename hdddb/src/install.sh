@@ -11,8 +11,10 @@ if [ "${1}" = "late" ]; then
   cp -vf hdddb.sh /tmpRoot/usr/sbin/hdddb.sh
   chmod +x /tmpRoot/usr/sbin/hdddb.sh
 
-  echo "Excute hdddb.sh with option n."
-  /tmpRoot/usr/syno/bin/synosetkeyvalue /tmpRoot/etc.defaults/synoinfo.conf "drive_db_test_url" "127.0.0.1"
+  echo "Add drive_db_test_url to synoinfo.conf"
+  echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc.defaults/synoinfo.conf
+  echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc/synoinfo.conf  
+  #echo "Excute hdddb.sh with option n."
   #/tmpRoot/usr/sbin/hdddb.sh -n
 
   mkdir -p "/tmpRoot/etc/systemd/system"
