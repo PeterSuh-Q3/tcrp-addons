@@ -11,6 +11,9 @@ if [ "${1}" = "late" ]; then
   cp -vf hdddb.sh /tmpRoot/usr/sbin/hdddb.sh
   chmod +x /tmpRoot/usr/sbin/hdddb.sh
 
+  echo "Excute hdddb.sh with option n."
+  /tmpRoot/usr/sbin/hdddb.sh -n
+
   mkdir -p "/tmpRoot/etc/systemd/system"
   DEST="/tmpRoot/etc/systemd/system/hdddb.service"
   echo "[Unit]"                                    >${DEST}
@@ -20,7 +23,7 @@ if [ "${1}" = "late" ]; then
   echo "[Service]"                                >>${DEST}
   echo "Type=oneshot"                             >>${DEST}
   echo "RemainAfterExit=yes"                      >>${DEST}
-  echo "ExecStart=/usr/sbin/hdddb.sh -nfre"       >>${DEST}
+  echo "ExecStart=/usr/sbin/hdddb.sh -nfreS"      >>${DEST}
   echo                                            >>${DEST}
   echo "[Install]"                                >>${DEST}
   echo "WantedBy=multi-user.target"               >>${DEST}
