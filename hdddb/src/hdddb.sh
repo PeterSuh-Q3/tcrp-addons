@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env ash
 # shellcheck disable=SC1083,SC2054,SC2121,SC2207
 #--------------------------------------------------------------------------------------------------
 # Github: https://github.com/007revad/Synology_HDD_db
