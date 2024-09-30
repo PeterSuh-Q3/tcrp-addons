@@ -12,7 +12,8 @@ if [ "${1}" = "late" ]; then
   chmod +x /tmpRoot/usr/sbin/hdddb.sh
 
   echo "Excute hdddb.sh with option n."
-  /tmpRoot/usr/sbin/hdddb.sh -n
+  /tmpRoot/usr/syno/bin/synosetkeyvalue /tmpRoot/etc.defaults/synoinfo.conf "drive_db_test_url" "127.0.0.1"
+  #/tmpRoot/usr/sbin/hdddb.sh -n
 
   mkdir -p "/tmpRoot/etc/systemd/system"
   DEST="/tmpRoot/etc/systemd/system/hdddb.service"
