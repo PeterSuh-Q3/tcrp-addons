@@ -12,8 +12,8 @@ if [ "${1}" = "late" ]; then
   chmod +x /tmpRoot/usr/sbin/hdddb.sh
 
   echo "Add drive_db_test_url to synoinfo.conf"
-  echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc.defaults/synoinfo.conf
-  echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc/synoinfo.conf  
+  grep -q '^drive_db_test_url=' /tmpRoot/etc.defaults/synoinfo.conf || echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc.defaults/synoinfo.conf
+  grep -q '^drive_db_test_url=' /tmpRoot/etc/synoinfo.conf || echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc/synoinfo.conf
   #echo "Excute hdddb.sh with option n."
   #/tmpRoot/usr/sbin/hdddb.sh -n
 
