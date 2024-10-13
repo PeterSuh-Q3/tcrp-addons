@@ -30,7 +30,7 @@ function checkSynoboot() {
         BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-12 )"
         echo "Found NVMe Disk loader!"
       elif [ "${devtype}" = "mm" ]; then
-        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-13 )"
+        BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | cut -c 6-12 )"
         echo "Found MMC Disk loader!"
       else
         BOOTDISK=""
