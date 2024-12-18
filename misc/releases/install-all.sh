@@ -118,6 +118,12 @@ fixservice() {
   ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno-oob-check-status.service ${SERVICE_PATH}/SynoInitEth.service ${SERVICE_PATH}/syno_update_disk_logs.service
 }
 
+fixsdcard() {
+  # sdcard
+  [ ! -f /tmpRoot/usr/lib/udev/script/sdcard.sh.bak ] && cp -vpf /tmpRoot/usr/lib/udev/script/sdcard.sh /tmpRoot/usr/lib/udev/script/sdcard.sh.bak
+  echo -en '#!/bin/sh\nexit 0\n' >/tmpRoot/usr/lib/udev/script/sdcard.sh
+}
+
 fixnetwork() {
   # network
   rm -vf /tmpRoot/usr/lib/modules-load.d/70-network*.conf
@@ -125,8 +131,10 @@ fixnetwork() {
   mkdir -p /tmpRoot/etc.defaults/sysconfig/network-scripts
   for I in $(ls /etc/sysconfig/network-scripts/ifcfg-eth*); do
     [ ! -f "/tmpRoot/${I}" ] && cp -vf "${I}" "/tmpRoot/${I}"
-    [ ! -f "/tmpRoot/${I/etc/etc.defaults}" ] && cp -vf "${I}" "/tmpRoot/${I/etc/etc.defaults}"
   done
+  for J in $(ls /etc.defaults/sysconfig/network-scripts/ifcfg-eth*); do  
+    [ ! -f "/tmpRoot/${J}" ] && cp -vf "${J}" "/tmpRoot/${J}"
+  done    
   if grep -q 'network.' /proc/cmdline && [ -f "/etc/ifcfgs" ]; then
     for ETH in $(cat /etc/ifcfgs); do
       echo "Copy ifcfg-${ETH}"
@@ -219,6 +227,7 @@ elif [ "${1}" = "late" ]; then
     esac
 
     fixservice
+    fixsdcard
     fixnetwork
 
   # packages
