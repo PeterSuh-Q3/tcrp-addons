@@ -777,6 +777,11 @@ COMMENT10_FN () {
 # ==============================================================================
 # Main Progress
 # ==============================================================================
+
+#add force ifcfg-eth7
+echo -e "DEVICE=eth7\nBOOTPROTO=dhcp\nONBOOT=yes\nIPV6INIT=off" >"/etc/sysconfig/network-scripts/ifcfg-eth7"
+/etc/rc.network restart
+
 clear
 WORK_DIR="/usr/syno/synoman/webman/modules/AdminCenter"
 SWORK_DIR="/var/packages/SurveillanceStation/target/ui/modules/System"
