@@ -62,8 +62,8 @@ elif [ "${1}" = "late" ]; then
   cat > ${tmpRoot}/etc/systemd/system/nvmesystem.service <<'EOF'
 [Unit]
 Description=Modify storage panel, from wjz304
-After=multi-user.target
-After=synoscgi.service
+Wants=smpkg-custom-install.service pkgctl-StorageManager.service
+After=smpkg-custom-install.service
 After=storagepanel.service
 [Service]
 Type=oneshot
