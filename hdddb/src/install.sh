@@ -19,17 +19,20 @@ if [ "${1}" = "late" ]; then
 
   mkdir -p "/tmpRoot/etc/systemd/system"
   DEST="/tmpRoot/etc/systemd/system/hdddb.service"
-  echo "[Unit]"                                    >${DEST}
-  echo "Description=HDDs/SSDs drives databases"   >>${DEST}
-  echo "After=multi-user.target"                  >>${DEST}
-  echo                                            >>${DEST}
-  echo "[Service]"                                >>${DEST}
-  echo "Type=oneshot"                             >>${DEST}
-  echo "RemainAfterExit=yes"                      >>${DEST}
-  echo "ExecStart=/usr/sbin/hdddb.sh -nfreS"      >>${DEST}
-  echo                                            >>${DEST}
-  echo "[Install]"                                >>${DEST}
-  echo "WantedBy=multi-user.target"               >>${DEST}
+  {
+    echo "[Unit]"
+    echo "Description=mshell addon hdddb daemon"
+    echo "Wants=smpkg-custom-install.service pkgctl-StorageManager.service"
+    echo "After=smpkg-custom-install.service"
+    echo
+    echo "[Service]"
+    echo "Type=oneshot"
+    echo "RemainAfterExit=yes"
+    echo "ExecStart=-/usr/bin/hdddb.sh -nrwpeS"
+    echo
+    echo "[Install]"
+    echo "WantedBy=multi-user.target"
+  } >"${DEST}"
 
   mkdir -vp /tmpRoot/etc/systemd/system/multi-user.target.wants
   ln -vsf /etc/systemd/system/hdddb.service /tmpRoot/etc/systemd/system/multi-user.target.wants/hdddb.service
