@@ -29,7 +29,7 @@
 # /var/packages/StorageManager/target/ui/storage_panel.js
 
 
-scriptver="v3.5.106"
+scriptver="v3.5.107"
 script=Synology_HDD_db
 repo="007revad/Synology_HDD_db"
 scriptname=syno_hdd_db
@@ -956,10 +956,10 @@ getdriveinfo(){
         # Account for SSD drives with spaces in their model name/number
         fwrev=$(/usr/syno/bin/syno_hdd_util --ssd_detect | grep "$device " | awk '{print $(NF-3)}')  # GitHub issue #86, 87
 
-        # Get M.2 SATA SSD firmware version
+        # Get M.2 SATA SSD and missing SAS firmware version
         if [[ -z $fwrev ]]; then
             dev=/dev/"$(basename -- "$1")"
-            fwrev=$(smartctl -a -d sat -T permissive "$dev" | grep -i firmware | awk '{print $NF}')
+            fwrev=$(smartctl -a -d ata -T permissive "$dev" | grep -i firmware | awk '{print $NF}')
         fi
 
         # Get drive GB size
