@@ -18,7 +18,7 @@ elif [ "${1}" = "patches" ]; then
     return
   fi
 
-  devtype="$(blkid | grep "6234-C863" | sed -E 's#^/dev/([a-z]+).*$#\1#')"
+  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
   if [ "${devtype}" = "sd" ]; then
     partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sd[a-z]+([0-9]+):.*$#\1#')
     [ "${partnochk}" -eq 3 ] && return
