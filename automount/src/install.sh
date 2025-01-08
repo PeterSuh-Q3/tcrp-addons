@@ -17,31 +17,26 @@ elif [ "${1}" = "patches" ]; then
     echo "Found normal synoboot1 / synoboot2 / synoboot3"
     return
   fi
-#/dev/sda3: UUID="6234-C863"
-#/dev/sata1p3: UUID="6234-C863" 
-  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
+
+  devtype="$(blkid | grep "6234-C863" | sed -E 's#^/dev/([a-z]+).*$#\1#')"
   if [ "${devtype}" = "sd" ]; then
-    partnochk=$(blkid | grep "6234-C863" | cut -c 9 )
+    partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sd[a-z]+([0-9]+):.*$#\1#')
     [ "${partnochk}" -eq 3 ] && return
 
-    LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 6-8 )
+    LOADER_DISK=$(blkid | grep "6234-C863" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
     echo "Found USB or HDD Disk loader!"
     p1="5"
     p2="6"
     p3="4"
-    cutpos1="13"
-    cutpos2="8"
   elif [ "${devtype}" = "sa" ]; then
-    partnochk=$(blkid | grep "6234-C863" | cut -c 12 )
+    partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sata[0-9]+p([0-9]+):.*$#\1#')
     [ "${partnochk}" -eq 3 ] && return
 
-    LOADER_DISK=$(blkid | grep "6234-C863" | cut -c 6-10 )
+    LOADER_DISK=$(blkid | grep "6234-C863" | sed -E 's#^/dev/(sata[0-9]+).*$#\1#')
     echo "Found Sata Disk loader!"
     p1="p5"
     p2="p6"
     p3="p4"
-    cutpos1="15"
-    cutpos2="10"
   else
     LOADER_DISK=""
   fi
@@ -54,10 +49,10 @@ elif [ "${1}" = "patches" ]; then
   BOOT_DISK="${LOADER_DISK}"
   if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}${p3} ]; then
 
-    for edisk in $(fdisk -l | grep "Disk /dev/${devtype}" | cut -c 6-${cutpos1} ); do
+    for edisk in $(fdisk -l | grep "Disk /dev/${devtype}" | sed -E 's#^Disk /dev/(sd[a-z]+|sata[0-9]+):.*$#\1#'); do
         if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
             echo "This is BASIC or SHR Type Disk & Has Syno Boot Partition. $edisk"
-            BOOT_DISK=$(echo "$edisk" | cut -c 6-${cutpos2})
+            BOOT_DISK="${edisk}"
             if [ $(fdisk -l | grep "Win95 Ext" | grep ${edisk} | wc -l ) -eq 1 ]; then
                 echo "This is SHR Type Disk(Win95 Ext) & Has Syno Boot Partition. $edisk"
                 p1=$(echo ${p1} | sed 's#5#4#')
