@@ -389,14 +389,8 @@ function nondtModel() {
       echo "bootloader: ${P}"
       continue
     fi
-    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'/' -f4)
+    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | sed 's/.*\///')
     if [ -n "${PCIEPATH}" ]; then
-      # TODO: Need check?
-      # MULTIPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'/' -f5)
-      # if [ -z "${MULTIPATH}" ]; then
-      #   echo "${PCIEPATH} does not support!"
-      #   continue
-      # fi
       echo "pci${COUNT}=\"${PCIEPATH}\"" >>/etc/extensionPorts
       COUNT=$((${COUNT} + 1))
 
@@ -437,15 +431,12 @@ elif [ "${1}" = "patches" ]; then
       echo "bootloader: ${P}"
       continue
     fi
-    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'/' -f4)
+    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | sed 's/.*\///')
     if [ -n "${PCIEPATH}" ]; then
-      # TODO: Need check?
-      MULTIPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'/' -f5)
-      if [ -z "${MULTIPATH}" ]; then
-        echo "${PCIEPATH} does not support!"
-        continue
-      fi
       echo "${PCIEPATH}" >>/etc/nvmePorts
+    else
+      echo "${PCIEPATH} does not support!"
+      continue
     fi
   done
   [ -f /etc/nvmePorts ] && cat /etc/nvmePorts
