@@ -389,7 +389,7 @@ function nondtModel() {
       echo "bootloader: ${P}"
       continue
     fi
-    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | sed 's/.*\///')
+    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | rev | cut -d'/' -f2 | rev )
     if [ -n "${PCIEPATH}" ]; then
       echo "pci${COUNT}=\"${PCIEPATH}\"" >>/etc/extensionPorts
       COUNT=$((${COUNT} + 1))
@@ -406,10 +406,11 @@ if [ "${1}" = "modules" ]; then
   cp -vf dtc /usr/sbin/
   cp -vf readlink /usr/sbin/
   cp -vf sed /usr/sbin/sed
+  cp -vf rev /usr/sbin/rev
   cp -vf blkid /usr/sbin/blkid
   cp -vf libblkid.so.1 /lib64/libblkid.so.1
 
-  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed /usr/sbin/blkid /lib64/libblkid.so.1
+  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed /usr/sbin/rev /usr/sbin/blkid /lib64/libblkid.so.1
 
 elif [ "${1}" = "patches" ]; then
   echo "Installing addon disks - ${1}"
@@ -431,7 +432,7 @@ elif [ "${1}" = "patches" ]; then
       echo "bootloader: ${P}"
       continue
     fi
-    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | sed 's/.*\///')
+    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | rev | cut -d'/' -f2 | rev )
     if [ -n "${PCIEPATH}" ]; then
       echo "${PCIEPATH}" >>/etc/nvmePorts
     else
