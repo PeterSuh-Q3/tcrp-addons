@@ -50,7 +50,7 @@ elif [ "${1}" = "late" ]; then
   else    
     # Activate nvmevolume for Non-DT flatforms
     ${tmpRoot}/usr/bin/xxd -c $(${tmpRoot}/usr/bin/xxd -p "${SO_FILE}.tmp" | wc -c) -p "${SO_FILE}.tmp" | 
-      sed "s/803e00b8010000007524488b/803e00b8010000009090488b/" | 
+      sed "s/803e00b801000000752.488b/803e00b8010000009090488b/" | 
       ${tmpRoot}/usr/bin/xxd -r -p > "${SO_FILE}"
   fi  
   rm -f "${SO_FILE}.tmp"  
