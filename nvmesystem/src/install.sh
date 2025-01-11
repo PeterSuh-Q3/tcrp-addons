@@ -67,6 +67,8 @@ elif [ "${1}" = "late" ]; then
   cp -vpf nvmesystem.sh /tmpRoot/usr/sbin/nvmesystem.sh
   chmod +x /tmpRoot/usr/sbin/nvmesystem.sh
 
+  [ ! -f "/tmpRoot/usr/bin/gzip" ] && cp -vpf /usr/bin/gzip /tmpRoot/usr/bin/gzip  
+
   cat > /tmpRoot/etc/systemd/system/nvmesystem.service <<'EOF'
 [Unit]
 Description=mshell addon nvmesystem daemon
