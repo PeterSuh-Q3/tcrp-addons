@@ -1,3 +1,5 @@
+This Addon is not included in bundled-exts.json.
+
 Create your own device tree binary.
 
 ```shell
