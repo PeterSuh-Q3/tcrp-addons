@@ -413,7 +413,7 @@ function nondtModel() {
   _set_conf_kv rd "maxdisks" "${MAXDISKS}"
   printf "set maxdisks=%d\n" "${MAXDISKS}"
 
-  if [ "${1}" = "true" ]; then
+  if [ "${1}" = "false" ]; then
     echo "TODO: no-DT's sort!!!"
   fi
 
