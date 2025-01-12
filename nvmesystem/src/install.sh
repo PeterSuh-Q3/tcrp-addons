@@ -69,7 +69,7 @@ elif [ "${1}" = "late" ]; then
 
   [ ! -f "/tmpRoot/usr/bin/gzip" ] && cp -vpf /usr/bin/gzip /tmpRoot/usr/bin/gzip  
 
-  cat > /tmpRoot/etc/systemd/system/nvmesystem.service <<'EOF'
+  cat > /tmpRoot/usr/lib/systemd/system/nvmesystem.service <<'EOF'
 [Unit]
 Description=mshell addon nvmesystem daemon
 Wants=smpkg-custom-install.service pkgctl-StorageManager.service
@@ -83,8 +83,8 @@ ExecStart=/usr/sbin/nvmesystem.sh
 WantedBy=multi-user.target
 EOF
 
-  mkdir -vp /tmpRoot/etc/systemd/system/multi-user.target.wants
-  ln -vsf /etc/systemd/system/nvmesystem.service /tmpRoot/etc/systemd/system/multi-user.target.wants/nvmesystem.service
+  mkdir -vp /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
+  ln -vsf /usr/lib/systemd/system/nvmesystem.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/nvmesystem.service
 
 elif [ "${1}" = "rcExit" ]; then
   echo "Installing addon nvmesystem - ${1}"
