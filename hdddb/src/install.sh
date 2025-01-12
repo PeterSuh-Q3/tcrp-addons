@@ -17,8 +17,8 @@ if [ "${1}" = "late" ]; then
   #echo "Excute hdddb.sh with option n."
   #/tmpRoot/usr/sbin/hdddb.sh -n
 
-  mkdir -p "/tmpRoot/etc/systemd/system"
-  DEST="/tmpRoot/etc/systemd/system/hdddb.service"
+  mkdir -p "/tmpRoot/usr/lib/systemd/system"
+  DEST="/tmpRoot/usr/lib/systemd/system/hdddb.service"
   {
     echo "[Unit]"
     echo "Description=mshell addon hdddb daemon"
@@ -34,6 +34,6 @@ if [ "${1}" = "late" ]; then
     echo "WantedBy=multi-user.target"
   } >"${DEST}"
 
-  mkdir -vp /tmpRoot/etc/systemd/system/multi-user.target.wants
-  ln -vsf /etc/systemd/system/hdddb.service /tmpRoot/etc/systemd/system/multi-user.target.wants/hdddb.service
+  mkdir -vp /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
+  ln -vsf /usr/lib/systemd/system/hdddb.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/hdddb.service
 fi
