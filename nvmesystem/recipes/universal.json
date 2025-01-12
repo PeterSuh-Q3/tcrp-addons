@@ -28,7 +28,6 @@
 
   "scripts": {
     "on_early": "install.sh",
-    "on_os_load": "install.sh",
-    "on_rcExit": "install.sh"
+    "on_os_load": "install.sh"
   }
 }
