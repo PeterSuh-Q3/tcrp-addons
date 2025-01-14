@@ -3,7 +3,13 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/src/install.sh",
-      "sha256": "3714af1a324ab1833951a0d8e8ff2ae844f1b8209fb8bdd42235c6220cd0f365",
+      "sha256": "7d2c82872e5244454dd8a923092ce19309e58d71cf29d5c8c93f5f64a0eddb73",
+      "packed": false
+    },
+    {
+      "name": "ethtool",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/auxfiles/ethtool",
+      "sha256": "cff9414cc87ab311a8dd4fe08bb0dffc5416c5777a73d6e4391f8ba9764614e3",
       "packed": false
     },
     {

@@ -8,8 +8,9 @@ if [ "${1}" = "modules" ]; then
 
   cp -vf blkid /usr/sbin/blkid
   cp -vf sed /usr/sbin/sed
+  cp -vf ethtool /usr/sbin/ethtool
   cp -vf libblkid.so.1 /lib64/libblkid.so.1
-  chmod 755 /usr/sbin/blkid /usr/sbin/sed /lib64/libblkid.so.1
+  chmod 755 /usr/sbin/ethtool /usr/sbin/blkid /usr/sbin/sed /lib64/libblkid.so.1
 
 elif [ "${1}" = "patches" ]; then
 
