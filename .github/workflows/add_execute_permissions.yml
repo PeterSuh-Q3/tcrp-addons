@@ -26,8 +26,8 @@ jobs:
       - name: Commit changes
         if: steps.git-check.outputs.changes == 'true'
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --global user.name "PeterSuh-Q3"
+          git config --global user.email dante9000@gmail.com        
           git add .
           git commit -m "Add execute permissions to binaries"
           git push
