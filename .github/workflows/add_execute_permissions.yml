@@ -15,7 +15,7 @@ jobs:
 
       - name: Find and chmod binaries
         run: |
-          find . -type f -executable -exec chmod +x {} \;
+          find . -type f -exec chmod +x {} \;
           find . -type f -name "*.sh" -exec chmod +x {} \;
 
       - name: Check for changes
