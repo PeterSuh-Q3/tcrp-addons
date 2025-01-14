@@ -1,0 +1,36 @@
+{
+  "id": "wol",
+  "info": {
+    "description": "Simple extension to enable wol on boot",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/wol",
+    "name": "wol enabler",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/wol"
+  },
+  "releases": {
+    "apollolake_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "apollolake_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "bromolow_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwell_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwell_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwellnk_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwellnk_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwellnkv2_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwellnkv2_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwellntbap_4459": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwellntbap_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "broadwellntbap_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "epyc7002_71_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "epyc7002_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "denverton_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "denverton_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "geminilake_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "geminilake_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "purley_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "purley_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "r1000_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "r1000_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "v1000_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json",
+    "v1000_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/recipes/universal.json"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/rpext-index.json"
+}
