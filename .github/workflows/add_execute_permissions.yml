@@ -1,8 +1,6 @@
 name: Add Execute Permissions to Binaries
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
