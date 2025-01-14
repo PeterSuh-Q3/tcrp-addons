@@ -9,7 +9,8 @@ jobs:
   add-permissions:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
