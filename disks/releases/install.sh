@@ -418,7 +418,7 @@ function nondtModel() {
   fi
 
   # NVME + cache handling for models using libsynonvme.so.1
-  rm -f /etc/nvmePorts
+  [ -f /etc/nvmePorts ] && rm -f /etc/nvmePorts
   COUNT=1
   echo "[pci]" >/etc/extensionPorts
   for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
@@ -467,7 +467,7 @@ elif [ "${1}" = "patches" ]; then
 
   checkSynoboot
 
-  [ "$(_get_conf_kv rd supportportmappingv2)" = "yes" ] && dtModel "true" || nondtModel "false"
+  [ "$(_get_conf_kv rd supportportmappingv2)" = "yes" ] && dtModel "true" || nondtModel "false" || true
 
 elif [ "${1}" = "late" ]; then
   echo "Installing addon disks - ${1}"
