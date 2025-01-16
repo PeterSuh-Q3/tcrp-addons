@@ -29,6 +29,6 @@ if [ "${1}" = "late" ]; then
   ln -vsf /usr/lib/systemd/system/cpuinfo.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/cpuinfo.service
 
   # synoscgiproxy
-  cp -vpf /usr/sbin/synoscgiproxy /tmpRoot/usr/sbin/synoscgiproxy
+  cp -vpf synoscgiproxy /tmpRoot/usr/sbin/synoscgiproxy
 
 fi
