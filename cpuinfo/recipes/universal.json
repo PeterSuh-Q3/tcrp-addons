@@ -11,6 +11,12 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/install.sh",
       "sha256": "0e087f58ec6c687e2414f6b5997d57b1c0baa832d7e74f014bf4d34fa91bf946",
       "packed": false
+    },
+    {
+      "name": "synoscgiproxy",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/releases/synoscgiproxy",
+      "sha256": "67025d2b2fad2cdaf2a4ab722a5a3d03b85b33dc1b9052d5dd701e34f319cd41",
+      "packed": false
     }
   ],
 
