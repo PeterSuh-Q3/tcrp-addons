@@ -115,7 +115,9 @@ fixacpibutton() {
 fixservice() {
 # service
   SERVICE_PATH="/tmpRoot/usr/lib/systemd/system"
-  ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno-oob-check-status.service ${SERVICE_PATH}/SynoInitEth.service ${SERVICE_PATH}/syno_update_disk_logs.service
+  [ -f ${SERVICE_PATH}/syno-oob-check-status.service ] && ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno-oob-check-status.service 
+  [ -f ${SERVICE_PATH}/SynoInitEth.service  ] && ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/SynoInitEth.service 
+  [ -f ${SERVICE_PATH}/syno_update_disk_logs.service ] && ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno_update_disk_logs.service
 }
 
 fixsdcard() {
