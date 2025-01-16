@@ -1,34 +1,20 @@
 #!/bin/bash
 
 if [ "${1}" = "late" ]; then
-
-  echo "Installing addon cpuinfo - ${1}"
-
-  # cpuinfo
-  cp -vpf cpuinfo.sh /tmpRoot/usr/bin/cpuinfo.sh
-
-  shift
-  mkdir -p "/tmpRoot/usr/lib/systemd/system"
-  DEST="/tmpRoot/usr/lib/systemd/system/cpuinfo.service"
-  {
-    echo "[Unit]"
-    echo "Description=MSHELL addon cpuinfo daemon"
-    echo "After=multi-user.target"
-    echo "After=synoscgi.service nginx.service"
-    echo
-    echo "[Service]"
-    echo "Type=oneshot"
-    echo "RemainAfterExit=yes"
-    echo "ExecStart=-/usr/bin/cpuinfo.sh $@"
-    echo
-    echo "[Install]"
-    echo "WantedBy=multi-user.target"
-  } >"${DEST}"
-
-  mkdir -vp /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
-  ln -vsf /usr/lib/systemd/system/cpuinfo.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/cpuinfo.service
-
-  # synoscgiproxy
-  cp -vpf synoscgiproxy /tmpRoot/usr/sbin/synoscgiproxy
-
+  echo "Installing daemon for CPU Info"
+  cp -vf cpuinfo.sh /tmpRoot/usr/sbin/cpuinfo.sh
+  chmod 755 /tmpRoot/usr/sbin/cpuinfo.sh
+  cat > /tmpRoot/usr/lib/systemd/system/cpuinfo.service <<'EOF'
+[Unit]
+Description=Adds correct CPU Info, from FOXBI
+After=multi-user.target
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/sbin/cpuinfo.sh
+[Install]
+WantedBy=multi-user.target  
+EOF
+  mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
+  ln -sf /usr/lib/systemd/system/cpuinfo.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/cpuinfo.service
 fi
