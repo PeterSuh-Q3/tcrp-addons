@@ -526,7 +526,7 @@ elif [ "${1}" = "late" ]; then
   if [ "$(_get_conf_kv rd supportportmappingv2)" = "yes" ]; then
     echo "Copying /etc.defaults/model.dtb"
     # copy file
-    cp -vpf /usr/bin/dtc /tmpRoot/usr/bin/dtc
+    cp -vpf dtc /tmpRoot/usr/bin/dtc
     cp -vpf /etc/model.dtb /tmpRoot/etc/model.dtb
     cp -vpf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
   else
