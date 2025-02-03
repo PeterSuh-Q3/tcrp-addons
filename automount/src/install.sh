@@ -1,10 +1,25 @@
 #!/bin/sh
 
+set -e
 # 2024.03.13
 # Changed to handle only loader partition injection function on HDD,
 # and moved the existing checkSynoboot function to the boot-wait addon.
 
+# Function to remap device nodes
+function remap_device() {
+      local src=$1
+      local dest=$2
+      [ ! -b "$src" ] && return
+      
+      local major=$(stat -c %t "$src")
+      local minor=$(stat -c %T "$src")
+      mknod "$dest" b $((0x${major})) $((0x${minor}))
+      rm -f "$src"
+}
+
 if [ "${1}" = "modules" ]; then
+
+  echo "Installing addon automount - ${1}"
 
   cp -vf blkid /usr/sbin/blkid
   cp -vf sed /usr/sbin/sed
@@ -14,9 +29,36 @@ if [ "${1}" = "modules" ]; then
 
 elif [ "${1}" = "patches" ]; then
 
+  echo "Installing addon automount - ${1}"
+
+  # Check if /dev/synoboot6 exists
+  if [ -b /dev/synoboot6 ]; then
+    # Search for unused sdX
+    for letter in {a..z}; do
+        [ ! -b "/dev/sd${letter}" ] && NEW_DISK="sd${letter}" && break
+    done
+    [ -z "${NEW_DISK}" ] && { echo "No available sdX device"; exit 1; }
+    
+    # Remap base devices
+    remap_device "/dev/synoboot" "/dev/${NEW_DISK}"
+    for i in {1..3}; do
+        remap_device "/dev/synoboot${i}" "/dev/${NEW_DISK}${i}"
+    done
+    
+    # Relocate extended partitions
+    for i in {4..6}; do
+        target=$((i-3))
+        remap_device "/dev/synoboot${i}" "/dev/synoboot${target}"
+    done
+    
+    echo "Remapping completed: synoboot -> ${NEW_DISK}, 4-6 -> 1-3"
+    
+  fi
+
+
   if [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
-    echo "Found normal synoboot1 / synoboot2 / synoboot3"
-    return
+      echo "Found normal synoboot1 / synoboot2 / synoboot3"
+      return
   fi
 
   devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
