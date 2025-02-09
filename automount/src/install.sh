@@ -54,11 +54,11 @@ elif [ "${1}" = "patches" ]; then
     p1="5"
     p2="6"
     p3="4"
-  elif [ "${partnochk}" -eq 6 ]; then
+  elif [ "${partnochk}" -eq 7 ]; then
     echo "This is SHR Type Disk(Win95 Ext) & Has Syno Boot Partition. $partnochk"  
     p1="4"
-    p2="5"
-    p3="6"
+    p2="6"
+    p3="7"
   fi
 
   if [ "${devtype}" = "sa" ]; then
@@ -71,12 +71,8 @@ elif [ "${1}" = "patches" ]; then
   echo "LOADER_DISK = ${LOADER_DISK}" 
 
   if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}${p3} ]; then
-    [ -b /dev/${LOADER_DISK}${p3} ] && ln -s /dev/${LOADER_DISK}${p3} /dev/synoboot3    
     [ -b /dev/${BOOT_DISK}${p1} ] && ln -s /dev/${BOOT_DISK}${p1} /dev/synoboot1
-    if [ "${partnochk}" -eq 4 ]; then
-      [ -b /dev/${BOOT_DISK}${p2} ] && ln -s /dev/${BOOT_DISK}${p2} /dev/synoboot2
-    elif [ "${partnochk}" -eq 6 ]; then
-      ln -s /dev/${BOOT_DISK}${p3}/2nd /dev/synoboot2
-    fi
+    [ -b /dev/${BOOT_DISK}${p2} ] && ln -s /dev/${BOOT_DISK}${p2} /dev/synoboot2
+    [ -b /dev/${LOADER_DISK}${p3} ] && ln -s /dev/${LOADER_DISK}${p3} /dev/synoboot3
   fi
 fi
