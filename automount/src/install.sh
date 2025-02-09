@@ -5,18 +5,6 @@ set -e
 # Changed to handle only loader partition injection function on HDD,
 # and moved the existing checkSynoboot function to the boot-wait addon.
 
-# Function to remap device nodes
-function remap_device() {
-      local src=$1
-      local dest=$2
-      [ ! -b "$src" ] && return
-      
-      local major=$(stat -c %t "$src")
-      local minor=$(stat -c %T "$src")
-      mknod "$dest" b $((0x${major})) $((0x${minor}))
-      rm -f "$src"
-}
-
 if [ "${1}" = "modules" ]; then
 
   echo "Installing addon automount - ${1}"
@@ -31,31 +19,6 @@ elif [ "${1}" = "patches" ]; then
 
   echo "Installing addon automount - ${1}"
 
-  # Check if /dev/synoboot6 exists
-  if [ -b /dev/synoboot6 ]; then
-    # Search for unused sdX
-    for letter in {a..z}; do
-        [ ! -b "/dev/sd${letter}" ] && NEW_DISK="sd${letter}" && break
-    done
-    [ -z "${NEW_DISK}" ] && { echo "No available sdX device"; exit 1; }
-    
-    # Remap base devices
-    remap_device "/dev/synoboot" "/dev/${NEW_DISK}"
-    for i in {1..3}; do
-        remap_device "/dev/synoboot${i}" "/dev/${NEW_DISK}${i}"
-    done
-    
-    # Relocate extended partitions
-    for i in {4..6}; do
-        target=$((i-3))
-        remap_device "/dev/synoboot${i}" "/dev/synoboot${target}"
-    done
-    
-    echo "Remapping completed: synoboot -> ${NEW_DISK}, 4-6 -> 1-3"
-    
-  fi
-
-
   if [ -b /dev/synoboot1 -a -b /dev/synoboot2 -a -b /dev/synoboot3 ]; then
       echo "Found normal synoboot1 / synoboot2 / synoboot3"
       return
@@ -66,55 +29,54 @@ elif [ "${1}" = "patches" ]; then
     partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sd[a-z]+([0-9]+):.*$#\1#')
     [ "${partnochk}" -eq 3 ] && return
 
+    BOOT_DISK=$(blkid | grep "1234-5678" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
     LOADER_DISK=$(blkid | grep "6234-C863" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
-    echo "Found USB or HDD Disk loader!"
-    p1="5"
-    p2="6"
-    p3="4"
+    echo "Found SynoDisk Injected boot loader on Non Device-Tree model."
   elif [ "${devtype}" = "sa" ]; then
     partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sata[0-9]+p([0-9]+):.*$#\1#')
     [ "${partnochk}" -eq 3 ] && return
 
+    BOOT_DISK=$(blkid | grep "1234-5678" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
     LOADER_DISK=$(blkid | grep "6234-C863" | sed -E 's#^/dev/(sata[0-9]+).*$#\1#')
-    echo "Found Sata Disk loader!"
-    p1="p5"
-    p2="p6"
-    p3="p4"
+    echo "Found SynoDisk Injected boot loader on Device-Tree model."
   else
+    BOOT_DISK=""
     LOADER_DISK=""
   fi
-  
+
   if [ -z ${LOADER_DISK} ]; then
     echo "Not Supported Device Type for loader Partition !!!"
     return
   fi
 
-  BOOT_DISK="${LOADER_DISK}"
-  if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}${p3} ]; then
-
-    for edisk in $(fdisk -l | grep "Disk /dev/${devtype}" | sed -E 's#^Disk /dev/(sd[a-z]+|sata[0-9]+):.*$#\1#'); do
-        if [ $(fdisk -l | grep "fd Linux raid autodetect" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
-            echo "This is BASIC or SHR Type Disk & Has Syno Boot Partition. $edisk"
-            BOOT_DISK="${edisk}"
-            if [ $(fdisk -l | grep "Win95 Ext" | grep ${edisk} | wc -l ) -eq 1 ]; then
-                echo "This is SHR Type Disk(Win95 Ext) & Has Syno Boot Partition. $edisk"
-                p1=$(echo ${p1} | sed 's#5#4#')
-            fi
-        elif [ $(fdisk -l | grep "Linux RAID" | grep ${edisk} | wc -l ) -eq 3 ] && [ $(fdisk -l | grep "83 Linux" | grep ${edisk} | wc -l ) -eq 2 ]; then
-            echo "This is Fixed SHR Type Disk & Has Syno Boot Partition. $edisk"
-            p1=$(echo ${p1} | sed 's#5#4#')
-        fi
-    done
-  
-    if [ "${BOOT_DISK}" = "${LOADER_DISK}" ]; then
-        echo "Failed to find boot Partition !!!"
-        return
-    fi
-    
-    [ -b /dev/${BOOT_DISK}${p1} ] && ln -s /dev/${BOOT_DISK}${p1} /dev/synoboot1
-    [ -b /dev/${BOOT_DISK}${p2} ] && ln -s /dev/${BOOT_DISK}${p2} /dev/synoboot2
-    [ -b /dev/${LOADER_DISK}${p3} ] && ln -s /dev/${LOADER_DISK}${p3} /dev/synoboot3
-  
+  if [ "${partnochk}" -eq 4 ]; then
+    echo "This is BASIC or JBOD Type Disk & Has Syno Boot Partition. $partnochk"    
+    p1="5"
+    p2="6"
+    p3="4"
+  elif [ "${partnochk}" -eq 6 ]; then
+    echo "This is SHR Type Disk(Win95 Ext) & Has Syno Boot Partition. $partnochk"  
+    p1="4"
+    p2="5"
+    p3="6"
   fi
 
+  if [ "${devtype}" = "sa" ]; then
+    p1="p${p1}"
+    p2="p${p2}"
+    p3="p${p3}"
+  fi
+
+  echo "BOOT_DISK = ${BOOT_DISK}" 
+  echo "LOADER_DISK = ${LOADER_DISK}" 
+
+  if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}${p3} ]; then
+    [ -b /dev/${LOADER_DISK}${p3} ] && ln -s /dev/${LOADER_DISK}${p3} /dev/synoboot3    
+    [ -b /dev/${BOOT_DISK}${p1} ] && ln -s /dev/${BOOT_DISK}${p1} /dev/synoboot1
+    if [ "${partnochk}" -eq 4 ]; then
+      [ -b /dev/${BOOT_DISK}${p2} ] && ln -s /dev/${BOOT_DISK}${p2} /dev/synoboot2
+    elif [ "${partnochk}" -eq 6 ]; then
+      ln -s /dev/${BOOT_DISK}${p3}/2nd /dev/synoboot2
+    fi
+  fi
 fi
