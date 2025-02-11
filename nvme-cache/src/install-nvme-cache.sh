@@ -8,7 +8,7 @@ if [ "${1}" = "patches" ]; then
   echo "Installing addon nvmecache - ${1}"
 
   BOOTDISK=""
-  BOOTDISK_PART3=$((blkid -U "6234-C863" 2>/dev/null || blkid -U "8765-4321" 2>/dev/null) | sed 's/\/dev\///')
+  BOOTDISK_PART3=$(blkid -U "6234-C863" 2>/dev/null || blkid -U "8765-4321" 2>/dev/null) | sed 's/\/dev\///')
   echo "BOOTDISK_PART3=${BOOTDISK_PART3}"
   [ -n "${BOOTDISK_PART3}" ] && BOOTDISK=$(ls -d /sys/block/*/${BOOTDISK_PART3} 2>/dev/null | cut -d'/' -f4)
   [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
