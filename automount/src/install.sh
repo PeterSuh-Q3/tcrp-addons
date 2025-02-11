@@ -24,20 +24,20 @@ elif [ "${1}" = "patches" ]; then
       return
   fi
 
-  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
+  devtype="$(blkid | grep -e "6234-C863" -e "8765-4321" | cut -c 6-7 )"
   if [ "${devtype}" = "sd" ]; then
-    partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sd[a-z]+([0-9]+):.*$#\1#')
+    partnochk=$(blkid | grep -e "6234-C863" -e "8765-4321" | sed -E 's#^/dev/sd[a-z]+([0-9]+):.*$#\1#')
     [ "${partnochk}" -eq 3 ] && return
 
     BOOT_DISK=$(blkid | grep "1234-5678" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
-    LOADER_DISK=$(blkid | grep "6234-C863" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
+    LOADER_DISK=$(blkid | grep -e "6234-C863" -e "8765-4321" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
     echo "Found SynoDisk Injected boot loader on Non Device-Tree model."
   elif [ "${devtype}" = "sa" ]; then
-    partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sata[0-9]+p([0-9]+):.*$#\1#')
+    partnochk=$(blkid | grep -e "6234-C863" -e "8765-4321" | sed -E 's#^/dev/sata[0-9]+p([0-9]+):.*$#\1#')
     [ "${partnochk}" -eq 3 ] && return
 
     BOOT_DISK=$(blkid | grep "1234-5678" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
-    LOADER_DISK=$(blkid | grep "6234-C863" | sed -E 's#^/dev/(sata[0-9]+).*$#\1#')
+    LOADER_DISK=$(blkid | grep -e "6234-C863" -e "8765-4321" | sed -E 's#^/dev/(sata[0-9]+).*$#\1#')
     echo "Found SynoDisk Injected boot loader on Device-Tree model."
   else
     BOOT_DISK=""
@@ -49,12 +49,7 @@ elif [ "${1}" = "patches" ]; then
     return
   fi
 
-  if [ "${partnochk}" -eq 4 ]; then
-    echo "This is BASIC or JBOD Type Disk & Has Syno Boot Partition. $partnochk"    
-    p1="5"
-    p2="6"
-    p3="4"
-  elif [ "${partnochk}" -eq 7 ]; then
+  if [ "${partnochk}" -eq 7 ]; then
     echo "This is SHR Type Disk(Win95 Ext) & Has Syno Boot Partition. $partnochk"  
     p1="4"
     p2="6"
