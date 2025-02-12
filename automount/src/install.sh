@@ -24,25 +24,33 @@ elif [ "${1}" = "patches" ]; then
       return
   fi
 
-  devtype="$(blkid | grep -e "6234-C863" -e "8765-4321" | cut -c 6-7 )"
+  devtype="$(blkid | grep "6234-C863" | cut -c 6-7 )"
   if [ "${devtype}" = "sd" ]; then
-    partnochk=$(blkid | grep -e "6234-C863" -e "8765-4321" | sed -E 's#^/dev/sd[a-z]+([0-9]+):.*$#\1#')
-    [ "${partnochk}" -eq 3 ] && return
-
-    BOOT_DISK=$(blkid | grep "1234-5678" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
-    LOADER_DISK=$(blkid | grep -e "6234-C863" -e "8765-4321" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
-    echo "Found SynoDisk Injected boot loader on Non Device-Tree model."
+    partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sd[a-z]+([0-9]+):.*$#\1#')
+    LOADER_DISK=$(blkid | grep "6234-C863" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
+    echo "Found Normal boot loader on Non Device-Tree model."
   elif [ "${devtype}" = "sa" ]; then
-    partnochk=$(blkid | grep -e "6234-C863" -e "8765-4321" | sed -E 's#^/dev/sata[0-9]+p([0-9]+):.*$#\1#')
-    [ "${partnochk}" -eq 3 ] && return
-
-    BOOT_DISK=$(blkid | grep "1234-5678" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
-    LOADER_DISK=$(blkid | grep -e "6234-C863" -e "8765-4321" | sed -E 's#^/dev/(sata[0-9]+).*$#\1#')
-    echo "Found SynoDisk Injected boot loader on Device-Tree model."
+    partnochk=$(blkid | grep "6234-C863" | sed -E 's#^/dev/sata[0-9]+p([0-9]+):.*$#\1#')
+    LOADER_DISK=$(blkid | grep "6234-C863" | sed -E 's#^/dev/(sata[0-9]+).*$#\1#')
+    echo "Found Normal boot loader on Device-Tree model."
   else
-    BOOT_DISK=""
     LOADER_DISK=""
   fi
+
+  if [ -z ${LOADER_DISK} ]; then
+    devtype="$(blkid | grep "8765-4321" | cut -c 6-7 )"
+    if [ "${devtype}" = "sd" ]; then
+      partnochk=$(blkid | grep "8765-4321" | sed -E 's#^/dev/sd[a-z]+([0-9]+):.*$#\1#')
+      LOADER_DISK=$(blkid | grep "8765-4321" | sed -E 's#^/dev/(sd[a-z]+).*$#\1#')
+      echo "Found SynoDisk Injected boot loader on Non Device-Tree model."
+    elif [ "${devtype}" = "sa" ]; then
+      partnochk=$(blkid | grep "8765-4321" | sed -E 's#^/dev/sata[0-9]+p([0-9]+):.*$#\1#')
+      LOADER_DISK=$(blkid | grep "8765-4321" | sed -E 's#^/dev/(sata[0-9]+).*$#\1#')
+      echo "Found SynoDisk Injected boot loader on Device-Tree model."
+    else
+      LOADER_DISK=""
+    fi
+  fi  
 
   if [ -z ${LOADER_DISK} ]; then
     echo "Not Supported Device Type for loader Partition !!!"
@@ -54,6 +62,10 @@ elif [ "${1}" = "patches" ]; then
     p1="4"
     p2="6"
     p3="7"
+  else
+    p1="1"
+    p2="2"
+    p3="3"
   fi
 
   if [ "${devtype}" = "sa" ]; then
@@ -62,12 +74,11 @@ elif [ "${1}" = "patches" ]; then
     p3="p${p3}"
   fi
 
-  echo "BOOT_DISK = ${BOOT_DISK}" 
   echo "LOADER_DISK = ${LOADER_DISK}" 
 
   if [ -d /sys/block/${LOADER_DISK}/${LOADER_DISK}${p3} ]; then
-    [ -b /dev/${BOOT_DISK}${p1} ] && ln -s /dev/${BOOT_DISK}${p1} /dev/synoboot1
-    [ -b /dev/${BOOT_DISK}${p2} ] && ln -s /dev/${BOOT_DISK}${p2} /dev/synoboot2
+    [ -b /dev/${LOADER_DISK}${p1} ] && ln -s /dev/${LOADER_DISK}${p1} /dev/synoboot1
+    [ -b /dev/${LOADER_DISK}${p2} ] && ln -s /dev/${LOADER_DISK}${p2} /dev/synoboot2
     [ -b /dev/${LOADER_DISK}${p3} ] && ln -s /dev/${LOADER_DISK}${p3} /dev/synoboot3
   fi
 fi
