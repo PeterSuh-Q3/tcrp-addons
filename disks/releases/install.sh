@@ -415,7 +415,10 @@ if [ "${1}" = "modules" ]; then
 elif [ "${1}" = "patches" ]; then
   echo "Installing addon disks - ${1}"
 
-  BOOTDISK_PART3=$(blkid -U "6234-C863" 2>/dev/null || blkid -U "8765-4321" 2>/dev/null | sed 's/\/dev\///')
+  BOOTDISK_PART3=$(blkid -U "6234-C863" 2>/dev/null | sed 's/\/dev\///')
+  if [ -z "$BOOTDISK_PART3" ]; then
+      BOOTDISK_PART3=$(blkid -U "8765-4321" 2>/dev/null | sed 's/\/dev\///')
+  fi
   [ -n "${BOOTDISK_PART3_PATH}" ] && BOOTDISK_PART3_MAJORMINOR="$((0x$(stat -c '%t' "${BOOTDISK_PART3_PATH}"))):$((0x$(stat -c '%T' "${BOOTDISK_PART3_PATH}")))" || BOOTDISK_PART3_MAJORMINOR=""
   [ -n "${BOOTDISK_PART3_MAJORMINOR}" ] && BOOTDISK_PART3="$(cat /sys/dev/block/${BOOTDISK_PART3_MAJORMINOR}/uevent 2>/dev/null | grep 'DEVNAME' | cut -d'=' -f2)" || BOOTDISK_PART3=""
 
