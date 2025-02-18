@@ -1,7 +1,11 @@
 #!/usr/bin/env ash
 
+PLATFORM="$(uname -u | cut -d '_' -f2)"
+
 if [ "${1}" = "late" ]; then
   echo "reboottotcrp - late"
+  [ "${PLATFORM}" = "bromolow" ] && exit 0
+  
   cp -vf tcrp-reboot.sh /tmpRoot/usr/sbin/tcrp-reboot.sh
   chmod 755 /tmpRoot/usr/sbin/tcrp-reboot.sh
   if [ -f /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db ]; then
