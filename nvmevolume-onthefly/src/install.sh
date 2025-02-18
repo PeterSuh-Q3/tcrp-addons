@@ -10,17 +10,14 @@ fi
 # | original    | 803e 00b8 0100 0000 7524 488b | 7.2.X
 # | patched     | 803e 00b8 0100 0000 9090 488b |
 
-MODEL=$(cat /proc/sys/kernel/syno_hw_version)
+PLATFORM="$(uname -u | cut -d '_' -f2)"
 tmpRoot="/tmpRoot"
 file="/lib64/libhwcontrol.so.1"
 
 if [ "${1}" = "late" ]; then
   echo "nvmevolume-onthefly - ${1}"
-  if [ "${MODEL}" = "DS3622xs+" ]; then
-    echo "nvmevolume-onthefly - ${1}, Skip DS3622xs+ (Not Supported)"
-    exit 0
-  elif [ "${MODEL}" = "DS3615xs" ]; then
-    echo "nvmevolume-onthefly - ${1}, Skip DS3615xs (Not Supported)"
+  if [ "${PLATFORM}" = "broadwellnk" ] || [ "${PLATFORM}" = "bromolow" ]; then
+    echo "nvmevolume-onthefly - ${1}, Skip ${PLATFORM} (Not Supported)"
     exit 0
   fi
   [ ! -f "${tmpRoot}${file}.bak" ] && cp -vf "${tmpRoot}${file}" "${tmpRoot}${file}.bak"
