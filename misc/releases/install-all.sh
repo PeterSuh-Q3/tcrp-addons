@@ -177,10 +177,10 @@ if [ "${1}" = "patches" ]; then
 
     case "${PLATFORM}" in
     apollolake)
-        fixintelgpu || exit 0
+        fixintelgpu
         ;;
     geminilake)
-        fixintelgpu || exit 0
+        fixintelgpu
         ;;
     esac
 
