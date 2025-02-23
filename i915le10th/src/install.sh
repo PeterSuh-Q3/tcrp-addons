@@ -4,7 +4,7 @@ set -o pipefail
 
 PLATFORM="$(uname -u | cut -d '_' -f2)"
 
-fixintelgpu() {
+function fixintelgpu() {
   # Intel GPU
   echo "replace intel gpu info for i915le10th"
 
@@ -46,7 +46,7 @@ fixintelgpu() {
   
 }
 
-copyintelgpu() {
+function copyintelgpu() {
   KO_FILE="/tmpRoot/usr/lib/modules/i915.ko"
   [ ! -f "${KO_FILE}.bak" ] && cp -vf "${KO_FILE}" "${KO_FILE}.bak"
   cp -vf "/usr/lib/modules/i915.ko" "${KO_FILE}"
@@ -72,4 +72,17 @@ if [ "${1}" = "patches" ]; then
         fixintelgpu
         ;;
     esac
+    
+elif [ "${1}" = "late" ]; then
+    echo "Installing addon i915le1th - ${1}"
+
+    case "${PLATFORM}" in
+    apollolake)
+        copyintelgpu
+        ;;
+    geminilake)
+        copyintelgpu
+        ;;
+    esac
+    
 fi
