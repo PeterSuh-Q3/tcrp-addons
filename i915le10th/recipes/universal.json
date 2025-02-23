@@ -15,6 +15,7 @@
   ],
 
   "scripts": {
+    "on_patches": "install.sh",
     "on_os_load": "install.sh"
   }
 }
