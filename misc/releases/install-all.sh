@@ -103,10 +103,10 @@ fixintelgpu() {
     echo "i915 xxd proc fail!!!" 
   fi  
   rm -vf "${KO_FILE}.tmp"
-  if [ "${isLoad}" = "1" ]; then
-    echo "doing modprobe i915 ..." 
-    /usr/sbin/modprobe i915
-  fi
+  #if [ "${isLoad}" = "1" ]; then
+  #  echo "doing modprobe i915 ..." 
+  #  /usr/sbin/modprobe i915
+  #fi
   
 }
 
