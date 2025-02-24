@@ -39,7 +39,7 @@
 	  {
       "name": "i915ids",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/i915ids",
-      "sha256": "f9d54eca38099b14075aac73cb39f9e7119eeac9c66e74608fdb9c78a6d7e3ff",
+      "sha256": "0f7888107c5cb37f6e8a5d65dda5f1df269a0fc6200ca8d35a04e96bb515c857",
       "packed": false
     }    
   ],
