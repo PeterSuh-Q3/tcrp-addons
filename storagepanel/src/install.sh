@@ -30,7 +30,11 @@
 # $2 ?
 #  (row)X(column)    # default: 1X8
 
+PLATFORM="$(uname -u | cut -d '_' -f2)"
+
 if [ "${1}" = "late" ]; then
+
+[ "${PLATFORM}" = "bromolow" ] && exit 0
 
 HDD_BAY="RACK_60_Bay"
 SSD_BAY="1X4"

@@ -19,18 +19,23 @@ function checkSynoboot() {
 
       if [ "${devtype}" = "sd" ]; then
         BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | sed -E 's#/dev/(sd[a-z]+).*#\1#')"
+        [ -z "$BOOTDISK" ] && BOOTDISK="$(blkid | grep "8765-4321" | grep "/dev/${devtype}" | sed -E 's#/dev/(sd[a-z]+).*#\1#')"
         echo "Found USB or HDD Disk loader!"
       elif [ "${devtype}" = "us" ]; then
         BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | sed -E 's#/dev/(us[a-z]+).*#\1#')"
+        [ -z "$BOOTDISK" ] && BOOTDISK="$(blkid | grep "8765-4321" | grep "/dev/${devtype}" | sed -E 's#/dev/(us[a-z]+).*#\1#')"
         echo "Found USB Disk loader!"
       elif [ "${devtype}" = "sa" ]; then
         BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | sed -E 's#/dev/(sata[0-9]+).*#\1#')"
+        [ -z "$BOOTDISK" ] && BOOTDISK="$(blkid | grep "8765-4321" | grep "/dev/${devtype}" | sed -E 's#/dev/(sata[0-9]+).*#\1#')"
         echo "Found Sata Disk loader!"
       elif [ "${devtype}" = "nv" ]; then
         BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | sed -E 's#/dev/(nvme[0-9]+n[0-9]+).*#\1#')"
+        [ -z "$BOOTDISK" ] && BOOTDISK="$(blkid | grep "8765-4321" | grep "/dev/${devtype}" | sed -E 's#/dev/(nvme[0-9]+n[0-9]+).*#\1#')"
         echo "Found NVMe Disk loader!"
       elif [ "${devtype}" = "mm" ]; then
         BOOTDISK="$(blkid | grep "6234-C863" | grep "/dev/${devtype}" | sed -E 's#/dev/(mmcblk[0-9]+).*#\1#')"
+        [ -z "$BOOTDISK" ] && BOOTDISK="$(blkid | grep "8765-4321" | grep "/dev/${devtype}" | sed -E 's#/dev/(mmcblk[0-9]+).*#\1#')"        
         echo "Found MMC Disk loader!"
       else
         BOOTDISK=""
