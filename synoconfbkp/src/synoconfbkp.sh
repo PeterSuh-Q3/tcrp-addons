@@ -14,7 +14,7 @@
 NUM="${1:-7}"
 PRE="${2:-bkp}"
 
-SCBKPATH="/usr/rr/scbk"
+SCBKPATH="/usr/mshell/scbk"
 FILENAME="${PRE}_$(date +%Y%m%d%H%M%S).dss"
 mkdir -p "${SCBKPATH}"
 /usr/syno/bin/synoconfbkp export --filepath="${SCBKPATH}/${FILENAME}"
@@ -24,10 +24,7 @@ for I in $(ls ${SCBKPATH}/${PRE}*.dss | sort -r | awk "NR>${NUM}"); do
   rm -f "${I}"
 done
 
-LOADER_DISK_PART1="$(/sbin/blkid -L RR1 2>/dev/null)"
-if [ ! -b "${LOADER_DISK_PART1}" ] && [ -b "/dev/synoboot1" ]; then
-  LOADER_DISK_PART1="/dev/synoboot1"
-fi
+LOADER_DISK_PART1="/dev/synoboot1"
 if [ ! -b "${LOADER_DISK_PART1}" ]; then
   echo "Boot disk not found"
   exit 1
