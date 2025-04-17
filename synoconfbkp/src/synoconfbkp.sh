@@ -17,7 +17,7 @@ PRE="${2:-bkp}"
 SCBKPATH="/usr/mshell/scbk"
 FILENAME="${PRE}_$(date +%Y%m%d%H%M%S).dss"
 mkdir -p "${SCBKPATH}"
-rm -f "${SCBKPATH}/*"
+rm -f ${SCBKPATH}/*.dss
 
 /usr/syno/bin/synoconfbkp export --filepath="${SCBKPATH}/${FILENAME}"
 echo "Backup to ${SCBKPATH}/${FILENAME}"
