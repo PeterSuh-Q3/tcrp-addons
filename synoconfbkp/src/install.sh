@@ -9,10 +9,10 @@
 if [ "${1}" = "late" ]; then
   echo "Installing addon synoconfbkp - ${1}"
 
-  cp -vpf /usr/bin/synoconfbkp.sh /tmpRoot/usr/bin/synoconfbkp.sh
-  chmod 755 /tmpRoot/usr/bin/synoconfbkp.sh
+  cp -vpf ./synoconfbkp.sh /tmpRoot/usr/sbin/synoconfbkp.sh
+  chmod 755 /tmpRoot/usr/sbin/synoconfbkp.sh
   
-  export LD_LIBRARY_PATH=/tmpRoot/bin:/tmpRoot/lib
+  export LD_LIBRARY_PATH=/tmpRoot/sbin:/tmpRoot/lib
   ESYNOSCHEDULER_DB="/tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db"
   echo "insert synoconfbkp task to esynoscheduler.db"
   /tmpRoot/bin/sqlite3 "${ESYNOSCHEDULER_DB}" <<EOF
