@@ -17,12 +17,10 @@ PRE="${2:-bkp}"
 SCBKPATH="/usr/mshell/scbk"
 FILENAME="${PRE}_$(date +%Y%m%d%H%M%S).dss"
 mkdir -p "${SCBKPATH}"
+rm -f "${SCBKPATH}/*"
+
 /usr/syno/bin/synoconfbkp export --filepath="${SCBKPATH}/${FILENAME}"
 echo "Backup to ${SCBKPATH}/${FILENAME}"
-
-for I in $(ls ${SCBKPATH}/${PRE}*.dss | sort -r | awk "NR>${NUM}"); do
-  rm -f "${I}"
-done
 
 LOADER_DISK_PART1="/dev/synoboot1"
 if [ ! -b "${LOADER_DISK_PART1}" ]; then
@@ -40,7 +38,7 @@ mount -o loop "${LOADER_DISK_PART1}" "${WORK_PATH}" || {
   exit 1
 }
 
-rm -rf "${WORK_PATH}/scbk"
+rm -f "${WORK_PATH}/scbk/*"
 cp -rf "${SCBKPATH}" "${WORK_PATH}"
 
 sync
