@@ -38,7 +38,7 @@ mount -o loop "${LOADER_DISK_PART1}" "${WORK_PATH}" || {
   exit 1
 }
 
-rm -f "${WORK_PATH}/scbk/*"
+rm -f ${WORK_PATH}/scbk/*.dss
 cp -rf "${SCBKPATH}" "${WORK_PATH}"
 
 sync
