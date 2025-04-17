@@ -46,8 +46,7 @@ cp -rf "${SCBKPATH}" "${WORK_PATH}"
 
 sync
 
-umount "${LOADER_DISK_PART1}" 2>/dev/null
-rm -rf "${WORK_PATH}"
+umount "${WORK_PATH}" 2>/dev/null
 
 echo 0 >/proc/sys/kernel/syno_install_flag 2>/dev/null
 
