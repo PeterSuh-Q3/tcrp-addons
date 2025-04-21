@@ -1,0 +1,13 @@
+{
+  "id": "blockupdate",
+  "info": {
+    "description": "PeterSuh-Q3's blockupdate",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/blockupdate",
+    "name": "PeterSuh-Q3's blockupdate",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/blockupdate"
+  },
+  "releases": {
+    "avoton_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/blockupdate/recipes/universal.json"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/blockupdate/rpext-index.json"
+}

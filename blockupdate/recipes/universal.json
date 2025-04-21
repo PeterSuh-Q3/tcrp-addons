@@ -1,0 +1,15 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/blockupdate/src/install.sh",
+      "sha256": "2fd844dc784549c4ee75b62aa7067cfbe58cd571c0d795c8f836f7cf931d2a9a",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh",
+    "on_patches": "install.sh"
+  }
+}
