@@ -10,7 +10,7 @@ ls -d */ | grep -v -e "9p" | while IFS= read -r dir; do
 
     jsonfile="./${dir}rpext-index.json"
     model_url="${baseurl}/${dir}recipes/universal.json"
-    jq --arg model "${baseplatform}" --arg url "$model_url" '.releases -= { ($model): $url }' "$jsonfile" > temp.json && mv temp.json "$jsonfile"    
+    jq --arg model "${baseplatform}" '.releases |= del(.[$model])' "$jsonfile" > temp.json && mv temp.json "$jsonfile"
 
   done
 done
