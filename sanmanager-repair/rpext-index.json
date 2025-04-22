@@ -31,7 +31,8 @@
     "r1000_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/recipes/universal.json",
     "v1000_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/recipes/universal.json",
     "v1000_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/recipes/universal.json",
-    "avoton_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/recipes/universal.json"
+    "avoton_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/recipes/universal.json",
+    "braswell_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/recipes/universal.json"
   },
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sanmanager-repair/rpext-index.json"
 }
