@@ -35,6 +35,14 @@ if [ "${1}" = "modules" ]; then
     fi
   }
 
+  get_size_gb(){ 
+      # $1 is /sys/block/sata1 or /sys/block/nvme0n1 etc
+      local disk_size_gb
+      #disk_size_gb=$(synodisk --info /dev/"$(basename -- "$1")" 2>/dev/null | grep 'Total capacity' | awk '{print int($4 * 1.073741824)}')
+      disk_size_gb=$(fdisk -l "$1" 2>/dev/null | grep GB | awk '{print $3}')
+      echo "$disk_size_gb"
+  }
+
   getdriveinfo(){
     # ${1} is /sys/block/sata1 etc
 
@@ -90,11 +98,11 @@ if [ "${1}" = "modules" ]; then
               if grep '"'"${hdmodel}"'":' /etc/disk_db.json >/dev/null; then
                  # Replace  "WD40PURX-64GVNY0":{  with  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
                   echo "Insert firmware version:"  # debug
-                  sed -i 's#"'"${hdmodel}"'":{#"'"${hdmodel}"'":{"'"${fwrev}"'":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},#' /etc/disk_db.json
+                  sed -i 's#"'"${hdmodel}"'":{#"'"${hdmodel}"'":{"'"${fwrev}"'":{"size_gb":"'"${size_gb}"'","compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},#' /etc/disk_db.json
               else
                  # Add  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}
                   echo "Append drive and firmware:"  # debug
-                  jsondata='"'"${hdmodel}"'":{"'"${fwrev}"'":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},
+                  jsondata='"'"${hdmodel}"'":{"'"${fwrev}"'":{"compatibility_interval":[{"size_gb":"'"${size_gb}"'","compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},
                   "default":{"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"smart_test_ignore":false,"smart_attr_ignore":false}]}}' && echo $jsondata >> /etc/disk_db.json
                   echo "," >> /etc/disk_db.json
               fi                    
@@ -108,9 +116,11 @@ if [ "${1}" = "modules" ]; then
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
       sd*|hd*|sata*|sas*)
+        size_gb=$(get_size_gb "${d}")
         getdriveinfo "$d" "sd"
       ;;
       nvme*)
+        size_gb=$(get_size_gb "${d}")
         getdriveinfo "$d" "nvme"
       ;;
     esac
