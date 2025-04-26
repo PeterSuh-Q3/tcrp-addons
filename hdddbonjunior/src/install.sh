@@ -101,12 +101,12 @@ if [ "${1}" = "modules" ]; then
               if grep '"'"${hdmodel}"'":' /etc/disk_db.json >/dev/null; then
                  # Replace  "WD40PURX-64GVNY0":{  with  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
                   echo "Insert firmware version:"  # debug
-                  sed -i 's#"'"${hdmodel}"'":{#"'"${hdmodel}"'":{"'"${fwrev}"'":{"size_gb":"'"${size_gb}"'","compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},#' /etc/disk_db.json
+                  sed -i 's#"'"${hdmodel}"'":{#"'"${hdmodel}"'":{"'"${fwrev}"'":{"size_gb":'"${size_gb}"',"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},#' /etc/disk_db.json
               else
                  # Add  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}
                   echo "Append drive and firmware:"  # debug
-                  jsondata='"'"${hdmodel}"'":{"'"${fwrev}"'":{"size_gb":"'"${size_gb}"'","compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},
-                  "default":{"compatibility_interval":[{"size_gb":"'"${size_gb}"'","compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]}}' && echo $jsondata >> /etc/disk_db.json
+                  jsondata='"'"${hdmodel}"'":{"'"${fwrev}"'":{"size_gb":'"${size_gb}"',"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},
+                  "default":{"compatibility_interval":[{"size_gb":'"${size_gb}"',"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]}}' && echo $jsondata >> /etc/disk_db.json
                   echo "," >> /etc/disk_db.json
               fi                    
           fi
