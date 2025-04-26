@@ -146,8 +146,10 @@ if [ "${1}" = "modules" ]; then
           else
             # JSON 파일 업데이트
             if jq -e ".${hdmodel}" /etc/disk_db.json >/dev/null; then
-              update_json --argjson new "$new_entry" \
-                '.[$hdmodel] += $new[$hdmodel][$fwrev]'
+              update_json --arg hdmodel "$hdmodel" \
+                          --arg fwrev "$fwrev" \
+                          --argjson new "$new_entry" \
+                '.[$hdmodel] += $new[$hdmodel][$fwrev]'            
             else
               update_json --argjson new "$new_entry" \
                 '. += $new'
@@ -173,9 +175,10 @@ if [ "${1}" = "modules" ]; then
   #cat /etc/disk_db.json
 
   diskdata=$(jq . /etc/disk_db.json)
-  jsonfile=$(jq '.disk_compatbility_info |= .+ '"$diskdata" ${dbfile}) && echo $jsonfile | jq . > ${dbfile}
+  #jsonfile=$(jq '.disk_compatibility_info |= .+ '"$diskdata" ${dbfile}) && echo $jsonfile | jq . > ${dbfile}
+  jsonfile=$(jq --argjson diskdata "$diskdata" '.disk_compatibility_info *= $diskdata' ${dbfile})
   # print last 8 elements
-  #jq '.disk_compatbility_info | to_entries | map(select(.value != null)) | .[-8:]' ${dbfile}
+  #jq '.disk_compatibility_info | to_entries | map(select(.value != null)) | .[-8:]' ${dbfile}
 
   cp -vf ${dbfile} /etc/
 
