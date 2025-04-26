@@ -88,8 +88,11 @@ if [ "${1}" = "modules" ]; then
             fwrev=$(cat "$1/device/firmware_rev")
         fi
 
+        size_gb=$(get_size_gb "${device}")
+
         echo hdmodel "${hdmodel}" >&2  # debug
         echo fwrev "${fwrev}" >&2      # debug
+        echo size_gb "${size_gb}" >&2      # debug
 
         if [ -n "${hdmodel}" ] && [ -n "${fwrev}" ]; then
           if [ $(cat "${dbfile}" | grep "${hdmodel}" | wc -l) -gt 0 ]; then
@@ -116,11 +119,9 @@ if [ "${1}" = "modules" ]; then
     # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
       sd*|hd*|sata*|sas*)
-        size_gb=$(get_size_gb "${d}")
         getdriveinfo "$d" "sd"
       ;;
       nvme*)
-        size_gb=$(get_size_gb "${d}")
         getdriveinfo "$d" "nvme"
       ;;
     esac
