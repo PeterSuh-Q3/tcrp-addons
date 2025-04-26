@@ -100,8 +100,8 @@ if [ "${1}" = "modules" ]; then
           --arg fwrev "$fwrev" \
           --arg size_gb "$size_gb" \
           "{
-            (\$hdmodel): {
-              (\$fwrev): {
+            \"\($hdmodel)\": {
+              \"\($fwrev)\": {
                 size_gb: (\$size_gb | tonumber),
                 compatibility_interval: [
                   {
@@ -159,9 +159,8 @@ if [ "${1}" = "modules" ]; then
      fi
   }
 
-  echo "{" > /etc/disk_db.json
+  echo "{}" > /etc/disk_db.json
   for d in /sys/block/*; do
-    # $d is /sys/block/sata1 etc
     case "$(basename -- "${d}")" in
       sd*|hd*|sata*|sas*)
         getdriveinfo "$d" "sd"
@@ -171,7 +170,6 @@ if [ "${1}" = "modules" ]; then
       ;;
     esac
   done
-  sed -i '$s/,$/}/' /etc/disk_db.json
   #cat /etc/disk_db.json
 
   diskdata=$(jq . /etc/disk_db.json)
