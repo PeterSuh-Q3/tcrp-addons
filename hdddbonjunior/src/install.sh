@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set +o posix 
 
 model=$(uname -u | cut -d '_' -f3)
 echo model "${model}" >&2  # debug
