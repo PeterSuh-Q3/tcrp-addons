@@ -98,46 +98,45 @@ if [ "${1}" = "modules" ]; then
         new_entry=$(jq -n \
           --arg hdmodel "$hdmodel" \
           --arg fwrev "$fwrev" \
-          --arg size_gb "$size_gb" \
-          "{
-            \"\($hdmodel)\": {
-              \"\($fwrev)\": {
-                size_gb: (\$size_gb | tonumber),
+          --argjson size_gb "$size_gb" \
+          '{
+            ($hdmodel): {
+              ($fwrev): {
+                size_gb: $size_gb,
                 compatibility_interval: [
                   {
-                    compatibility: \"support\",
-                    not_yet_rolling_status: \"support\",
+                    compatibility: "support",
+                    not_yet_rolling_status: "support",
                     fw_dsm_update_status_notify: false,
                     barebone_installable: true,
-                    barebone_installable_v2: \"auto\",
+                    barebone_installable_v2: "auto",
                     smart_test_ignore: false,
                     smart_attr_ignore: false
                   }
                 ]
               },
               default: {
-                size_gb: (\$size_gb | tonumber),
+                size_gb: $size_gb,
                 compatibility_interval: [
                   {
-                    compatibility: \"support\",
-                    not_yet_rolling_status: \"support\",
+                    compatibility: "support",
+                    not_yet_rolling_status: "support",
                     fw_dsm_update_status_notify: false,
                     barebone_installable: true,
-                    barebone_installable_v2: \"auto\",
+                    barebone_installable_v2: "auto",
                     smart_test_ignore: false,
                     smart_attr_ignore: false
                   }
                 ]
               }
             }
-          }"
-        )
-    
+          }'
+        )    
         # 임시 파일 생성 함수
         update_json() {
           local tmpfile="/tmp/tmpfile.$$.$RANDOM"
           touch "$tmpfile"
-          jq "$@" /etc/disk_db.json > "$tmpfile" && mv "$tmpfile" /etc/disk_db.json
+          jq -s '.[0] * .[1]' /etc/disk_db.json <(echo "$new_entry") > "$tmpfile" && mv "$tmpfile" /etc/disk_db.json
         }
     
         if [ -n "${hdmodel}" ] && [ -n "${fwrev}" ]; then
