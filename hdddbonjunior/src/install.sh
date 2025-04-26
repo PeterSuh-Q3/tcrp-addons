@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set +o posix 
 
 model=$(uname -u | cut -d '_' -f3)
 echo model "${model}" >&2  # debug
@@ -137,7 +136,8 @@ if [ "${1}" = "modules" ]; then
         update_json() {
           local tmpfile="/tmp/tmpfile.$$.$RANDOM"
           touch "$tmpfile"
-          jq -s '.[0] * .[1]' /etc/disk_db.json <(echo "$new_entry") > "$tmpfile" && mv "$tmpfile" /etc/disk_db.json
+          echo "$new_entry" > /tmp/new_entry.json
+          jq -s '.[0] * .[1]' /etc/disk_db.json /tmp/new_entry.json > "$tmpfile" && mv "$tmpfile" /etc/disk_db.json
         }
     
         if [ -n "${hdmodel}" ] && [ -n "${fwrev}" ]; then
