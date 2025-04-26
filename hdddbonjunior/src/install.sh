@@ -174,7 +174,7 @@ if [ "${1}" = "modules" ]; then
 
   diskdata=$(jq . /etc/disk_db.json)
   #jsonfile=$(jq '.disk_compatibility_info |= .+ '"$diskdata" ${dbfile}) && echo $jsonfile | jq . > ${dbfile}
-  jsonfile=$(jq --argjson diskdata "$diskdata" '.disk_compatibility_info *= $diskdata' ${dbfile})
+  jsonfile=$(jq --argjson diskdata "$diskdata" '.disk_compatibility_info |= (. // {}) * $diskdata' ${dbfile})
   # print last 8 elements
   #jq '.disk_compatibility_info | to_entries | map(select(.value != null)) | .[-8:]' ${dbfile}
 
