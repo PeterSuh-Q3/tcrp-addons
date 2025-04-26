@@ -1,0 +1,32 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/src/install.sh",
+      "sha256": "f72fb95df0297ad9b08f0d76f237190afc990b19ddf3742a271bf1f777be2abf",
+      "packed": false
+    },
+    {
+      "name": "hdparm701",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/src/hdparm701",
+      "sha256": "7775ba097e7822a64568ac828e446a3157a9c8388a6cd57ee28c8e2880d02c7b",
+      "packed": false
+    },
+    {
+      "name": "hdparm711",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/src/hdparm711",
+      "sha256": "2764fe51405bb259d81a1c23e8b7652cff4b6dcd48cbb7e83291ac76cfb94a3c",
+      "packed": false
+    },
+    {
+      "name": "hdparm720",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/src/hdparm720",
+      "sha256": "6b07abfe013c0a9d1bf3751c8d94d2a8e3e7c0654ac119760e28d26726d90c04",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_boot": "install.sh"
+  }
+}
