@@ -145,7 +145,7 @@ if [ "${1}" = "modules" ]; then
             echo "${hdmodel} is already exists in ${dbfile}, skip writing to /etc/disk_db.json" >&2  # debug
           else
             # JSON 파일 업데이트
-            if jq -e ".${hdmodel}" /etc/disk_db.json >/dev/null; then
+            if grep '"'"${hdmodel}"'":' /etc/disk_db.json >/dev/null; then
               update_json --arg hdmodel "$hdmodel" \
                           --arg fwrev "$fwrev" \
                           --argjson new "$new_entry" \
