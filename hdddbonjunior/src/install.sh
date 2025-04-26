@@ -94,24 +94,67 @@ if [ "${1}" = "modules" ]; then
         echo fwrev "${fwrev}" >&2      # debug
         echo size_gb "${size_gb}" >&2      # debug
 
+        # JSON 기본 템플릿 생성 (원본 동일)
+        new_entry=$(jq -n \
+          --arg hdmodel "$hdmodel" \
+          --arg fwrev "$fwrev" \
+          --arg size_gb "$size_gb" \
+          "{
+            (\$hdmodel): {
+              (\$fwrev): {
+                size_gb: (\$size_gb | tonumber),
+                compatibility_interval: [
+                  {
+                    compatibility: \"support\",
+                    not_yet_rolling_status: \"support\",
+                    fw_dsm_update_status_notify: false,
+                    barebone_installable: true,
+                    barebone_installable_v2: \"auto\",
+                    smart_test_ignore: false,
+                    smart_attr_ignore: false
+                  }
+                ]
+              },
+              default: {
+                size_gb: (\$size_gb | tonumber),
+                compatibility_interval: [
+                  {
+                    compatibility: \"support\",
+                    not_yet_rolling_status: \"support\",
+                    fw_dsm_update_status_notify: false,
+                    barebone_installable: true,
+                    barebone_installable_v2: \"auto\",
+                    smart_test_ignore: false,
+                    smart_attr_ignore: false
+                  }
+                ]
+              }
+            }
+          }"
+        )
+    
+        # 임시 파일 생성 함수
+        update_json() {
+          local tmpfile="/tmp/tmpfile.$$.$RANDOM"
+          touch "$tmpfile"
+          jq "$@" /etc/disk_db.json > "$tmpfile" && mv "$tmpfile" /etc/disk_db.json
+        }
+    
         if [ -n "${hdmodel}" ] && [ -n "${fwrev}" ]; then
           if [ $(cat "${dbfile}" | grep "${hdmodel}" | wc -l) -gt 0 ]; then
             echo "${hdmodel} is already exists in ${dbfile}, skip writing to /etc/disk_db.json" >&2  # debug
           else
-              if grep '"'"${hdmodel}"'":' /etc/disk_db.json >/dev/null; then
-                 # Replace  "WD40PURX-64GVNY0":{  with  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
-                  echo "Insert firmware version:"  # debug
-                  sed -i 's#"'"${hdmodel}"'":{#"'"${hdmodel}"'":{"'"${fwrev}"'":{"size_gb":'"${size_gb}"',"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},#' /etc/disk_db.json
-              else
-                 # Add  "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}
-                  echo "Append drive and firmware:"  # debug
-                  jsondata='"'"${hdmodel}"'":{"'"${fwrev}"'":{"size_gb":'"${size_gb}"',"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]},
-                  "default":{"size_gb":'"${size_gb}"',"compatibility_interval":[{"compatibility":"support","not_yet_rolling_status":"support","fw_dsm_update_status_notify":false,"barebone_installable":true,"barebone_installable_v2":"auto","smart_test_ignore":false,"smart_attr_ignore":false}]}}' && echo $jsondata >> /etc/disk_db.json
-                  echo "," >> /etc/disk_db.json
-              fi                    
+            # JSON 파일 업데이트
+            if jq -e ".${hdmodel}" /etc/disk_db.json >/dev/null; then
+              update_json --argjson new "$new_entry" \
+                '.[$hdmodel] += $new[$hdmodel][$fwrev]'
+            else
+              update_json --argjson new "$new_entry" \
+                '. += $new'
+            fi
           fi
-       fi   
-    fi
+        fi   
+     fi
   }
 
   echo "{" > /etc/disk_db.json
