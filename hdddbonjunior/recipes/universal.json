@@ -23,7 +23,13 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/src/hdparm720",
       "sha256": "6b07abfe013c0a9d1bf3751c8d94d2a8e3e7c0654ac119760e28d26726d90c04",
       "packed": false
-    }
+    },
+    {
+      "name": "test.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/hdddbonjunior/src/test.sh",
+      "sha256": "285314217265922717200dc799bc918f65d171072d48a032b119bcbe18086670",
+      "packed": false
+    }    
   ],
 
   "scripts": {
