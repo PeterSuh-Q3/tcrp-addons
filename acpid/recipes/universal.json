@@ -7,15 +7,9 @@
       "packed": false
     },
     {
-      "name": "acpid.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/releases/acpid.tgz",
-      "sha256": "8671cff49f4b39b5d845650a1efffbcb6582a1e352672e5434b0da9ded1f575b",
-      "packed": false
-    },
-    {
       "name": "usr.tgz",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/releases/usr.tgz",
-      "sha256": "44abe53b59c546828f76c598cca7777ec8b2b2f9c9f1fcf02424284ed80e9c35",
+      "sha256": "56300a40db9c79e1ce9d92fc79859235a9e325e018e8e1f70ecb355218aa277f",
       "packed": false
     }
   ],
