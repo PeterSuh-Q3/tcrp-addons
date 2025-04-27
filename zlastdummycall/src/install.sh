@@ -5,6 +5,7 @@
 #
 if [ "${1}" = "patches" ]; then
   echo "Installing addon zlastdummycall - ${1}"
+  cd /exts/hdddbonjunior
   ash /exts/hdddbonjunior/install.sh modules
   #ash /linuxrc.syno.impl
 fi
