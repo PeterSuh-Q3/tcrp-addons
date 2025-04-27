@@ -456,37 +456,120 @@ nondtModel() {
 }
 
 #
-if [ "${1}" = "patches" ]; then
+if [ "${1}" = "modules" ]; then
+  echo "Installing addon disks - ${1}"
+  cp -vf dtc /usr/sbin/
+  cp -vf readlink /usr/sbin/
+  cp -vf sed /usr/sbin/sed
+  cp -vf rev /usr/sbin/rev
+  cp -vf blkid /usr/sbin/blkid
+  cp -vf libblkid.so.1 /lib64/libblkid.so.1
+
+  chmod 755 /usr/sbin/dtc /usr/sbin/readlink /usr/sbin/sed /usr/sbin/rev /usr/sbin/blkid /lib64/libblkid.so.1
+
+elif [ "${1}" = "patches" ]; then
   echo "Installing addon disks - ${1}"
 
-  BOOTDISK_PART3_PATH="$(/sbin/blkid -L RR3 2>/dev/null)"
+  BOOTDISK_PART3=$(blkid -U "6234-C863" 2>/dev/null | sed 's/\/dev\///')
+  if [ -z "$BOOTDISK_PART3" ]; then
+      BOOTDISK_PART3=$(blkid -U "8765-4321" 2>/dev/null | sed 's/\/dev\///')
+  fi
   [ -n "${BOOTDISK_PART3_PATH}" ] && BOOTDISK_PART3_MAJORMINOR="$((0x$(stat -c '%t' "${BOOTDISK_PART3_PATH}"))):$((0x$(stat -c '%T' "${BOOTDISK_PART3_PATH}")))" || BOOTDISK_PART3_MAJORMINOR=""
-  [ -n "${BOOTDISK_PART3_MAJORMINOR}" ] && BOOTDISK_PART3="$(cat "/sys/dev/block/${BOOTDISK_PART3_MAJORMINOR}/uevent" 2>/dev/null | grep 'DEVNAME' | cut -d'=' -f2)" || BOOTDISK_PART3=""
+  [ -n "${BOOTDISK_PART3_MAJORMINOR}" ] && BOOTDISK_PART3="$(cat /sys/dev/block/${BOOTDISK_PART3_MAJORMINOR}/uevent 2>/dev/null | grep 'DEVNAME' | cut -d'=' -f2)" || BOOTDISK_PART3=""
 
   [ -n "${BOOTDISK_PART3}" ] && BOOTDISK="$(ls -d /sys/block/*/${BOOTDISK_PART3} 2>/dev/null | cut -d'/' -f4)" || BOOTDISK=""
-  [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat "/sys/block/${BOOTDISK}/uevent" 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
+  [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat /sys/block/${BOOTDISK}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
 
   echo "BOOTDISK=${BOOTDISK}"
   echo "BOOTDISK_PHYSDEVPATH=${BOOTDISK_PHYSDEVPATH}"
 
+  # NVMe cache handling for models using libsynonvme.so.1
+  [ -f /etc/nvmePorts ] && rm -f /etc/nvmePorts
+  for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
+    if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+      echo "bootloader: ${P}"
+      continue
+    fi
+    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | rev | cut -d'/' -f2 | rev )
+    if [ -n "${PCIEPATH}" ]; then
+      echo "${PCIEPATH}" >>/etc/nvmePorts
+    else
+      echo "${PCIEPATH} does not support!"
+      continue
+    fi
+  done
+  [ -f /etc/nvmePorts ] && cat /etc/nvmePorts
+
   checkSynoboot
 
-  [ "$(_get_conf_kv rd supportportmappingv2)" = "yes" ] && dtModel "${2}" || nondtModel "${2}"
+  [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && dtModel "${2}" || nondtModel "${2}" || true
 
 elif [ "${1}" = "late" ]; then
   echo "Installing addon disks - ${1}"
-  if [ "$(_get_conf_kv rd supportportmappingv2)" = "yes" ]; then
+
+  MODELS="DS918+ RS1619xs+ DS419+ DS1019+ DS719+ DS1621xs+"
+  MODEL=$(cat /proc/sys/kernel/syno_hw_version)
+  tmpRoot="/tmpRoot"
+
+  # NVMe cache handling for models using libsynonvme.so.1
+  if echo ${MODELS} | grep -q ${MODEL}; then
+  #
+  # |       models      |     1st      |     2nd      |
+  # | DS918+            | 0000:00:13.1 | 0000:00:13.2 |
+  # | RS1619xs+         | 0000:00:03.2 | 0000:00:03.3 |
+  # | DS419+, DS1019+   | 0000:00:14.1 |              |
+  # | DS719+, DS1621xs+ | 0000:00:01.1 | 0000:00:01.0 |
+  #
+  # In the late stage, the /sys/ directory does not exist, and the device path cannot be obtained.
+  # (/dev/ does exist, but there is no useful information.)
+  # (The information obtained by lspci is incomplete and an error will be reported.)
+  # Therefore, the device path is obtained in the early stage and stored in /etc/nvmePorts.
+
+    SO_FILE="/tmpRoot/usr/lib/libsynonvme.so.1"
+    [ ! -f "${SO_FILE}.bak" ] && cp -vf "${SO_FILE}" "${SO_FILE}.bak"
+
+    cp -vf "${SO_FILE}.bak" "${SO_FILE}"
+
+    num=1
+    while read -r N; do
+      echo "${num} - ${N}"
+      if [ ${num} -eq 1 ]; then
+        if [ ${MODEL} = "DS918+" ]; then 
+          sed -i "s/0000:00:13.1/${N}/" "${SO_FILE}"
+        elif [ ${MODEL} = "RS1619xs+" ]; then
+          sed -i "s/0000:00:03.2/${N}/" "${SO_FILE}"
+        elif [ ${MODEL} = "DS419+" ]||[ ${MODEL} = "DS1019+" ]; then
+          sed -i "s/0000:00:14.1/${N}/" "${SO_FILE}"
+        elif [ ${MODEL} = "DS719+" ]||[ ${MODEL} = "DS1621xs+" ]; then
+          sed -i "s/0000:00:01.1/${N}/" "${SO_FILE}"
+        fi  
+      elif [ ${num} -eq 2 ]; then
+        if [ ${MODEL} = "DS918+" ]; then 
+          sed -i "s/0000:00:13.2/${N}/" "${SO_FILE}"
+        elif [ ${MODEL} = "RS1619xs+" ]; then
+          sed -i "s/0000:00:03.3/${N}/" "${SO_FILE}"        
+        elif [ ${MODEL} = "DS719+" ]||[ ${MODEL} = "DS1621xs+" ]; then
+          sed -i "s/0000:00:01.0/${N}/" "${SO_FILE}"        
+        fi  
+      else
+        break
+      fi
+      num=$((num + 1))
+    done < /etc/nvmePorts
+  fi
+  
+  if [ "$(_get_conf_kv supportportmappingv2)" = "yes" ]; then
     echo "Copying /etc.defaults/model.dtb"
     # copy file
-    cp -vpf /usr/bin/dtc /tmpRoot/usr/bin/dtc
-    cp -vpf /etc/model.dtb /tmpRoot/etc/model.dtb
-    cp -vpf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
+    cp -vf dtc /tmpRoot/usr/bin/dtc
+    cp -vf /etc/model.dtb /tmpRoot/etc/model.dtb
+    cp -vf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
   else
     echo "Adjust maxdisks and internalportcfg automatically"
     # sysfs is unpopulated here, get the values from junior synoinfo.conf
-    USBPORTCFG=$(_get_conf_kv rd usbportcfg)
-    ESATAPORTCFG=$(_get_conf_kv rd esataportcfg)
-    INTERNALPORTCFG=$(_get_conf_kv rd internalportcfg)
+    USBPORTCFG=$(_get_conf_kv usbportcfg)
+    ESATAPORTCFG=$(_get_conf_kv esataportcfg)
+    INTERNALPORTCFG=$(_get_conf_kv internalportcfg)
     # log
     echo "usbportcfg=${USBPORTCFG}"
     echo "esataportcfg=${ESATAPORTCFG}"
@@ -496,16 +579,16 @@ elif [ "${1}" = "late" ]; then
     _set_conf_kv hd "esataportcfg" "${ESATAPORTCFG}"
     _set_conf_kv hd "internalportcfg" "${INTERNALPORTCFG}"
     # nvme
-    cp -vpf /etc/extensionPorts /tmpRoot/etc/extensionPorts
-    cp -vpf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
+    cp -vf /etc/extensionPorts /tmpRoot/etc/extensionPorts
+    cp -vf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
   fi
 
-  MAXDISKS=$(_get_conf_kv rd maxdisks)
+  MAXDISKS=$(_get_conf_kv maxdisks)
   echo "maxdisks=${MAXDISKS}"
   _set_conf_kv hd "maxdisks" "${MAXDISKS}"
 
-  SUPPORTNVME=$(_get_conf_kv rd supportnvme)
-  SUPPORT_M2_POOL=$(_get_conf_kv rd support_m2_pool)
+  SUPPORTNVME=$(_get_conf_kv supportnvme)
+  SUPPORT_M2_POOL=$(_get_conf_kv support_m2_pool)
   _set_conf_kv hd "supportnvme" "${SUPPORTNVME}"
   _set_conf_kv hd "support_m2_pool" "${SUPPORT_M2_POOL}"
 fi
