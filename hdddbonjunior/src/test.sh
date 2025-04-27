@@ -6,7 +6,7 @@ echo model "${model}" >&2  # debug
 # Host db files
 dbpath="/var/lib/disk-compatibility/"
 dbfileorg=$(ls "${dbpath}"*"${model}_host_v7.db")
-dbfile=$(ls "${dbpath}"*"${model}_host_v7_test.db")
+dbfile="$dbfileorg".test
 cp -vf "${dbfileorg}" "${dbfile}"
 
 echo dbfile "${dbfile}" >&2  # debug
