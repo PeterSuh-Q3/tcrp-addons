@@ -11,7 +11,7 @@ cp -vf "${dbfile}" "${dbfile}".bak
 
 echo dbfile "${dbfile}" >&2  # debug
 
-if [ "${1}" = "modules" ]; then
+if [ "${1}" = "patches" ]; then
 
   #------------------------------------------------------------------------------
   # Get list of installed SATA, SAS and M.2 NVMe/SATA drives,
