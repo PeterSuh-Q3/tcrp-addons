@@ -162,8 +162,18 @@ if [ "${1}" = "modules" ]; then
      fi
   }
 
+  getloaderdisk() {
+      loaderdisk=""
+      # Get the loader disk using the UUID "6234-C863"
+      loaderdisk=$(blkid | grep -e "6234-C863" -e "8765-4321" | cut -d ':' -f1 | sed 's/p\?3//g' | awk -F/ '{print $NF}' | head -n 1)
+      # Output the loader disk
+      echo "LOADER DISK: $loaderdisk"
+  }
+
+  getloaderdisk
   echo "{}" > /etc/add_disk_db.json
   for d in /sys/block/*; do
+    [ "$(basename -- "${d}")" = "$loaderdisk" ] && continue  
     case "$(basename -- "${d}")" in
       sd*|hd*|sata*|sas*)
         getdriveinfo "$d" "sd"
