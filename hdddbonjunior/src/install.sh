@@ -6,6 +6,8 @@ echo model "${model}" >&2  # debug
 # Host db files
 dbpath="/var/lib/disk-compatibility/"
 dbfile=$(ls "${dbpath}"*"${model}_host_v7.db")
+dbfilebak="${dbfile}".bak
+cp -vf "${dbfile}" "${dbfilebak}"
 echo dbfile "${dbfile}" >&2  # debug
 
 if [ "${1}" = "modules" ]; then
