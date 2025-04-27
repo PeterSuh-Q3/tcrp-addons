@@ -7,7 +7,7 @@ echo model "${model}" >&2  # debug
 dbpath="/var/lib/disk-compatibility/"
 dbfileorg=$(ls "${dbpath}"*"${model}_host_v7.db")
 dbfile="$dbfileorg".test
-cp -vf "${dbfileorg}" "${dbfile}"
+cp -vf "${dbfileorg}".bak "${dbfile}"
 
 echo dbfile "${dbfile}" >&2  # debug
 
