@@ -1,0 +1,14 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/zlastdummycall/src/install.sh",
+      "sha256": "bac9c94526a285a2b1b4818002311bf777d7bb544d7afcb46f4cd7fe0d712a5f",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_patches": "install.sh"
+  }
+}
