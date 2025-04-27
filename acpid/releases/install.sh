@@ -6,8 +6,8 @@
 if [ "${1}" = "modules" ]; then
   echo "acpid - modules"
   echo "extract acpid.tgz to /usr/sbin/ "
-  tar xfz /exts/acpid/acpid.tgz -C /
-  tar xfz /exts/acpid/usr.tgz -C /usr
+  tar vxfz /exts/acpid/acpid.tgz -C /
+  tar vxfz /exts/acpid/usr.tgz -C /usr
 
   #/usr/sbin/acpid
 elif [ "${1}" = "late" ]; then
