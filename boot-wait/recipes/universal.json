@@ -3,31 +3,12 @@
     {
       "name": "boot-wait.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/boot-wait/src/boot-wait.sh",
-      "sha256": "02f4b2d10a51cd69a5f0d8d6db010bb2e40f6e20f16c0c017b18b603c80875a3",
-      "packed": false
-    },
-    {
-      "name": "sed",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/boot-wait/auxfiles/sed",
-      "sha256": "be9c9394fca38bac3412a1a9da1452e4dedb415a168a0329d86a1548df8ced7c",
-      "packed": false
-    },
-    {
-      "name": "blkid",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/boot-wait/auxfiles/blkid",
-      "sha256": "4c9eeabb72afaa74bd255c366772fbf4bac74075b49fbdd01823a182897b831a",
-      "packed": false
-    },
-    {
-      "name": "libblkid.so.1",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/boot-wait/auxfiles/libblkid.so.1",
-      "sha256": "33bc0e824592479e95718f858653d04a4e810c863e8399c859fcf27ed9d70590",
+      "sha256": "7862dcf05176758ef0c9a120609ad49ca227980604e6d20f0a679d2c55e8f65b",
       "packed": false
     }
   ],
 
   "scripts": {
-    "on_boot": "boot-wait.sh",
     "on_patches": "boot-wait.sh"
   }
 }

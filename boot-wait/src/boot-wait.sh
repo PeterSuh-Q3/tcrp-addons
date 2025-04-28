@@ -87,14 +87,7 @@ function checkSynoboot() {
 
 }
 
-if [ "${1}" = "modules" ]; then
-
-  cp -vf blkid /usr/sbin/blkid
-  cp -vf sed /usr/sbin/sed
-  cp -vf libblkid.so.1 /lib64/libblkid.so.1
-  chmod 755 /usr/sbin/blkid /usr/sbin/sed /lib64/libblkid.so.1
-
-elif [ "${1}" = "patches" ]; then
+if [ "${1}" = "patches" ]; then
     wait_time=10 # maximum wait time in seconds
 
     time_counter=0
