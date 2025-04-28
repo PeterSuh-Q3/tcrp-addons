@@ -5,10 +5,9 @@
 
 if [ "${1}" = "modules" ]; then
   echo "Installing addon abusyboxupgrade - ${1}"
-  echo "extract usr-busybox.tgz to /usr/bin/ "
-  tar vxfz usr-busybox.tgz -C /usr/bin/
-  echo "make syboliclink for new busybox "
-  /usr/bin/busybox --install -s /usr/bin
-  cp -vf get_key_value /usr/bin/get_key_value
-  chmod +x /usr/bin/get_key_value
+  echo "extract usr-busybox.tgz (busybox 1.35.0) to /usr/sbin/ "
+  tar vxfz usr-busybox.tgz -C /usr/sbin/
+  mv /usr/sbin/busybox /usr/sbin/busybox135
+  echo "make syboliclink for new busybox 1.35.0 "
+  /usr/sbin/busybox135 --install -s /usr/sbin
 fi
