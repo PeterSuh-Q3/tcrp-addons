@@ -3,13 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sortnetif/src/install.sh",
-      "sha256": "6cbf0d2645a5c066fcef32fb65d076e5092c86df994bc6c7c1b822c886d42c7c",
-      "packed": false
-    },
-    {
-      "name": "usr.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sortnetif/releases/usr.tgz",
-      "sha256": "8369f299ffd50ecf8fdf8e72add173279e6be869777e50f71cc519f75a814bd5",
+      "sha256": "bc41a9091f56731ea3af60c8c7300858d19e83555a0ef1c244d0dc7df3c2a0bf",
       "packed": false
     }
   ],

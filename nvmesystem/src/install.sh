@@ -22,12 +22,6 @@
 
 if [ "${1}" = "early" ]; then
   echo "Installing addon nvmesystem - ${1}"
-
-  # for mshell
-  [ ! -f "/usr/sbin/xxd" ] && cp -vf xxd /usr/sbin/xxd
-  chmod +x /usr/sbin/xxd
-  [ ! -f "/usr/sbin/sed" ] && cp -vf sed /usr/sbin/sed
-  chmod +x /usr/sbin/sed
   
   # System volume is assembled with SSD Cache only, please remove SSD Cache and then reboot
   sed -i "s/support_ssd_cache=.*/support_ssd_cache=\"no\"/" /etc/synoinfo.conf /etc.defaults/synoinfo.conf

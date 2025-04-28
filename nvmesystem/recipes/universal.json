@@ -3,25 +3,13 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/src/install.sh",
-      "sha256": "04c1fe00e822d9ff1907cf31c3fdbf2b8ade65ede2a69c0234c54476b74d4436",
+      "sha256": "f627dd64685746c3fd6a0702d84efc9428c236e047b9f55cffe5114991f13cc6",
       "packed": false
     },
     {
       "name": "nvmesystem.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/src/nvmesystem.sh",
       "sha256": "1e0f9cc3740c068768df8a6bd682517a9c1c0a09602ce71087735e427f3ea369",
-      "packed": false
-    },
-    {
-      "name": "sed",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/releases/sed",
-      "sha256": "be9c9394fca38bac3412a1a9da1452e4dedb415a168a0329d86a1548df8ced7c",
-      "packed": false
-    },    
-    {
-      "name": "xxd",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/releases/xxd",
-      "sha256": "8c5276692602de7b0ff53b7ac787d31538e3cd9f49234f6ccd58dd01aca59712",
       "packed": false
     }
   ],

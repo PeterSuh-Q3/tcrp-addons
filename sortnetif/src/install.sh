@@ -8,10 +8,6 @@
 
 if [ "${1}" = "patches" ]; then
   echo "Installing addon sortnetif - ${1}"
-  echo "extract usr.tgz to /usr/ "
-  tar xvfz /exts/sortnetif/usr.tgz -C /
-
-  chmod +x /usr/bin/awk /usr/bin/tr /usr/bin/sort /usr/bin/sed /usr/bin/ethtool
 
   ETHLIST=""
   ETHX=$(ls /sys/class/net/ 2>/dev/null | grep eth) # real network cards list
