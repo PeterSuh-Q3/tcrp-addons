@@ -10,6 +10,9 @@ if [ "${1}" = "modules" ]; then
 elif [ "${1}" = "rcExit" ]; then
   echo "Installing addon misc - ${1}"
 
+  SH_FILE="/usr/syno/share/get_hcl_invalid_disks.sh"
+  [ -f "${SH_FILE}" ] && cp -pf "${SH_FILE}" "${SH_FILE}.bak" && printf '#!/bin/sh\nexit 0\n' >"${SH_FILE}"
+
   mkdir -p /usr/syno/web/webman
   # clear system disk space
   cat >/usr/syno/web/webman/clean_system_disk.cgi <<EOF
