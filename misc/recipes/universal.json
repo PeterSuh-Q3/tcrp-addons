@@ -3,7 +3,7 @@
     {
       "name": "install-all.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install-all.sh",
-      "sha256": "75137d20e95e2d2c3eef2a6a7166a110a7c0f5e790e89888998876be74641ad5",
+      "sha256": "1d510c11145b8110abbd33d385218db1cf7ddca145cb8c0eb975d891f30c69fc",
       "packed": false
     },
     {
@@ -23,18 +23,6 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/lrzsz.tar.gz",
       "sha256": "92917b39874f2a843b56549081332dbfc38607ce9d94f14bbff04aa9dda145cd",
       "packed": true
-    },
-    {
-      "name": "xxd",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/xxd",
-      "sha256": "8c5276692602de7b0ff53b7ac787d31538e3cd9f49234f6ccd58dd01aca59712",
-      "packed": false
-    },	  
-    {
-      "name": "sed",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/sed",
-      "sha256": "be9c9394fca38bac3412a1a9da1452e4dedb415a168a0329d86a1548df8ced7c",
-      "packed": false 
     },
 	  {
       "name": "i915ids",

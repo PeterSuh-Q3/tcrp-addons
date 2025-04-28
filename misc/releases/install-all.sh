@@ -166,12 +166,6 @@ fixnetwork() {
 if [ "${1}" = "patches" ]; then
     echo "Installing addon misc - ${1}"
 
-    cp -vf /exts/misc/xxd /usr/bin/xxd
-    chmod +x /usr/bin/xxd
-
-    cp -vf /exts/misc/sed /usr/bin/sed
-    chmod +x /usr/bin/sed
-
     cp -vf /exts/misc/i915ids /usr/sbin/i915ids
     chmod +x /usr/sbin/i915ids
 
