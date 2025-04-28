@@ -6,7 +6,7 @@
 if [ "${1}" = "on_early" ]; then
   echo "Installing addon abusyboxupgrade - ${1}"
   echo "extract usr-busybox.tgz to /usr/bin/ "
-  tar vxfz usr-busybox.tgz -C /usr/bin
+  tar vxfz usr-busybox.tgz -C /usr/bin/
   echo "make syboliclink for new busybox "
   /usr/bin/busybox --install -s /usr/bin
 fi
