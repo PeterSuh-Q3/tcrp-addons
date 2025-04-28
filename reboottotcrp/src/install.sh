@@ -1,10 +1,14 @@
 #!/usr/bin/env ash
 
-PLATFORM="$(uname -u | cut -d '_' -f2)"
+kernelver=$(uname -r)
+firstchar=$(printf "%.1s" "$kernelver")
 
 if [ "${1}" = "late" ]; then
   echo "reboottotcrp - late"
-  [ "${PLATFORM}" = "bromolow" ] && exit 0
+  if [ "$firstchar" = "3" ]; then
+    echo "syno kernel 3 is not supported"
+    exit 0
+  fi
   
   cp -vf tcrp-reboot.sh /tmpRoot/usr/sbin/tcrp-reboot.sh
   chmod 755 /tmpRoot/usr/sbin/tcrp-reboot.sh

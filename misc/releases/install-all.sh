@@ -2,7 +2,7 @@
 
 set -o pipefail 
 
-PLATFORM="$(uname -u | cut -d '_' -f2)"
+PLATFORM="$(uname -a | awk '{print $NF}' | cut -d '_' -f2)"
 
 SED_PATH='/tmpRoot/usr/bin/sed'
 XXD_PATH='/tmpRoot/usr/bin/xxd'

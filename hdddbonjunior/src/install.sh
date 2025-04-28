@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-model=$(uname -u | cut -d '_' -f3)
+model=$(uname -a | awk '{print $NF}' | cut -d '_' -f3)
 echo model "${model}" >&2  # debug
 
 # Host db files

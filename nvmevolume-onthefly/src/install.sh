@@ -10,7 +10,7 @@ fi
 # | original    | 803e 00b8 0100 0000 7524 488b | 7.2.X
 # | patched     | 803e 00b8 0100 0000 9090 488b |
 
-PLATFORM="$(uname -u | cut -d '_' -f2)"
+PLATFORM="$(uname -a | awk '{print $NF}' | cut -d '_' -f2)"
 tmpRoot="/tmpRoot"
 file="/lib64/libhwcontrol.so.1"
 
