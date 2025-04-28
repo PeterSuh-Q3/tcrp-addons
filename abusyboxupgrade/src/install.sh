@@ -9,4 +9,9 @@ if [ "${1}" = "early" ]; then
   tar vxfz usr-busybox.tgz -C /usr/bin/
   echo "make syboliclink for new busybox "
   /usr/bin/busybox --install -s /usr/bin
+  cat << 'EOF' > /usr/bin/get_key_value
+#!/bin/sh
+grep "^${2}=" "${1}" | head -n1 | cut -d'=' -f2-
+EOF
+  chmod +x /usr/bin/get_key_value
 fi
