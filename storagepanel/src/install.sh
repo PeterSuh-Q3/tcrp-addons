@@ -30,7 +30,7 @@
 # $2 ?
 #  (row)X(column)    # default: 1X8
 
-PLATFORM="$(uname -u | cut -d '_' -f2)"
+PLATFORM="$(uname -a | awk '{print $NF}' | cut -d '_' -f2)"
 
 if [ "${1}" = "late" ]; then
 
@@ -39,7 +39,7 @@ if [ "${1}" = "late" ]; then
 HDD_BAY="RACK_60_Bay"
 SSD_BAY="1X4"
 
-_UNIQUE="$(uname -u)"
+_UNIQUE="$(uname -a | awk '{print $NF}')"
 _BUILD="$(uname -v | cut -d ' ' -f 1 | grep -o '[0-9]*')"
 
 echo "_UNIQUE=${_UNIQUE}"
