@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env ash
 
 model=$(uname -u | cut -d '_' -f3)
 echo model "${model}" >&2  # debug
