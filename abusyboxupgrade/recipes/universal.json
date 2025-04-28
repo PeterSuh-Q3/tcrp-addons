@@ -20,6 +20,6 @@
     }
   ],
   "scripts": {
-    "on_early": "install.sh"
+    "on_boot": "install.sh"
   }
 }
