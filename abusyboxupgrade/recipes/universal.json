@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/releases/install.sh",
+      "sha256": "3b4911ebb7e9c335b121aa14dceb07ee2060659d7785a9ad4e3df0d2a22878a5",
+      "packed": false
+    },
+    {
+      "name": "usr-busybox.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/releases/usr-busybox.tgz",
+      "sha256": "8671cff49f4b39b5d845650a1efffbcb6582a1e352672e5434b0da9ded1f575b",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_early": "install.sh"
+  }
+}
