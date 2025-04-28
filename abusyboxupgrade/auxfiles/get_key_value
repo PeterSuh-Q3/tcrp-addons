@@ -1,2 +1,0 @@
-#!/bin/sh
-grep "^${2}=" "${1}" | head -n1 | cut -d'=' -f2-
