@@ -3,37 +3,12 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/src/install.sh",
-      "sha256": "5594f51e5952ce51d3ce39aece60a13ed6f13daec83fd354ef1e8c7dbd1faa37",
-      "packed": false
-    },
-    {
-      "name": "ethtool",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/auxfiles/ethtool",
-      "sha256": "cff9414cc87ab311a8dd4fe08bb0dffc5416c5777a73d6e4391f8ba9764614e3",
-      "packed": false
-    },
-    {
-      "name": "sed",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/auxfiles/sed",
-      "sha256": "be9c9394fca38bac3412a1a9da1452e4dedb415a168a0329d86a1548df8ced7c",
-      "packed": false
-    },
-    {
-      "name": "blkid",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/auxfiles/blkid",
-      "sha256": "4c9eeabb72afaa74bd255c366772fbf4bac74075b49fbdd01823a182897b831a",
-      "packed": false
-    },
-    {
-      "name": "libblkid.so.1",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/automount/auxfiles/libblkid.so.1",
-      "sha256": "33bc0e824592479e95718f858653d04a4e810c863e8399c859fcf27ed9d70590",
+      "sha256": "5c73100d7c0ec60a4138bab0977b27cff6571d984fa5fd7ade31cbe190d9a712",
       "packed": false
     }
   ],
 
   "scripts": {
-    "on_boot": "install.sh",
     "on_patches": "install.sh"
   }
 }
