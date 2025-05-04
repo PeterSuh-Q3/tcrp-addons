@@ -3,13 +3,19 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/src/install.sh",
-      "sha256": "65cf3aa04e552634d2b1d3269372379b39619321024097f0faa13e71e16b8719",
+      "sha256": "02ea3b836133d16fd7f755eed2af32f39ae595b3628868f37b1266e5755d9497",
       "packed": false
     },
     {
       "name": "usr.tgz",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/usr.tgz",
       "sha256": "1381eadbe1920e69d1a3d1da4471133cf9c8893beabf9146adebf6c551e42413",
+      "packed": false
+    },
+    {
+      "name": "btrfs_ko.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_ko.tgz",
+      "sha256": "7606e755b38fc428515ecdfcd550d6e62cca6f08a507066f2bcd36a34c8713a4",
       "packed": false
     }
   ],
