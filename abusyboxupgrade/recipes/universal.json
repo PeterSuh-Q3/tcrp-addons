@@ -19,8 +19,8 @@
       "packed": false
     },
     {
-      "name": "btrfs_4.4_ko.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_4.4_ko.tgz",
+      "name": "btrfs_v1000_ko.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_v1000_ko.tgz",
       "sha256": "3c73529488644c2a885845ba07e2618037ee30dd5c877a649c21fabc0b226b17",
       "packed": false
     }
