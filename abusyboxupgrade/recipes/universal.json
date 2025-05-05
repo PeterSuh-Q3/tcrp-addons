@@ -13,8 +13,8 @@
       "packed": false
     },
     {
-      "name": "btrfs_5.10_ko.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_5.10_ko.tgz",
+      "name": "btrfs_epyc7002_ko.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_epyc7002_ko.tgz",
       "sha256": "625b9d7fb9d611370e27b983776c80f5950a864f8ce3745268baaf9f6ff8a73e",
       "packed": false
     },
