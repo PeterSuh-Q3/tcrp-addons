@@ -3,7 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/src/install.sh",
-      "sha256": "2dce99268f2d8f7c7c81182405ff8f5cc4a7a3873f5a4af8693b4c9b2315733d",
+      "sha256": "b8d9105ff9018d4742d0e6339bfcb665462202472e4fc928c9277f660bf6d4eb",
       "packed": false
     },
     {
@@ -11,22 +11,9 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/usr.tgz",
       "sha256": "1381eadbe1920e69d1a3d1da4471133cf9c8893beabf9146adebf6c551e42413",
       "packed": false
-    },
-    {
-      "name": "btrfs_epyc7002_ko.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_epyc7002_ko.tgz",
-      "sha256": "625b9d7fb9d611370e27b983776c80f5950a864f8ce3745268baaf9f6ff8a73e",
-      "packed": false
-    },
-    {
-      "name": "btrfs_v1000_ko.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_v1000_ko.tgz",
-      "sha256": "3c73529488644c2a885845ba07e2618037ee30dd5c877a649c21fabc0b226b17",
-      "packed": false
     }
   ],
   "scripts": {
-    "on_early": "install.sh",
-    "on_boot": "install.sh"
+    "on_early": "install.sh"
   }
 }
