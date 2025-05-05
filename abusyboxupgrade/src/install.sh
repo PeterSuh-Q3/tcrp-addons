@@ -17,7 +17,7 @@ elif [ "${1}" = "modules" ]; then
       echo "Installing  xor raid6_pq zstd_compress syno_cache_protection btrfs  modules"
       tar vxfz btrfs_5.10_ko.tgz -C /
   elif [ "$KERNEL_VCODE" -ge "$(KernelVersionCode "4.4")" ]; then
-      echo "Installing  xxhash ecryptfs zstd_decompress zstd_compress xor raid6_pq btrfs  modules"
-      tar vxfz btrfs_4.4_ko.tgz -C /
+      echo "Installing  xxhash ecryptfs zstd_decompress zstd_compress xor raid6_pq btrfs  modules (not now)"
+      #tar vxfz btrfs_4.4_ko.tgz -C /
   fi
 fi
