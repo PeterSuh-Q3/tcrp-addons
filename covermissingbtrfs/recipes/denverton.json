@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/src/install.sh",
+      "sha256": "b8d9105ff9018d4742d0e6339bfcb665462202472e4fc928c9277f660bf6d4eb",
+      "packed": false
+    },
+    {
+      "name": "usr.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/usr.tgz",
+      "sha256": "1381eadbe1920e69d1a3d1da4471133cf9c8893beabf9146adebf6c551e42413",
+      "packed": false
+    },
+    {
+      "name": "btrfs_denverton_ko.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_denverton_ko.tgz",
+      "sha256": "b0b4733b07ecd2e9da88ad8629e1fa44b1f2af918b55adf963ad90bc3f220efb",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_early": "install.sh",
+    "on_boot": "install.sh"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "covermissbtrfs",
+  "info": {
+    "description": "Addon to complement the missing btrfs module pack for migration between different models",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/covermissbtrfs",
+    "name": "Addon to complement the missing btrfs module pack for migration between different models",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/covermissbtrfs"
+  },
+  "releases": {
+    "apollolake_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "apollolake_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/apollolake.json",
+    "bromolow_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "broadwell_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "broadwell_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/broadwell.json",
+    "broadwellnk_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "broadwellnk_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/broadwellnk.json",
+    "broadwellnkv2_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "broadwellnkv2_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/broadwellnkv2.json",
+    "broadwellntbap_4459": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "broadwellntbap_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "broadwellntbap_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "epyc7002_71_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "epyc7002_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/epyc7002.json",
+    "denverton_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "denverton_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/denverton.json",
+    "geminilake_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "geminilake_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/geminilake.json",
+    "purley_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "purley_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "r1000_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "r1000_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/r1000.json",
+    "v1000_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "v1000_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/v1000.json",
+    "avoton_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "braswell_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "cedarview_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "grantley_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json",
+    "v1000nk_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/recipes/universal.json"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissbtrfs/rpext-index.json"
+}
