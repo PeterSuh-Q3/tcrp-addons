@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/src/install.sh",
+      "sha256": "a291df43d9f2c26fedc113df9e3f77646fa5e4a270974146aa40ffc792be5e7b",
+      "packed": false
+    },
+    {
+      "name": "btrfs_purley_ko.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/auxfiles/btrfs_purley_ko.tgz",
+      "sha256": "8af7a67da08a344ff9966c989dbe818ecfbaa4ffba62612aebdb2f207bf5dc67",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_boot": "install.sh"
+  }
+}
