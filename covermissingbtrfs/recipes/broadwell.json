@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/src/install.sh",
       "sha256": "a291df43d9f2c26fedc113df9e3f77646fa5e4a270974146aa40ffc792be5e7b",
       "packed": false
     },
     {
       "name": "btrfs_broadwell_ko.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_broadwell_ko.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/auxfiles/btrfs_broadwell_ko.tgz",
       "sha256": "bfee8569692ce849959ffaf99343ff4e204df6ac268fd5c7477366f3827eb422",
       "packed": false
     }

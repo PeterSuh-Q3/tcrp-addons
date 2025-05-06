@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/src/install.sh",
       "sha256": "a291df43d9f2c26fedc113df9e3f77646fa5e4a270974146aa40ffc792be5e7b",
       "packed": false
     },
     {
       "name": "btrfs_epyc7002_ko.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_epyc7002_ko.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/auxfiles/btrfs_epyc7002_ko.tgz",
       "sha256": "625b9d7fb9d611370e27b983776c80f5950a864f8ce3745268baaf9f6ff8a73e",
       "packed": false
     }

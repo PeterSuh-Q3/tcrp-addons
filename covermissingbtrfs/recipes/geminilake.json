@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/src/install.sh",
       "sha256": "a291df43d9f2c26fedc113df9e3f77646fa5e4a270974146aa40ffc792be5e7b",
       "packed": false
     },
     {
       "name": "btrfs_geminilake_ko.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/abusyboxupgrade/auxfiles/btrfs_geminilake_ko.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/auxfiles/btrfs_geminilake_ko.tgz",
       "sha256": "f77e34c1afb0d62d4a4cb0615dc151b3931a0ad643f297b362219c6911b738c9",
       "packed": false
     }
