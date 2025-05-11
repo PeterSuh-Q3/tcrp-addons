@@ -73,7 +73,7 @@ MSG="\${MSG}To 'System partition(/dev/md0) has been mounted to': /tmpRoot\n"
 echo -e "\${MSG}" > /etc/motd
 
 /usr/bin/killall ttyd 2>/dev/null || true
-/usr/sbin/ttyd -W -t titleFixed="MSHELL Recovery" login -f root >/dev/null 2>&1 &
+./ttyd -W -t titleFixed="MSHELL Recovery" login -f root >/dev/null 2>&1 &
 
 cp -pf /usr/syno/web/web_index.html /usr/syno/web/web_install.html
 cp -pf web_index.html /usr/syno/web/web_index.html
