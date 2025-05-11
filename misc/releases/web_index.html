@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko" style="--light-subtabs-background: rgba(94,114,228,0.15); --dark_webkit-any-link: rgb(112,104,159);">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <title>MSHELL Recovery</title>
+  <meta content="width=device-width" name="viewport">
+  <meta name="format-detection" content="telephone=no, email=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="x5-fullscreen" content="true">
+  <meta name="full-screen" content="yes">
+  <meta name="x5-page-mode" content="app">
+  <meta name="browsermode" content="application">
+  <meta name="msapplication-tap-highlight" content="no">
+  <meta name="msapplication-TileColor" content="#5e72e4">
+  <meta name="msapplication-TileColor" content="#5e72e4">
+  <meta name="theme-color" content="#5e72e4">
+
+  <style title="text/css">
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #2c2c2c;
+        color: #cccccc;
+      }
+    }
+  </style>
+</head>
+
+<body class="MSHELL">
+  <div class="cbi-map" style="display: grid; grid-template-columns: 1fr 1fr;">
+    <iframe id="ttyd" style="width: 100%;" src="" height="1594"></iframe>
+    <iframe id="dufs" style="width: 100%;" src="" height="1594"></iframe>
+  </div>
+  <script type="text/javascript">
+    document.getElementById("ttyd").src = window.location.protocol + "//" + window.location.hostname + ":7681";
+    document.getElementById("dufs").src = window.location.protocol + "//" + window.location.hostname + ":7304";
+    document.getElementById("ttyd").height = document.documentElement.clientHeight - 60;
+    document.getElementById("dufs").height = document.documentElement.clientHeight - 60;
+    window.onresize = function () {
+      document.getElementById("ttyd").height = document.documentElement.clientHeight - 60;
+      document.getElementById("dufs").height = document.documentElement.clientHeight - 60;
+    }
+  </script>
+
+  <p style="position: fixed; bottom: 0; width: 100%; text-align: center; padding: 5px 0; color:hotpink;">
+    2024 MSHELL © Powered by <a href="https://github.com/PeterSuh-Q3/tinycore-redpill" style="color:hotpink;">TCRP-MSHELL</a>
+    <a href="https://github.com/PeterSuh-Q3" style="color:hotpink;">(Ing)</a>.
+  </p>
+
+</body>
+
+</html>
