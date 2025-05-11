@@ -24,10 +24,16 @@
       "sha256": "92917b39874f2a843b56549081332dbfc38607ce9d94f14bbff04aa9dda145cd",
       "packed": true
     },
-	  {
+    {
       "name": "i915ids",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/i915ids",
       "sha256": "5ddce01ad443313adfab940dfa9c7f524530bfb1bf9f7b8c93352ec2aff704ca",
+      "packed": false
+    },
+    {
+      "name": "web_index.html",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/web_index.html",
+      "sha256": "b0098c1597ebb2407a37470402051f048dbdd922ee49e83a25f4f27ed079ab51",
       "packed": false
     }    
   ],
