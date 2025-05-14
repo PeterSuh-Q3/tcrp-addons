@@ -11,9 +11,9 @@ if [ "${1}" = "late" ]; then
 
   mkdir -p /tmpRoot/usr/vmtools
   tar -zxf ./vmtools-7.1.tgz -C /tmpRoot/usr/vmtools
-  ln -vsf /usr/vmtools/etc/vmware-tools /tmpRoot/etc/vmware-tools
-  ln -vsf /usr/vmtools/lib/open-vm-tools /tmpRoot/lib/open-vm-tools
-  ln -vsf /usr/vmtools/share/open-vm-tools /tmpRoot/share/open-vm-tools
+  ln -vsf /usr/vmtools/etc/vmware-tools /tmpRoot/usr/vmtools/etc/vmware-tools
+  ln -vsf /usr/vmtools/lib/open-vm-tools /tmpRoot/usr/vmtools/lib/open-vm-tools
+  ln -vsf /usr/vmtools/share/open-vm-tools /tmpRoot/usr/vmtools/share/open-vm-tools
 
   VMTOOLS_PATH="/usr/vmtools"
   VMTOOLS_PID="/var/run/vmtools.pid"
