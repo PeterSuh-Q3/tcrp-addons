@@ -107,7 +107,7 @@ if [ "${1}" = "late" ]; then
       echo "[Install]"
       echo "WantedBy=multi-user.target"
     } >"${DEST}"
-    exit 1
+    exit 0
   fi
   mkdir -vp /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
   ln -vsf /usr/lib/systemd/system/vmtools.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/vmtools.service
