@@ -11,7 +11,7 @@ if [ "${1}" = "late" ]; then
 
   mkdir -p /tmpRoot/usr/vmtools
   tar -zxf ./vmtools-7.1.tgz -C /tmpRoot/usr/vmtools
-  ln -vsf /usr/vmtools/etc/open-vm-tools /tmpRoot/etc/open-vm-tools
+  ln -vsf /usr/vmtools/etc/vmware-tools /tmpRoot/etc/vmware-tools
   ln -vsf /usr/vmtools/lib/open-vm-tools /tmpRoot/lib/open-vm-tools
   ln -vsf /usr/vmtools/share/open-vm-tools /tmpRoot/share/open-vm-tools
 
@@ -68,7 +68,7 @@ if [ "${1}" = "late" ]; then
     GUEST_AGENT="/dev/virtio-ports/org.qemu.guest_agent.0"
     {
       echo "[Unit]"
-      echo "Description=mshell addon vmtools daemon"
+      echo "Description=mshell addon qemu-guest-agent daemon"
       echo "IgnoreOnIsolate=true"
       echo "After=multi-user.target"
       echo "ConditionPathExists=${GUEST_AGENT}"
