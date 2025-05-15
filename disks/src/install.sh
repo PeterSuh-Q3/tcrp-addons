@@ -206,7 +206,8 @@ dtModel() {
         while true; do
           [ ! -d /sys/block/sata${J} ] && break
           if cat /sys/block/sata${J}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | grep -q "${P}"; then
-            if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+            if [ $(blkid -U "8765-4321" | grep "/dev/${BOOTDISK}" | wc -l ) -eq 0 ] &&
+               [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
               echo "bootloader: /sys/block/sata${J}"
             else
               PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
@@ -231,7 +232,8 @@ dtModel() {
       J=1
       while true; do
         [ ! -d /sys/block/sata${J} ] && break
-        if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+        if [ $(blkid -U "8765-4321" | grep "/dev/${BOOTDISK}" | wc -l ) -eq 0 ] &&
+           [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat /sys/block/sata${J}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
           echo "bootloader: /sys/block/sata${J}"
         else
           PCIEPATH=$(grep 'pciepath' /sys/block/sata${J}/device/syno_block_info 2>/dev/null | cut -d'=' -f2)
