@@ -107,13 +107,17 @@ checkSynoboot() {
 
   if [ ! -b /dev/synoboot -a -d /sys/block/${BOOTDISK} ]; then
     /bin/mknod /dev/synoboot b $(cat /sys/block/${BOOTDISK}/dev | sed 's/:/ /') >/dev/null 2>&1
-    rm -vf /dev/${BOOTDISK}
+    if [ $(blkid -U "8765-4321" | grep "/dev/${BOOTDISK}" | wc -l ) -eq 0 ]; then
+      rm -vf /dev/${BOOTDISK}
+    fi
   fi
   # 1,2,3 for sdN,vdN; p1,p2,p3 for sataN,nvmeXnN,mmcblkN.
   for i in 1 2 3 p1 p2 p3; do
     if [ ! -b /dev/synoboot${i/p/} -a -d /sys/block/${BOOTDISK}/${BOOTDISK}${i} ]; then
       /bin/mknod /dev/synoboot${i/p/} b $(cat /sys/block/${BOOTDISK}/${BOOTDISK}${i}/dev | sed 's/:/ /') >/dev/null 2>&1
-      rm -vf /dev/${BOOTDISK}${i}
+      if [ $(blkid -U "8765-4321" | grep "/dev/${BOOTDISK}" | wc -l ) -eq 0 ]; then
+        rm -vf /dev/${BOOTDISK}${i}
+      fi
     fi
   done
 }
