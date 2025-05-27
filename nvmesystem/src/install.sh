@@ -24,7 +24,7 @@ if [ "${1}" = "early" ]; then
   echo "Installing addon nvmesystem - ${1}"
   
   # System volume is assembled with SSD Cache only, please remove SSD Cache and then reboot
-  for F in "/etc/synoinfo.conf" "/etc.defaults/synoinfo.conf"; do /bin/set_key_value "${F}" "support_ssd_cache" "no"; done
+  sed -i "s/support_ssd_cache=.*/support_ssd_cache=\"no\"/" /etc/synoinfo.conf /etc.defaults/synoinfo.conf
 
   # [CREATE][failed] Raidtool initsys
   SO_FILE="/usr/syno/bin/scemd"
