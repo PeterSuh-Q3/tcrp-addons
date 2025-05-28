@@ -189,53 +189,20 @@ elif [ "${1}" = "late" ]; then
     
     case "${PLATFORM}" in
 
-    bromolow)
-        fixcpufreq
-        fixcrypto
-        ;;
     apollolake)
-        fixcpufreq
-        fixcrypto
         copyintelgpu
-        ;;
-    broadwell)
-        fixcpufreq
-        fixcrypto
-        ;;
-    broadwellnk)
-        fixcpufreq
-        fixcrypto
-        ;;
-    v1000)
-        fixcpufreq
-        fixcrypto
-        ;;
-    r1000)
-        fixcpufreq
-        fixcrypto
-        ;;
-    denverton)
-        fixcpufreq
-        fixcrypto
-        fixnvidia
         ;;
     geminilake)
-        fixcpufreq
-        fixcrypto
         copyintelgpu
         ;;
-    epyc7002)
-        fixcpufreq
-        fixcrypto
+    denverton)
         fixnvidia
-        ;;
-    *)
-        fixcpufreq
-        fixcrypto
         ;;
 
     esac
 
+    fixcpufreq
+    fixcrypto
     fixservice
     fixsdcard
     fixnetwork
