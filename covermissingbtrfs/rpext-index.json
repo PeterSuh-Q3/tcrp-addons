@@ -7,8 +7,8 @@
     "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/covermissingbtrfs"
   },
   "releases": {
-    "apollolake_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/recipes/universal.json",
-    "apollolake_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/recipes/universal.json",
+    "apollolake_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/recipes/apollolake.json",
+    "apollolake_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/recipes/apollolake.json",
     "bromolow_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/recipes/universal.json",
     "broadwell_44180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/recipes/universal.json",
     "broadwell_44302": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/recipes/universal.json",
