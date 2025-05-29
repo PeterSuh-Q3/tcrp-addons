@@ -2,7 +2,7 @@
 
 baseurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master"  # Base URL
 
-ls -d */ | grep -v -e "9p" | while IFS= read -r dir; do
+ls -d */ | grep -v -e "9p" -e "covermissingbtrfs"| while IFS= read -r dir; do
   for baseplatform in `cat platforms`
   do 
     
