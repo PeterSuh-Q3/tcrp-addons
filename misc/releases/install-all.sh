@@ -127,40 +127,46 @@ fixacpibutton() {
 }
 
 fixservice() {
-# service
+  # service
+  # systemd-modules-load SynoInitEth syno-oob-check-status syno_update_disk_logs
+  rm -vf /tmpRoot/usr/lib/modules-load.d/70-network*.conf
   SERVICE_PATH="/tmpRoot/usr/lib/systemd/system"
-  [ -f ${SERVICE_PATH}/syno-oob-check-status.service ] && ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno-oob-check-status.service 
-  [ -f ${SERVICE_PATH}/SynoInitEth.service  ] && ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/SynoInitEth.service 
-  [ -f ${SERVICE_PATH}/syno_update_disk_logs.service ] && ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno_update_disk_logs.service
+  ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/systemd-modules-load.service
+  ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno-oob-check-status.service 
+  ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/SynoInitEth.service 
+  ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno_update_disk_logs.service
 }
 
 fixsdcard() {
   # sdcard
   [ ! -f /tmpRoot/usr/lib/udev/script/sdcard.sh.bak ] && cp -vpf /tmpRoot/usr/lib/udev/script/sdcard.sh /tmpRoot/usr/lib/udev/script/sdcard.sh.bak
-  echo -en '#!/bin/sh\nexit 0\n' >/tmpRoot/usr/lib/udev/script/sdcard.sh
+  printf '#!/bin/sh\nexit 0\n' >/tmpRoot/usr/lib/udev/script/sdcard.sh
 }
 
 fixnetwork() {
   # network
-  rm -vf /tmpRoot/usr/lib/modules-load.d/70-network*.conf
-  mkdir -p /tmpRoot/etc/sysconfig/network-scripts
-  mkdir -p /tmpRoot/etc.defaults/sysconfig/network-scripts
-  for I in $(ls /etc/sysconfig/network-scripts/ifcfg-eth*); do
-    [ ! -f "/tmpRoot/${I}" ] && cp -vf "${I}" "/tmpRoot/${I}"
-  done
-  for J in $(ls /etc.defaults/sysconfig/network-scripts/ifcfg-eth*); do  
-    [ ! -f "/tmpRoot/${J}" ] && cp -vf "${J}" "/tmpRoot/${J}"
-  done    
-  if grep -q 'network.' /proc/cmdline && [ -f "/etc/ifcfgs" ]; then
-    for ETH in $(cat /etc/ifcfgs); do
-      echo "Copy ifcfg-${ETH}"
-      if [ -f "/etc/sysconfig/network-scripts/ifcfg-${ETH}" ]; then
-        rm -vf /tmpRoot/etc/sysconfig/network-scripts/ifcfg-*${ETH} /tmpRoot/etc.defaults/sysconfig/network-scripts/ifcfg-*${ETH}
-        cp -vf /etc/sysconfig/network-scripts/ifcfg-${ETH} /tmpRoot/etc/sysconfig/network-scripts/
-        cp -vf /etc/sysconfig/network-scripts/ifcfg-${ETH} /tmpRoot/etc.defaults/sysconfig/network-scripts/
-      fi
+  if grep -q 'network.' /proc/cmdline; then
+    for I in $(grep -Eo 'network.[0-9a-fA-F:]{12,17}=[^ ]*' /proc/cmdline); do
+      MACR="$(echo "${I}" | cut -d. -f2 | cut -d= -f1 | sed 's/://g; s/.*/\L&/')"
+      IPRS="$(echo "${I}" | cut -d= -f2)"
+      for F in /sys/class/net/eth*; do
+        [ ! -e "${F}" ] && continue
+        ETH="$(basename "${F}")"
+        MACX=$(cat "/sys/class/net/${ETH}/address" 2>/dev/null | sed 's/://g; s/.*/\L&/')
+        if [ "${MACR}" = "${MACX}" ]; then
+          echo "Setting IP for ${ETH} to ${IPRS}"
+          F="/etc/sysconfig/network-scripts/ifcfg-${ETH}"
+          /bin/set_key_value "${F}" "BOOTPROTO" "static"
+          /bin/set_key_value "${F}" "ONBOOT" "yes"
+          /bin/set_key_value "${F}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
+          /bin/set_key_value "${F}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
+          /bin/set_key_value "${F}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
+          /etc/rc.network restart ${ETH} >/dev/null 2>&1
+          [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
+        fi
+      done
     done
-  fi
+  fi  
 }
 
 if [ "${1}" = "patches" ]; then
@@ -177,6 +183,8 @@ if [ "${1}" = "patches" ]; then
         fixintelgpu
         ;;
     esac
+
+    fixnetwork
 
 elif [ "${1}" = "late" ]; then
     echo "Installing addon misc - ${1}"
@@ -203,9 +211,8 @@ elif [ "${1}" = "late" ]; then
 
     fixcpufreq
     fixcrypto
+    fixsdcard    
     fixservice
-    fixsdcard
-    fixnetwork
 
   # packages
   if [ ! -f /tmpRoot/usr/syno/etc/packages/feeds ]; then
