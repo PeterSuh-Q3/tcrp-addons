@@ -182,8 +182,8 @@ elif [ "${1}" = "late" ]; then
     echo "Installing addon misc - ${1}"
     echo "Script for fixing missing HW features dependencies"
 
-    cp -vf /exts/misc/sed /tmpRoot/usr/bin/sed
-    chmod +x /tmpRoot/usr/bin/sed
+    #cp -vf /exts/misc/sed /tmpRoot/usr/bin/sed
+    #chmod +x /tmpRoot/usr/bin/sed
 
     fixacpibutton
     
