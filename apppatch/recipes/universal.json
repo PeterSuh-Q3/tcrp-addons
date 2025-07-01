@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/apppatch/src/install.sh",
+      "sha256": "ac4eb9fcd8342fa24ce161382176858ef73ca48e851db2ce03f9918212ef40a8",
+      "packed": false
+    },
+    {
+      "name": "apppatch.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/apppatch/auxfiles/apppatch.sh",
+      "sha256": "533c25f837d3b98aaf3a701b62cb9209983eed514d31f7590cf1bfccbd8532a3",
+      "packed": false
+    },
+    {
+      "name": "PatchELFSharp",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/apppatch/auxfiles/PatchELFSharp",
+      "sha256": "434573b9d4b5e11ac2566b79b1c41f304e00c292a3f0612ed7053bb11508640c",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
