@@ -9,8 +9,8 @@
 if [ "${1}" = "late" ]; then
   echo "Installing addon apppatch - ${1}"
 
-  cp -vpf /usr/bin/PatchELFSharp /tmpRoot/usr/bin/PatchELFSharp
-  cp -vpf /usr/bin/apppatch.sh /tmpRoot/usr/bin/apppatch.sh
+  cp -vpf ./PatchELFSharp /tmpRoot/usr/bin/PatchELFSharp
+  cp -vpf ./apppatch.sh /tmpRoot/usr/bin/apppatch.sh
 
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
   DEST="/tmpRoot/usr/lib/systemd/system/apppatch.service"
