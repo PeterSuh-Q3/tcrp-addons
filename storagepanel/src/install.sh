@@ -45,6 +45,9 @@ _BUILD="$(uname -v | cut -d ' ' -f 1 | grep -o '[0-9]*')"
 echo "_UNIQUE=${_UNIQUE}"
 echo "_BUILD=${_BUILD}"
 
+echo "Changepanelsize ALL=(ALL) NOPASSWD: ALL" > /tmpRoot/etc/sudoers.d/changepanelsize
+chmod 0440 /tmpRoot/etc/sudoers.d/changepanelsize
+
 if [ ${_BUILD:-64570} -gt 64570 ]; then
   FILE_JS="/tmpRoot/usr/local/packages/@appstore/StorageManager/ui/storage_panel.js"
 else
