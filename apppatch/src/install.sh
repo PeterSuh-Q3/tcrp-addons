@@ -9,7 +9,8 @@
 if [ "${1}" = "late" ]; then
   echo "Installing addon apppatch - ${1}"
 
-  cp -vpf ./PatchELFSharp /tmpRoot/usr/bin/PatchELFSharp
+  tar -zxvf ./PatchELFSharp.tgz -C /tmpRoot/usr/bin
+  #cp -vpf ./PatchELFSharp /tmpRoot/usr/bin/PatchELFSharp
   cp -vpf ./apppatch.sh /tmpRoot/usr/bin/apppatch.sh
 
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
