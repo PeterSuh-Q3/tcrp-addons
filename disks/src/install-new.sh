@@ -5,15 +5,6 @@ GKV=$([ -x "/usr/syno/bin/synogetkeyvalue" ] && echo "/usr/syno/bin/synogetkeyva
 SKV=$([ -x "/usr/syno/bin/synosetkeyvalue" ] && echo "/usr/syno/bin/synosetkeyvalue" || echo "/bin/set_key_value")
 _log(){ echo "[install] $*"; /bin/logger -p info -t install "$@"; }
 
-save_nvme_ports_early(){
-    mkdir -p /etc/nvmePorts; rm -f /etc/nvmePorts/*
-    for DEV in /sys/block/nvme*; do
-        [ ! -e "$DEV" ] && continue
-        PCI=$(grep 'PHYSDEVPATH' "$DEV/device/uevent" 2>/dev/null | rev | cut -d'/' -f2 | rev)
-        [ -n "$PCI" ] && echo "$PCI" > /etc/nvmePorts/$(basename "$DEV")
-    done
-}
-
 copy_files(){
     cp -pf ./disks.sh /usr/bin/disks.sh && chmod 755 /usr/bin/disks.sh
     mkdir -p /usr/lib/udev/rules.d
@@ -45,7 +36,6 @@ case "$1" in
     patches)
         copy_files
         sync_synoinfo_keys
-        save_nvme_ports_early
         /usr/bin/disks.sh --create
         ;;
     late)
