@@ -122,6 +122,28 @@ checkSynoboot() {
   done
 }
 
+# check dts slot mapping instead of /usr/syno/bin/syno_slot_mapping
+_chk_slot_mapping() {
+
+  echo "Internal Disk:"
+  i=1
+  for dev in /sys/block/sata*; do
+      devname=$(basename $dev)
+      echo "$(printf '%02d' $i): /dev/$devname"
+      i=$((i+1))
+  done
+  echo
+  
+  echo "Internal SSD Cache:"
+  i=1
+  for dev in /sys/block/nvme*n*; do
+      devname=$(basename $dev)
+      echo "$(printf '%02d' $i): /dev/$devname"
+      i=$((i+1))
+  done
+
+}
+
 # USB ports
 getUsbPorts() {
   for I in $(ls -d /sys/bus/usb/devices/usb* 2>/dev/null); do
@@ -310,7 +332,7 @@ dtModel() {
   fi
   dtc -I dts -O dtb ${DEST} >/etc/model.dtb
   cp -vf /etc/model.dtb /run/model.dtb
-  /usr/syno/bin/syno_slot_mapping
+  _chk_slot_mapping
 }
 
 nondtModel() {
