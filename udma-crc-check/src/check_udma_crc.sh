@@ -66,7 +66,7 @@ for disk in $DISKS; do
   smart_info=$($SMARTCTL -i "$disk" 2>/dev/null)
   
   # 모델명과 시리얼 넘버 추출
-  if [ $seagate == "yes" ]; then
+  if [[ $seagate == "yes" ]]; then
     model=$(echo "$smart_info" | grep -i '^Device Model:' | sed 's/Device Model:\s*//')
     serial=$(echo "$smart_info" | grep -i '^Serial Number:' | sed 's/Serial Number:\s*//')
   else
