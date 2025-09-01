@@ -9,7 +9,7 @@
     {
       "name": "udma-crc-check.service",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/auxfiles/udma-crc-check.service",
-      "sha256": "149e35d93968161218813a4b47a8bd79f8b58727a703692cd28267d0afccb578",
+      "sha256": "c7a29282b8fa163b99edb5ed93893ea322921a825021b30a4bb06c84b78c9ac8",
       "packed": false
     },
     {
