@@ -72,7 +72,7 @@ for disk in $DISKS; do
   
   # 알림 (최초 실행 제외)
   if [ "$first_run" = false ] && [ "$diff" -gt 0 ]; then
-    text="[시놀로지 UDMA_CRC 감지] $disk (모델: $model, S/N: $serial)에서 199 UDMA_CRC 증가 $diff회 발생"
+    text="[Synology UDMA_CRC detection] $disk 199 UDMA_CRC increments occurred $diff times in (MODEL: $model, S/N: $serial)"
     curl -s --data "chat_id=${CHAT_ID}&text=${text}" "${URL}" > /dev/null 2>&1
   fi
 done
