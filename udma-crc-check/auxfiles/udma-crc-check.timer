@@ -1,0 +1,10 @@
+[Unit]
+Description=Run UDMA CRC Check every hour
+Requires=udma-crc-check.service
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
