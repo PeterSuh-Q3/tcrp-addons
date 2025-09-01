@@ -82,7 +82,3 @@ done
 for serial in "${!new_counts[@]}"; do
   echo "$serial ${new_counts[$serial]}" >> "$DATA_FILE"
 done
-
-# 권한 설정 (root 전용)
-chmod 600 "$LOG_FILE" "$DATA_FILE"
-chown root:root "$LOG_FILE" "$DATA_FILE"
