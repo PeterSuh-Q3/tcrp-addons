@@ -1,0 +1,32 @@
+{
+  "files": [
+    {
+      "name": "udma-check.env",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/auxfiles/udma-check.env",
+      "sha256": "e500df15483f0702c5e470f4a21b5fe57db875350a37e24d33f0b0c500302e56",
+      "packed": false
+    },
+    {
+      "name": "udma-crc-check.service",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/auxfiles/udma-crc-check.service",
+      "sha256": "149e35d93968161218813a4b47a8bd79f8b58727a703692cd28267d0afccb578",
+      "packed": false
+    },
+    {
+      "name": "udma-crc-check.timer",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/auxfiles/udma-crc-check.timer",
+      "sha256": "9bb472572f65ea6c67473b20a1153fd1b6c76ad3a23944ed4fde18fdc9a97c3b",
+      "packed": false
+    },
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/src/install.sh",
+      "sha256": "f5bf0800d0dbecf0acfe27355dc20865b58d6725cb336aa9623e499a954a0ff7",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
