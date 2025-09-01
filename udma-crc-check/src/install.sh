@@ -15,7 +15,7 @@ if [ "${1}" = "late" ]; then
   chmod 644 /tmpRoot/etc/systemd/system/udma-crc-check.service
   chmod 644 /tmpRoot/etc/systemd/system/udma-crc-check.timer
   # 환경변수 파일 보안 설정
-  chmod 600 /etc/udma-check.env
+  chmod 600 /tmpRoot/etc/udma-check.env
   
   # systemd 데몬 리로드
   systemctl daemon-reload
