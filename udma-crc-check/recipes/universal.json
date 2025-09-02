@@ -21,7 +21,7 @@
     {
       "name": "check_udma_crc.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/src/check_udma_crc.sh",
-      "sha256": "8be5d75b9c162c686676202396b1d92cd99bf3b9bc1bc5f0cb5787754be66f42",
+      "sha256": "c5aa8e0216baaf1315c4fff93de5fe2baff691dd1376da47070b4333794a990f",
       "packed": false
     },
     {
