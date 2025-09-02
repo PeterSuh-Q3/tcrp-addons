@@ -15,6 +15,7 @@ DATA_FILE="${LOG_DIR}/smart_id199_counts.txt"
 # 오늘 날짜 기반 로그 파일명
 TODAY=$(date '+%Y-%m-%d')
 LOG_FILE="${LOG_DIR}/smart_id199_history_${TODAY}.json"
+HOSTNAME=$(hostname)
 
 DISKS=$(ls /dev/sd? /dev/sata? 2>/dev/null)
 
@@ -100,7 +101,7 @@ for disk in $DISKS; do
   
   # 알림 (최초 실행 제외)
   if [ "$first_run" = false ] && [ "$diff" -gt 0 ]; then
-    text="[Synology UDMA_CRC detection] $disk 199 UDMA_CRC increments occurred $diff times in (MODEL: $model, S/N: $serial)"
+    text="[Synology $HOSTNAME UDMA_CRC detection] $disk 199 UDMA_CRC increments occurred $diff times in (MODEL: $model, S/N: $serial)"
     curl -s --data "chat_id=${CHAT_ID}&text=${text}" "${URL}" > /dev/null 2>&1
   fi
 done
