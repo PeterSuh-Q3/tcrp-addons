@@ -27,7 +27,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/src/install.sh",
-      "sha256": "d1bd7000e36d9a52f0633d4f16cb0b2268fa85c01d9ee09f0b51294f85c64c72",
+      "sha256": "42ebb18a42dc396e9def850b8c402e93e0b68951c826de703103570f56a4c598",
       "packed": false
     }
   ],
