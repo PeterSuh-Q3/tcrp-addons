@@ -75,19 +75,23 @@ dtModel(){
     UNIQUE=$(__get_conf_kv unique)
     echo "/dts-v1/; / { compatible = \"Synology\"; model = \"$UNIQUE\"; version= <0x01>; power_limit=\"\";" > "$DEST"
     # SATA
+    CNT=0
     for F in /sys/block/sata*; do
         PCIEPATH=$(grep 'pciepath' "$F/device/syno_block_info" 2>/dev/null | cut -d= -f2)
         ATAPORT=$(grep 'ata_port_no' "$F/device/syno_block_info" 2>/dev/null | cut -d= -f2)
         [ -z "$PCIEPATH" ] && continue
-        echo " internal_slot@1 { protocol_type = \"sata\"; ahci { pcie_root = \"$PCIEPATH\"; ata_port = <0x$(printf %02X $ATAPORT)>; }; };" >> "$DEST"
+        CNT=$((CNT+1))
+        echo " internal_slot@$CNT { protocol_type = \"sata\"; ahci { pcie_root = \"$PCIEPATH\"; ata_port = <0x$(printf %02X $ATAPORT)>; }; };" >> "$DEST"
     done
     # NVMe
     PL=""
+    CNT=0
     for F in /sys/block/nvme*; do
         PCIEPATH=$(grep 'pciepath' "$F/device/syno_block_info" 2>/dev/null | cut -d= -f2)
         grep -q "$PCIEPATH" "$DEST" && continue
         PL="${PL},0"
-        echo " nvme_slot@1 { pcie_root = \"$PCIEPATH\"; port_type = \"ssdcache\"; };" >> "$DEST"
+        CNT=$((CNT+1))
+        echo " nvme_slot@$CNT { pcie_root = \"$PCIEPATH\"; port_type = \"ssdcache\"; };" >> "$DEST"
     done
     [ -n "${PL#,}" ] && sed -i "s/power_limit = \"\";/power_limit = \"${PL#,}\";/" "$DEST"
     # USB
