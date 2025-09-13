@@ -1,0 +1,14 @@
+{
+  "id": "disks",
+  "info": {
+    "author_url": "https://github.com/PeterSuh-Q3/tcrp-addons/main/disks/",
+    "description": "Eudev binaries will assist with auto module loading",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/main/disks/",
+    "name": "Eudev binaries",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/main/disks/"
+  },
+  "releases": {
+    "epyc7002_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/disks/recipes/universal-t.json"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/rpext-index.json"
+}
