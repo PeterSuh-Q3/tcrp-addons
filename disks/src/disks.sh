@@ -157,8 +157,6 @@ dtModel() {
   _log dtModel
 
   DEST="/etc/model.dts"
-  [ -f "/addons/model.dts" ] && cp -vpf "/addons/model.dts" "${DEST}"
-  if [ ! -f "${DEST}" ]; then # Users can put their own dts.
     mkdir -p "$(dirname "${DEST}" 2>/dev/null)"
     {
       echo "/dts-v1/;"
@@ -267,7 +265,6 @@ dtModel() {
       } >>"${DEST}"
     done
     echo "};" >>"${DEST}"
-  fi
 
   # fix pcie_root prefix
   _release=$(/bin/uname -r)
@@ -308,17 +305,17 @@ dtModel() {
   dtc -I dts -O dtb "${DEST}" >/etc/model.dtb
   if [ $? -eq 0 ]; then
     _log "dtc success"
-    rm -vf "${DEST}"
-    cp -vpf /etc/model.dtb /etc.defaults/model.dtb
-    cp -vpf /etc/model.dtb /run/model.dtb
+    #rm -vf "${DEST}"
+    #cp -vpf /etc/model.dtb /etc.defaults/model.dtb
+    #cp -vpf /etc/model.dtb /run/model.dtb
     /usr/syno/bin/syno_slot_mapping
     # Check if the storagepanel.service is existing
     [ -f "/usr/lib/systemd/system/storagepanel.service" ] && systemctl restart storagepanel.service
     return 0
   else
     _log "dtc error"
-    rm -vf "${DEST}"
-    cp -vpf /etc.defaults/model.dtb /etc/model.dtb
+    #rm -vf "${DEST}"
+    #cp -vpf /etc.defaults/model.dtb /etc/model.dtb
     return 1
   fi
 }
