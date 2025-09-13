@@ -238,7 +238,7 @@ dtModel() {
       fi
       grep -q "pcie_root = \"${PCIEPATH}\";" ${DEST} && continue # An nvme controller only recognizes one disk
       [ $((${#POWER_LIMIT} + 2)) -gt 30 ] && break               # POWER_LIMIT string length limit 30 characters
-      POWER_LIMIT="${POWER_LIMIT:+${POWER_LIMIT},}0"
+      POWER_LIMIT="${POWER_LIMIT:+${POWER_LIMIT},}100"
       COUNT=$((COUNT + 1))
       {
         echo "    nvme_slot@${COUNT} {"
