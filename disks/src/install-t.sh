@@ -9,19 +9,19 @@
 if [ "${1}" = "patches" ]; then
   echo "Installing addon disks - ${1}"
 
-  /usr/bin/disks.sh --create
+  /usr/bin/disks-t.sh --create
 
 elif [ "${1}" = "late" ]; then
   echo "Installing addon disks - ${1}"
   mkdir -p "/tmpRoot/usr/rr/addons/"
   cp -pf "${0}" "/tmpRoot/usr/rr/addons/"
 
-  cp -vpf /usr/bin/disks.sh /tmpRoot/usr/bin/disks.sh
+  cp -vpf /usr/bin/disks-t.sh /tmpRoot/usr/bin/disks-t.sh
   {
     echo '# Author: "RROrg"'
     echo ''
     echo '# general disks dtb rules'
-    echo 'ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ENV{DEVNAME}=="/dev/nvme*|/dev/sas*|/dev/usb*|/dev/sd*|/dev/sata*", PROGRAM=="/usr/bin/disks.sh --update %E{DEVNAME}"'
+    echo 'ACTION=="add", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", ENV{DEVNAME}=="/dev/nvme*|/dev/sas*|/dev/usb*|/dev/sd*|/dev/sata*", PROGRAM=="/usr/bin/disks-t.sh --update %E{DEVNAME}"'
   } >"/tmpRoot/usr/lib/udev/rules.d/04-system-disk-dtb.rules"
 
   if [ "$(/bin/get_key_value "/etc.defaults/synoinfo.conf" "supportportmappingv2")" = "yes" ]; then
@@ -48,7 +48,7 @@ elif [ "${1}" = "late" ]; then
 elif [ "${1}" = "uninstall" ]; then
   echo "Installing addon beep - ${1}"
 
-  rm -rf "/tmpRoot/usr/bin/disks.sh"
+  rm -rf "/tmpRoot/usr/bin/disks-t.sh"
   rm -rf "/tmpRoot/usr/lib/udev/rules.d/04-system-disk-dtb.rules"
   rm -rf "/tmpRoot/usr/bin/dtc"
 fi
