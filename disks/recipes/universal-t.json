@@ -1,0 +1,14 @@
+{
+"files": [
+    {
+      "name": "install-t.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/src/install-t.sh",
+      "sha256": "bd8e5be24e263c74751094dca589b9d1ded2e41b4f01ad5b27fd7bf8578cf3b9",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_patches": "install-t.sh",	  
+    "on_os_load": "install-t.sh"
+  }
+}
