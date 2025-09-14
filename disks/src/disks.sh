@@ -264,6 +264,7 @@ dtModel() {
       grep -q "pcie_root = \"${PCIEPATH}\";" ${DEST} && continue # An nvme controller only recognizes one disk
       [ $((${#POWER_LIMIT} + 2)) -gt 30 ] && break               # POWER_LIMIT string length limit 30 characters
       POWER_LIMIT="${POWER_LIMIT:+${POWER_LIMIT},}100"
+      COUNT=$((COUNT + 1))
       {
         echo "    nvme_slot@${COUNT} {"
         echo "        reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"
@@ -276,6 +277,7 @@ dtModel() {
 
     # USB ports
     for I in $(getUsbPorts); do
+      COUNT=$((COUNT + 1))
       {
         echo "    usb_slot@${COUNT} {"
         echo "      reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"
