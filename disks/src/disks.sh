@@ -249,7 +249,6 @@ dtModel() {
     done
 
     # NVME ports
-    NVME_COUNT=32
     POWER_LIMIT=""
     for F in /sys/block/nvme*; do
       [ ! -e "${F}" ] && continue
@@ -265,10 +264,9 @@ dtModel() {
       grep -q "pcie_root = \"${PCIEPATH}\";" ${DEST} && continue # An nvme controller only recognizes one disk
       [ $((${#POWER_LIMIT} + 2)) -gt 30 ] && break               # POWER_LIMIT string length limit 30 characters
       POWER_LIMIT="${POWER_LIMIT:+${POWER_LIMIT},}100"
-      NVME_COUNT=$((NVME_COUNT + 1))
       {
-        echo "    nvme_slot@${NVME_COUNT} {"
-        echo "        reg = <0x$(printf '%02X' ${NVME_COUNT}) 0x00>;"
+        echo "    nvme_slot@${COUNT} {"
+        echo "        reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"
         echo "        pcie_root = \"${PCIEPATH}\";"
         echo "        port_type = \"ssdcache\";"
         echo "    };"
@@ -277,12 +275,10 @@ dtModel() {
     [ -n "${POWER_LIMIT}" ] && sed -i "s/power_limit = .*/power_limit = \"${POWER_LIMIT}\";/" "${DEST}" || sed -i '/power_limit/d' "${DEST}"
 
     # USB ports
-    USB_COUNT=64
     for I in $(getUsbPorts); do
-      USB_COUNT=$((USB_COUNT + 1))
       {
-        echo "    usb_slot@${USB_COUNT} {"
-        echo "      reg = <0x$(printf '%02X' ${USB_COUNT}) 0x00>;"
+        echo "    usb_slot@${COUNT} {"
+        echo "      reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"
         echo "      usb2 {"
         echo "        usb_port = \"${I}\";"
         echo "      };"
