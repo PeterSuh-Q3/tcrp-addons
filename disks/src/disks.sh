@@ -193,7 +193,7 @@ dtModel() {
 
     # SATA ports
     COUNT=0
-
+    REG_COUNT=0
     HDDSORT="$(grep -wq "hddsort" /proc/cmdline 2>/dev/null && echo "true" || echo "false")"
 
     for F in /sys/block/sata*; do
@@ -218,9 +218,10 @@ dtModel() {
             continue
           fi
           COUNT=$((COUNT + 1))
+          REG_COUNT=$((REG_COUNT + 1))
           {
             echo "    internal_slot@${COUNT} {"
-            echo "        reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"            
+            echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"            
             echo "        protocol_type = \"sata\";"
             echo "        ahci {"
             echo "            pcie_root = \"${PCIEPATH}\";"
@@ -235,9 +236,10 @@ dtModel() {
           continue
         fi
         COUNT=$((COUNT + 1))
+        REG_COUNT=$((REG_COUNT + 1))
         {
           echo "    internal_slot@${COUNT} {"
-          echo "        reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"                      
+          echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"                      
           echo "        protocol_type = \"sata\";"
           echo "        ahci {"
           echo "            pcie_root = \"${PCIEPATH}\";"
@@ -249,6 +251,7 @@ dtModel() {
     done
 
     # NVME ports
+    COUNT=0
     POWER_LIMIT=""
     for F in /sys/block/nvme*; do
       [ ! -e "${F}" ] && continue
@@ -265,9 +268,10 @@ dtModel() {
       [ $((${#POWER_LIMIT} + 2)) -gt 30 ] && break               # POWER_LIMIT string length limit 30 characters
       POWER_LIMIT="${POWER_LIMIT:+${POWER_LIMIT},}100"
       COUNT=$((COUNT + 1))
+      REG_COUNT=$((REG_COUNT + 1))
       {
         echo "    nvme_slot@${COUNT} {"
-        echo "        reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"
+        echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"
         echo "        pcie_root = \"${PCIEPATH}\";"
         echo "        port_type = \"ssdcache\";"
         echo "    };"
@@ -276,11 +280,13 @@ dtModel() {
     [ -n "${POWER_LIMIT}" ] && sed -i "s/power_limit = .*/power_limit = \"${POWER_LIMIT}\";/" "${DEST}" || sed -i '/power_limit/d' "${DEST}"
 
     # USB ports
+    COUNT=0
     for I in $(getUsbPorts); do
       COUNT=$((COUNT + 1))
+      REG_COUNT=$((REG_COUNT + 1))
       {
         echo "    usb_slot@${COUNT} {"
-        echo "      reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"
+        echo "      reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"
         echo "      usb2 {"
         echo "        usb_port = \"${I}\";"
         echo "      };"
