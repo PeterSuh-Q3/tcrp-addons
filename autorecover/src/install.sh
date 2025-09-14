@@ -13,8 +13,11 @@ if [ "${1}" = "rcExit" ]; then
     file_type=$(ls -l /dev/synoboot1 | cut -c 1)
 
     if [ "$file_type" == "b" ]; then
-      mount -t vfat synoboot1 /mnt/p1
-      mount -t vfat synoboot2 /mnt/p2
+      # use loop device for safe mount
+      losetup /dev/loop1 /dev/synoboot1
+      losetup /dev/loop2 /dev/synoboot2
+      mount -t vfat /dev/loop1 /mnt/p1
+      mount -t vfat /dev/loop2 /mnt/p2
     else
       BOOTDISK=$(cat /.bootdisk)
       echo "BOOTDISK is ${BOOTDISK}"
