@@ -37,10 +37,9 @@ case "$1" in
         copy_files
         sync_synoinfo_keys
         /usr/bin/disks.sh --create
-        [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && cp -vpf /etc/model.dtb /run/model.dtb
         ;;
     late)
-        [ "$(_get_conf_kv supportportmappingv2)" = "yes" ] && cp -vf /etc/model.dtb /tmpRoot/etc/model.dtb && cp -vf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
+        /usr/bin/disks.sh --update
         late_stage_nvme_patch
         ;;
     uninstall)
