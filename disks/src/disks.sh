@@ -183,6 +183,8 @@ dtModel() {
     {
       echo "/dts-v1/;"
       echo "/ {"
+      echo "    #address-cells = <1>;"
+      echo "    #size-cells = <1>;"      
       echo "    compatible = \"Synology\";"
       echo "    model = \"\";"
       echo "    version = <0x01>;"
@@ -218,6 +220,7 @@ dtModel() {
           COUNT=$((COUNT + 1))
           {
             echo "    internal_slot@${COUNT} {"
+            echo "        reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"            
             echo "        protocol_type = \"sata\";"
             echo "        ahci {"
             echo "            pcie_root = \"${PCIEPATH}\";"
@@ -234,6 +237,7 @@ dtModel() {
         COUNT=$((COUNT + 1))
         {
           echo "    internal_slot@${COUNT} {"
+          echo "        reg = <0x$(printf '%02X' ${COUNT}) 0x00>;"                      
           echo "        protocol_type = \"sata\";"
           echo "        ahci {"
           echo "            pcie_root = \"${PCIEPATH}\";"
@@ -264,6 +268,7 @@ dtModel() {
       COUNT=$((COUNT + 1))
       {
         echo "    nvme_slot@${COUNT} {"
+        echo "        reg = <0x$(printf '%12X' ${COUNT}) 0x00>;"
         echo "        pcie_root = \"${PCIEPATH}\";"
         echo "        port_type = \"ssdcache\";"
         echo "    };"
@@ -277,6 +282,7 @@ dtModel() {
       COUNT=$((COUNT + 1))
       {
         echo "    usb_slot@${COUNT} {"
+        echo "      reg = <0x$(printf '%22X' ${COUNT}) 0x00>;"
         echo "      usb2 {"
         echo "        usb_port = \"${I}\";"
         echo "      };"
