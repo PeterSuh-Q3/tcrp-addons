@@ -280,7 +280,6 @@ dtModel() {
     [ -n "${POWER_LIMIT}" ] && sed -i "s/power_limit = .*/power_limit = \"${POWER_LIMIT}\";/" "${DEST}" || sed -i '/power_limit/d' "${DEST}"
 
     # USB ports
-    COUNT=0
     for I in $(getUsbPorts); do
       COUNT=$((COUNT + 1))
       REG_COUNT=$((REG_COUNT + 1))
