@@ -329,7 +329,7 @@ dtModel() {
     _log "dtc success"
     #rm -vf "${DEST}"
     #cp -vpf /etc/model.dtb /etc.defaults/model.dtb
-    #cp -vpf /etc/model.dtb /run/model.dtb
+    cp -vpf /etc/model.dtb /run/model.dtb
     _chk_slot_mapping
     # Check if the storagepanel.service is existing
     [ -f "/usr/lib/systemd/system/storagepanel.service" ] && systemctl restart storagepanel.service
@@ -584,6 +584,8 @@ case ${1} in
     if [ ! -f "/etc/user_model.dts" ]; then
       dtUpdate "${2:-}"
     fi
+    cp -vpf /etc/model.dtb /tmpRoot/etc/model.dtb
+    cp -vpf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
   else
     if ! _check_user_conf "usbportcfg" || ! _check_user_conf "esataportcfg" || ! _check_user_conf "internalportcfg"; then
       nondtUpdate "${2:-}"
