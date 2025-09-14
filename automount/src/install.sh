@@ -70,5 +70,10 @@ if [ "${1}" = "patches" ]; then
     [ -b /dev/${LOADER_DISK}${p1} ] && ln -s /dev/${LOADER_DISK}${p1} /dev/synoboot1
     [ -b /dev/${LOADER_DISK}${p2} ] && ln -s /dev/${LOADER_DISK}${p2} /dev/synoboot2
     [ -b /dev/${LOADER_DISK}${p3} ] && ln -s /dev/${LOADER_DISK}${p3} /dev/synoboot3
+
+    echo "${LOADER_DISK}" > /.bootdisk
+    echo "${p1}" > /.p1
+    echo "${p2}" > /.p2
+    echo "${p3}" > /.p3    
   fi
 fi
