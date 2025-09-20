@@ -596,6 +596,9 @@ case ${1} in
     cp -vpf /etc/model.dtb /tmpRoot/etc/model.dtb
     cp -vpf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
   else
+    # nvme
+    cp -vpf /etc/extensionPorts /tmpRoot/etc/extensionPorts
+    cp -vpf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
     if ! _check_user_conf "usbportcfg" || ! _check_user_conf "esataportcfg" || ! _check_user_conf "internalportcfg"; then
       nondtUpdate "${2:-}"
     fi
