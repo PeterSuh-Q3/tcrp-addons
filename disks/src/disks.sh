@@ -534,9 +534,11 @@ nvme_late_patch(){
                     RS1619xs+) sed -i "s/0000:00:03.3/${N}/" "${SO_FILE}" ;;
                     DS719+|DS1621xs+) sed -i "s/0000:00:01.0/${N}/" "${SO_FILE}" ;;
                 esac
+            else    
+              break  
             fi
             num=$((num+1))
-        done < /etc/nvmePorts/*
+        done < /etc/nvmePorts
     fi
 }
 
