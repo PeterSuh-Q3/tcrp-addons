@@ -489,6 +489,38 @@ nondtModel() {
     echo "pci${COUNT}=\"${PCIEPATH}\"" >>/etc/extensionPorts
   done
 
+  # NVME cache handling for models using libsynonvme.so.1 (make /etc/nvmePorts)
+  BOOTDISK_PART3_PATH=$(blkid -U "6234-C863" 2>/dev/null)
+  if [ -z "$BOOTDISK_PART3_PATH" ]; then
+      BOOTDISK_PART3_PATH=$(blkid -U "8765-4321" 2>/dev/null)
+  fi
+  device_name="${BOOTDISK_PART3_PATH#/dev/}"
+  [ -n "${BOOTDISK_PART3_PATH}" ] && BOOTDISK_PART3_MAJORMINOR=$(cat "/sys/class/block/${device_name}/dev") || BOOTDISK_PART3_MAJORMINOR=""
+  [ -n "${BOOTDISK_PART3_MAJORMINOR}" ] && BOOTDISK_PART3="$(cat "/sys/dev/block/${BOOTDISK_PART3_MAJORMINOR}/uevent" 2>/dev/null | grep 'DEVNAME' | cut -d'=' -f2)" || BOOTDISK_PART3=""
+
+  [ -n "${BOOTDISK_PART3}" ] && BOOTDISK="$(ls -d /sys/block/*/${BOOTDISK_PART3} 2>/dev/null | cut -d'/' -f4)" || BOOTDISK=""
+  [ -n "${BOOTDISK}" ] && BOOTDISK_PHYSDEVPATH="$(cat "/sys/block/${BOOTDISK}/uevent" 2>/dev/null | grep 'PHYSDEVPATH' | cut -d'=' -f2)" || BOOTDISK_PHYSDEVPATH=""
+
+  echo "BOOTDISK=${BOOTDISK}"
+  echo "BOOTDISK_PHYSDEVPATH=${BOOTDISK_PHYSDEVPATH}"
+
+  # NVMe cache handling for models using libsynonvme.so.1 (make /etc/nvmePorts)
+  [ -f /etc/nvmePorts ] && rm -f /etc/nvmePorts
+  for P in $(ls -d /sys/block/nvme* 2>/dev/null); do
+    if [ -n "${BOOTDISK_PHYSDEVPATH}" -a "${BOOTDISK_PHYSDEVPATH}" = "$(cat ${P}/uevent | grep 'PHYSDEVPATH' | cut -d'=' -f2)" ]; then
+      echo "bootloader: ${P}"
+      continue
+    fi
+    PCIEPATH=$(cat ${P}/uevent 2>/dev/null | grep 'PHYSDEVPATH' | rev | cut -d'/' -f2 | rev )
+    if [ -n "${PCIEPATH}" ]; then
+      echo "${PCIEPATH}" >>/etc/nvmePorts
+    else
+      echo "${PCIEPATH} does not support!"
+      continue
+    fi
+  done
+  [ -f /etc/nvmePorts ] && cat /etc/nvmePorts
+
   if [ "${COUNT}" -gt 0 ]; then
     __set_conf_kv "supportnvme" "yes"
     __set_conf_kv "support_m2_pool" "yes"
