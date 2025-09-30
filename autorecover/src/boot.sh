@@ -19,7 +19,7 @@ function version() {
 function getredpillko() {
 
     if [ ! -n "$IP" ]; then
-        msgalert "The getredpillko() cannot proceed because there is no IP yet !!!! \n"
+        echo "The getredpillko() cannot proceed because there is no IP yet !!!! \n"
         exit 99
     fi
 
@@ -56,7 +56,7 @@ function getredpillko() {
     LATESTURL="`curl --connect-timeout 5 -skL -w %{url_effective} -o /dev/null "${PROXY}https://github.com/PeterSuh-Q3/redpill-lkm${v}/releases/latest"`"
 
     if [ $? -ne 0 ]; then
-        msgalert "Error downloading last version of ${ORIGIN_PLATFORM} ${KVER}+ rp-lkms.zip, Stop Booting...\n"
+        echo "Error downloading last version of ${ORIGIN_PLATFORM} ${KVER}+ rp-lkms.zip, Stop Booting...\n"
         exit 99
     fi
 
@@ -184,7 +184,7 @@ function extractramdisk() {
 function patchramdisk() {
 
     if [ ! -n "$IP" ]; then
-        msgalert "The patch cannot proceed because there is no IP yet !!!! \n"
+        echo "The patch cannot proceed because there is no IP yet !!!! \n"
         exit 99
     fi
 
@@ -364,50 +364,27 @@ function checkupgrade() {
         exit 99
     fi
 
-    origrdhash=$(sha256sum /mnt/tcrp-p2/rd.gz | awk '{print $1}')
-    origzimghash=$(sha256sum /mnt/tcrp-p2/zImage | awk '{print $1}')
-    rdhash="$(jq -r -e '.general .rdhash' $userconfigfile)"
-    zimghash="$(jq -r -e '.general .zimghash' $userconfigfile)"
-
-    if [ "$loadermode" == "JOT" ]; then    
-        if [ "${BUS}" = "usb" ]; then
-            msgnormal "Setting default boot entry to JOT USB\n"
-            setgrubdefault 2
-        else
-            msgnormal "Setting default boot entry to JOT SATA\n"
-            setgrubdefault 3
-        fi        
-    fi
-
     echo -n $(TEXT "Detecting upgrade : ")
 
-    if [ "$rdhash" = "$origrdhash" ]; then
-        msgnormal "Ramdisk OK ! "
+    echo "Ramdisk upgrade has been detected. \n"
+    [ -z "$IP" ] && getip
+    if [ -n "$IP" ]; then
+        patchramdisk 2>&1 | awk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; }' >>$FRIENDLOG
+        smallfixnumber="$(jq -r -e '.general .smallfixnumber' $userconfigfile)"
+        echo -ne "Smallfixnumber version changed after Ramdisk Patch, Build : $(msgnormal "$version"), Update : $(msgnormal "$smallfixnumber")\n"            
     else
-        msgwarning "Ramdisk upgrade has been detected. \n"
-        [ -z "$IP" ] && getip
-        if [ -n "$IP" ]; then
-            patchramdisk 2>&1 | awk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; }' >>$FRIENDLOG
-            smallfixnumber="$(jq -r -e '.general .smallfixnumber' $userconfigfile)"
-            echo -ne "Smallfixnumber version changed after Ramdisk Patch, Build : $(msgnormal "$version"), Update : $(msgnormal "$smallfixnumber")\n"            
-        else
-            msgalert "The patch cannot proceed because there is no IP yet !!!! \n"
-            exit 99
-        fi
+        echo "The patch cannot proceed because there is no IP yet !!!! \n"
+        exit 99
     fi
+    
+    echo "zImage upgrade has been detected. \n"
+    patchkernel 2>&1 | awk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; }' >>$FRIENDLOG
 
-    if [ "$zimghash" = "$origzimghash" ]; then
-        msgnormal "zImage OK ! \n"
-    else
-        msgwarning "zImage upgrade has been detected. \n"
-        patchkernel 2>&1 | awk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; }' >>$FRIENDLOG
-   
-        if [ "$loadermode" == "JOT" ]; then
-            msgwarning "Ramdisk upgrade and zImage upgrade for JOT completed successfully!\n"
-            TEXT "A reboot is required. Press any key to reboot..."
-            read answer
-            reboot
-        fi
+    if [ "$loadermode" == "JOT" ]; then
+        msgwarning "Ramdisk upgrade and zImage upgrade for JOT completed successfully!\n"
+        TEXT "A reboot is required. Press any key to reboot..."
+        read answer
+        reboot
     fi
     
 }
