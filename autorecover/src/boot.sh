@@ -84,45 +84,6 @@ function getredpillko() {
     [ -f /root/rd.temp/usr/lib/modules/rp.ko ] && echo "Redpill module is in place"
 }
 
-function getstaticmodule() {
-    redpillextension="https://github.com/pocopico/rp-ext/raw/main/redpill${redpillmake}/rpext-index.json"
-    SYNOMODEL="$(echo $model | sed -e 's/+/p/g' | tr '[:upper:]' '[:lower:]')_${buildnumber}"
-
-    cd /root
-
-    echo "Removing any old redpill.ko modules"
-    [ -f /root/redpill.ko ] && rm -f /root/redpill.ko
-
-    extension=$(curl --insecure --silent --location "$redpillextension")
-
-    echo "Looking for redpill for : $SYNOMODEL"
-
-    release=$(echo $extension | jq -r -e --arg SYNOMODEL $SYNOMODEL '.releases[$SYNOMODEL]')
-    files=$(curl --insecure --silent --location "$release" | jq -r '.files[] .url')
-
-    for file in $files; do
-        echo "Getting file $file"
-        curl --insecure --silent -O $file
-        if [ -f redpill*.tgz ]; then
-            echo "Extracting module"
-            gunzip redpill*.tgz
-            tar xf redpill*.tar
-            rm redpill*.tar
-            strip --strip-debug redpill.ko
-        fi
-    done
-
-    if [ -f /root/redpill.ko ] && [ -n $(strings /root/redpill.ko | grep -i $model | head -1) ]; then
-        echo "Copying redpill.ko module to ramdisk"
-        cp /root/redpill.ko /root/rd.temp/usr/lib/modules/rp.ko
-    else
-        echo "Module does not contain platform information for ${model}"
-    fi
-
-    [ -f /root/rd.temp/usr/lib/modules/rp.ko ] && echo "Redpill module is in place"
-
-}
-
 function _set_conf_kv() {
     # Delete
     if [ -z "$2" ]; then
@@ -254,7 +215,6 @@ function patchramdisk() {
 
     echo "Adding precompiled redpill module"
     getredpillko
-    #getstaticmodule
 
     echo "Adding custom.gz or initrd-dsm to image"
     cd $temprd
