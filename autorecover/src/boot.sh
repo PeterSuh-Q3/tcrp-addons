@@ -389,62 +389,6 @@ function checkupgrade() {
     
 }
 
-function mountall() {
-
-    # get SHR or NORMAL
-    getloadertype
-    #echo "LOADER_DISK = ${LOADER_DISK}"
-
-    BUS=$(getBus "${LOADER_DISK}")
-
-    if [ -z "${LOADER_DISK}" ]; then
-        TEXT "Not Supported Loader BUS Type, program Exit!!!"
-        exit 99
-    fi
-    
-    [ "${BUS}" = "nvme" ] && LOADER_DISK="${LOADER_DISK}p"
-    [ "${BUS}" = "mmc"  ] && LOADER_DISK="${LOADER_DISK}p"    
-
-    [ ! -d /mnt/tcrp ] && mkdir /mnt/tcrp
-    [ ! -d /mnt/tcrp-p1 ] && mkdir /mnt/tcrp-p1
-    [ ! -d /mnt/tcrp-p2 ] && mkdir /mnt/tcrp-p2
-
-    echo "LOADER_DISK = ${LOADER_DISK}"
-
-    if [ "${LDTYPE}" = "SHR" ]; then
-      echo "Found Syno Boot Injected Partition !!!"
-      SHR_EX_TEXT=" (SynoBoot Injected into Synodisk)"
-      p1="4"
-      p2="6"
-      p3="7"
-    else
-      SHR_EX_TEXT=""
-      p1="1"
-      p2="2"
-      p3="3"
-    fi
-
-    [ "$(mount | grep ${LOADER_DISK}${p1} | wc -l)" = "0" ] && mount /dev/${LOADER_DISK}${p1} /mnt/tcrp-p1
-    [ "$(mount | grep ${LOADER_DISK}${p2} | wc -l)" = "0" ] && mount /dev/${LOADER_DISK}${p2} /mnt/tcrp-p2 
-    [ "$(mount | grep ${LOADER_DISK}${p3} | wc -l)" = "0" ] && mount /dev/${LOADER_DISK}${p3} /mnt/tcrp
-
-    if [ "$(mount | grep /mnt/tcrp-p1 | wc -l)" = "0" ]; then
-        echo "Failed mount /dev/${LOADER_DISK}${p1} to /mnt/tcrp-p1, stopping boot process"
-        exit 99
-    fi
-
-    if [ "$(mount | grep /mnt/tcrp-p2 | wc -l)" = "0" ]; then
-        echo "Failed mount /dev/${LOADER_DISK}${p2} to /mnt/tcrp-p2, stopping boot process"
-        exit 99
-    fi
-
-    if [ "$(mount | grep /mnt/tcrp | wc -l)" = "0" ]; then
-        echo "Failed mount /dev/${LOADER_DISK}${p3} to /mnt/tcrp, stopping boot process"
-        exit 99
-    fi
-
-}
-
 function readconfig() {
 
     if [ -f $userconfigfile ]; then
@@ -507,9 +451,6 @@ function readconfig() {
 }
 
 function initialize() {
-
-    # Mount loader disk
-    [ -z "${LOADER_DISK}" ] && mountall
 
     # Read Configuration variables
     readconfig
