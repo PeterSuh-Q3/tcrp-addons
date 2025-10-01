@@ -86,7 +86,38 @@ EOF
   if grep -Eq "recovery" /proc/cmdline 2>/dev/null; then
     /usr/syno/web/webman/recovery.cgi
   fi
-  
+
+#usb nic mac spoofing
+    cmdline=$(cat /proc/cmdline)
+
+    for i in $(seq 1 8); do
+        val=$(echo "$cmdline" | grep -o -E "mac${i}=[^ ]+" | cut -d= -f2)
+        if [ -z "$val" ]; then
+            break
+        fi
+        eval "mac${i}=${val}"
+    done
+    
+    ethdevs=$(ls /sys/class/net/ | grep -v lo || true)
+    I=1
+    for eth in $ethdevs; do
+        curmacmask=$(ip link show $eth | awk '/link\/ether/ {print toupper($2)}')
+        eval "usrmac=\${mac${I}}"
+        if [ -n "${usrmac}" ] && [ "${usrmac}" != "null" ]; then
+            MAC="${usrmac:0:2}:${usrmac:2:2}:${usrmac:4:2}:${usrmac:6:2}:${usrmac:8:2}:${usrmac:10:2}"
+            if [ "${curmacmask}" != "${MAC}" ]; then
+                echo "Setting MAC Address from ${curmacmask} to ${MAC} on ${eth}" 
+                ip link set dev ${eth} address ${MAC} >/dev/null 2>&1 
+            else
+                echo "MAC Address on ${eth} is already set to ${MAC}, skipping"
+            fi
+        fi
+        I=$((I + 1))
+        if [ "${eth}" = "eth8" ]; then
+            break
+        fi
+    done
+    
 fi
 
 #echo "Starting dufs ..."
