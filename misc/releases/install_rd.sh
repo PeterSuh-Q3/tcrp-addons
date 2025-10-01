@@ -104,12 +104,11 @@ EOF
         curmacmask=$(ip link show $eth | awk '/link\/ether/ {print toupper($2)}')
         eval "usrmac=\${mac${I}}"
         if [ -n "${usrmac}" ] && [ "${usrmac}" != "null" ]; then
-            MAC="${usrmac:0:2}:${usrmac:2:2}:${usrmac:4:2}:${usrmac:6:2}:${usrmac:8:2}:${usrmac:10:2}"
-            if [ "${curmacmask}" != "${MAC}" ]; then
-                echo "Setting MAC Address from ${curmacmask} to ${MAC} on ${eth}" 
-                ip link set dev ${eth} address ${MAC} >/dev/null 2>&1 
+            if [ "${curmacmask}" != "${usrmac}" ]; then
+                echo "Setting MAC Address from ${curmacmask} to ${usrmac} on ${eth}" 
+                ip link set dev ${eth} address ${usrmac} >/dev/null 2>&1 
             else
-                echo "MAC Address on ${eth} is already set to ${MAC}, skipping"
+                echo "MAC Address on ${eth} is already set to ${usrmac}, skipping"
             fi
         fi
         I=$((I + 1))
