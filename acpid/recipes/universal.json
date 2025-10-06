@@ -3,13 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/src/install.sh",
-      "sha256": "9e620b683062a88e66ec3ebdeda154cf2242c2de51aa8b395341b80f61c2b4a0",
-      "packed": false
-    },
-    {
-      "name": "acpid.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/auxfiles/acpid.tgz",
-      "sha256": "8671cff49f4b39b5d845650a1efffbcb6582a1e352672e5434b0da9ded1f575b",
+      "sha256": "8b532dfb5008bc5a2bff0f7d95fff2f3ae28f6f26637b6a5cc368911bf7c9690",
       "packed": false
     },
     {
@@ -20,7 +14,6 @@
     }
   ],
   "scripts": {
-    "on_boot": "install.sh",
     "on_os_load": "install.sh"
   }
 }
