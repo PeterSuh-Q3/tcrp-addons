@@ -11,6 +11,12 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/auxfiles/acpid.tgz",
       "sha256": "8671cff49f4b39b5d845650a1efffbcb6582a1e352672e5434b0da9ded1f575b",
       "packed": false
+    },
+    {
+      "name": "acpid-7.1.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acpid/auxfiles/acpid-7.1.tgz",
+      "sha256": "b13497377c52b83a2f53c106b550f7e29059b091b960450552e44aeb4d551707",
+      "packed": false
     }
   ],
   "scripts": {
