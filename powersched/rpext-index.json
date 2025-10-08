@@ -37,7 +37,17 @@
     "grantley_310108": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
     "v1000nk_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
     "r1000nk_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
-    "geminilakenk_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json"
+    "geminilakenk_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "apollolake_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "broadwell_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "broadwellnk_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "broadwellnkv2_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "broadwellntbap_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "denverton_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "geminilake_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "purley_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "r1000_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json",
+    "v1000_81180": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/recipes/universal.json"
   },
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/powersched/rpext-index.json"
 }
