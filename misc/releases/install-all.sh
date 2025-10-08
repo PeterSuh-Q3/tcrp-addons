@@ -169,6 +169,7 @@ fixnetwork() {
   fi  
 }
 
+ip a
 if [ "${1}" = "patches" ]; then
     echo "Installing addon misc - ${1}"
 
