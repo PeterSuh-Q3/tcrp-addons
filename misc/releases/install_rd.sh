@@ -1,5 +1,6 @@
 #!/bin/sh
 
+ip a
 if [ "${1}" = "modules" ]; then
     echo "Starting ttyd, listening on port: 7681"
     tar -zxvf ./lrzsz.tgz -C /usr/sbin
