@@ -88,34 +88,34 @@ EOF
   fi
 
 #usb nic mac spoofing
-    cmdline=$(cat /proc/cmdline)
+    #cmdline=$(cat /proc/cmdline)
 
-    for i in $(seq 1 8); do
-        val=$(echo "$cmdline" | grep -o -E "mac${i}=[^ ]+" | cut -d= -f2)
-        if [ -z "$val" ]; then
-            break
-        fi
-        eval "mac${i}=${val}"
-    done
+    #for i in $(seq 1 8); do
+    #    val=$(echo "$cmdline" | grep -o -E "mac${i}=[^ ]+" | cut -d= -f2)
+    #    if [ -z "$val" ]; then
+    #        break
+    #    fi
+    #    eval "mac${i}=${val}"
+    #done
     
-    ethdevs=$(ls /sys/class/net/ | grep -v lo || true)
-    I=1
-    for eth in $ethdevs; do
-        curmacmask=$(ip link show $eth | awk '/link\/ether/ {print toupper($2)}')
-        eval "usrmac=\${mac${I}}"
-        if [ -n "${usrmac}" ] && [ "${usrmac}" != "null" ]; then
-            if [ "${curmacmask}" != "${usrmac}" ]; then
-                echo "Setting MAC Address from ${curmacmask} to ${usrmac} on ${eth}" 
-                ip link set dev ${eth} address ${usrmac} >/dev/null 2>&1 
-            else
-                echo "MAC Address on ${eth} is already set to ${usrmac}, skipping"
-            fi
-        fi
-        I=$((I + 1))
-        if [ "${eth}" = "eth8" ]; then
-            break
-        fi
-    done
+    #ethdevs=$(ls /sys/class/net/ | grep -v lo || true)
+    #I=1
+    #for eth in $ethdevs; do
+    #    curmacmask=$(ip link show $eth | awk '/link\/ether/ {print toupper($2)}')
+    #    eval "usrmac=\${mac${I}}"
+    #    if [ -n "${usrmac}" ] && [ "${usrmac}" != "null" ]; then
+    #        if [ "${curmacmask}" != "${usrmac}" ]; then
+    #            echo "Setting MAC Address from ${curmacmask} to ${usrmac} on ${eth}" 
+    #            ip link set dev ${eth} address ${usrmac} >/dev/null 2>&1 
+    #        else
+    #            echo "MAC Address on ${eth} is already set to ${usrmac}, skipping"
+    #        fi
+    #    fi
+    #    I=$((I + 1))
+    #    if [ "${eth}" = "eth8" ]; then
+    #        break
+    #    fi
+    #done
     
 fi
 
