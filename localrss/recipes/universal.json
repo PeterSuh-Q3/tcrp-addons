@@ -7,6 +7,12 @@
       "packed": false
     },
     {
+      "name": "rss6.2.4.json",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/rss6.2.4.json",
+      "sha256": "b6da79897d4bd6c1233fabca6335005b7ccaf1374c59ab3c221c70f3c825fd36",
+      "packed": false
+    },
+    {
       "name": "rss7.0.1.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/rss7.0.1.json",
       "sha256": "b6da79897d4bd6c1233fabca6335005b7ccaf1374c59ab3c221c70f3c825fd36",
@@ -39,6 +45,12 @@
     {
       "name": "rss7.3.0.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/rss7.3.0.json",
+      "sha256": "b3101eb63299c544c8ba3e478ff72e5fbe8a1234f73c3735bf630dd34c4b3542",
+      "packed": false
+    },
+    {
+      "name": "rss7.3.1.json",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/rss7.3.1.json",
       "sha256": "b3101eb63299c544c8ba3e478ff72e5fbe8a1234f73c3735bf630dd34c4b3542",
       "packed": false
     }
