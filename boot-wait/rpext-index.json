@@ -41,7 +41,17 @@
     "epyc7002_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
     "geminilakenk_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
     "r1000nk_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
-    "v1000nk_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json"
+    "v1000nk_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "apollolake_4459": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "braswell_310105": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "broadwell_310105": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "broadwellnk_4459": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "bromolow_310105": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "denverton_4459": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "geminilake_4459": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "grantley_310105": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "purley_4459": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json",
+    "v1000_4459": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/boot-wait/recipes/universal.json"
   },
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/boot-wait/rpext-index.json"
 }
