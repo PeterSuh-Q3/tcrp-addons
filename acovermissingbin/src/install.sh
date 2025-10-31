@@ -9,7 +9,7 @@ if [ "${1}" = "early" ]; then
   echo "Installing addon acovermissingbin - ${1}"
   echo "extract usr.tgz (extra binary) to /usr/sbin/ /usr/lib "
   if [ ${REVISION} = "#25556" ]; then
-    gzip -d -c usr.tgz | tar -xvf - -C /
+    gunzip -c usr.tgz | tar xvf - -C /
   else
     tar vxfz usr.tgz -C /
   fi  
