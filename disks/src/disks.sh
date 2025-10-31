@@ -6,9 +6,27 @@
 # See /LICENSE for more information.
 #
 
+set_key_value() {
+    local file="$1"
+    local key="$2"
+    local value="$3"
+
+    [ ! -f "$file" ] && touch "$file"
+
+    value=$(echo "$value" | sed 's/[\/&]/\\&/g')
+    
+    if grep -q "^${key}=" "$file"; then
+        # 기존 키 업데이트
+        sed -i "s/^${key}=.*/${key}=${value}/" "$file"
+    else
+        # 새로운 키 추가
+        echo "${key}=${value}" >> "$file"
+    fi
+}
+
 ROOT_PATH=""
 GKV=$([ -x "/usr/syno/bin/synogetkeyvalue" ] && echo "/usr/syno/bin/synogetkeyvalue" || echo "/bin/get_key_value")
-SKV=$([ -x "/usr/syno/bin/synosetkeyvalue" ] && echo "/usr/syno/bin/synosetkeyvalue" || echo "/bin/set_key_value")
+SKV="set_key_value"
 
 # Logging
 _log() {
