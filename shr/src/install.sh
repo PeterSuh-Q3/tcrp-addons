@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function modify_synoinfo() {
+modify_synoinfo() {
 # add supportraidgroup="no" , support_syno_hybrid_raid="yes" to /etc/synoinfo.conf for avtive SHR 2023.07.10
   if [ -f /tmpRoot/etc/synoinfo.conf ]; then
     echo 'add supportraidgroup="no" to /tmpRoot/etc/synoinfo.conf'
