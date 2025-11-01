@@ -1,6 +1,6 @@
 #!/usr/bin/env ash
 
-function saveLogs() {
+saveLogs() {
   modprobe vfat
   echo 1 > /proc/sys/kernel/syno_install_flag
   [ ! -b /dev/synoboot1 ] && exit 0
