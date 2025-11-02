@@ -14,17 +14,18 @@ PLATFORM="$(uname -a | awk '{print $NF}' | cut -d '_' -f2)"
 tmpRoot="/tmpRoot"
 file="/lib64/libhwcontrol.so.1"
 
+KVER_CLEAN=$(uname -r | grep -oP '^\d+\.\d+\.\d+')
+ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
+
 if [ "${1}" = "late" ]; then
   echo "nvmevolume-onthefly - ${1}"
-  if [ "${PLATFORM}" = "broadwellnk" ] || [ "${PLATFORM}" = "bromolow" ]; then
+  if [ "${PLATFORM}" = "broadwellnk" ]; then
     echo "nvmevolume-onthefly - ${1}, Skip ${PLATFORM} (Not Supported)"
     exit 0
   fi
 
-  REVISION="$(uname -a | cut -d ' ' -f4)"
-  echo "REVISION = ${REVISION}"
-  if [ ${REVISION} = "#25556" ] || [ ${REVISION} = "#42218" ]; then
-    echo "nvmevolume-onthefly - ${1}, Skip ${REVISION} (Not Supported)"
+  if [ "$ZPADKVER" -le 4004059 ]; then
+    echo "(Not Supported) nvmevolume-onthefly - ${1}, It does not work on kernel versions 4.4.59 and earlier." 
     exit 0
   fi  
     
