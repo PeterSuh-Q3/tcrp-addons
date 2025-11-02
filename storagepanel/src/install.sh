@@ -30,11 +30,15 @@
 # $2 ?
 #  (row)X(column)    # default: 1X8
 
-PLATFORM="$(uname -a | awk '{print $NF}' | cut -d '_' -f2)"
+KVER_CLEAN=$(uname -r | grep -oP '^\d+\.\d+\.\d+')
+ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
 
 if [ "${1}" = "late" ]; then
 
-[ "${PLATFORM}" = "bromolow" ] && exit 0
+  if [ "$ZPADKVER" -le 4004059 ]; then
+    echo "(Not Supported) nvmevolume-onthefly - ${1}, It does not work on kernel versions 4.4.59 and earlier." 
+    exit 0
+  fi  
 
 HDD_BAY="RACK_60_Bay"
 SSD_BAY="1X4"
