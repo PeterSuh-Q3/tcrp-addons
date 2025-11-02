@@ -14,7 +14,7 @@ PLATFORM="$(uname -a | awk '{print $NF}' | cut -d '_' -f2)"
 tmpRoot="/tmpRoot"
 file="/lib64/libhwcontrol.so.1"
 
-KVER_CLEAN=$(uname -r | grep -oP '^\d+\.\d+\.\d+')
+KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
 ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
 
 if [ "${1}" = "late" ]; then
