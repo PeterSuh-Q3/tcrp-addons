@@ -23,7 +23,7 @@ if [ "${1}" = "late" ]; then
 
   REVISION="$(uname -a | cut -d ' ' -f4)"
   echo "REVISION = ${REVISION}"
-  if [ ${REVISION} = "#42218" ]; then
+  if [ ${REVISION} = "#25556" ] || [ ${REVISION} = "#42218" ]; then
     echo "nvmevolume-onthefly - ${1}, Skip ${REVISION} (Not Supported)"
     exit 0
   fi  
