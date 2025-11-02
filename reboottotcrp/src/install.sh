@@ -1,14 +1,15 @@
 #!/usr/bin/env ash
 
-kernelver=$(uname -r)
-firstchar=$(printf "%.1s" "$kernelver")
-
+KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
+ 
 if [ "${1}" = "late" ]; then
   echo "reboottotcrp - late"
-  if [ "$firstchar" = "3" ]; then
-    echo "syno kernel 3 is not supported"
+
+  if [ "$ZPADKVER" -le 4004059 ]; then
+    echo "(Not Supported) nvmevolume-onthefly - ${1}, It does not work on kernel versions 4.4.59 and earlier." 
     exit 0
-  fi
+  fi  
   
   cp -vf tcrp-reboot.sh /tmpRoot/usr/sbin/tcrp-reboot.sh
   chmod 755 /tmpRoot/usr/sbin/tcrp-reboot.sh
