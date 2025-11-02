@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KVER_CLEAN=$(uname -r | grep -oP '^\d+\.\d+\.\d+')
+KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
 ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
 
 if [ "${1}" = "late" ]; then
