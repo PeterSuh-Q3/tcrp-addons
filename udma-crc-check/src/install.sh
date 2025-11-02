@@ -15,7 +15,7 @@ if [ "${1}" = "late" ]; then
   mkdir -p /tmpRoot/usr/lib/systemd/system/timers.target.wants
   
   # 심볼릭 링크 생성 (수동 enable)
-  ln -vsf /usr/lib/systemd/system/udma-crc-check.timer /tmpRoot/usr/lib/systemd/system/timers.target.wants/udma-crc-check.timer
+  ln -sf /usr/lib/systemd/system/udma-crc-check.timer /tmpRoot/usr/lib/systemd/system/timers.target.wants/udma-crc-check.timer
 
   # 서비스 파일 권한 설정
   chmod 644 /tmpRoot/usr/lib/systemd/system/udma-crc-check.service
