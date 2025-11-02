@@ -6,7 +6,7 @@ ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
 if [ "${1}" = "late" ]; then
 
   if [ "$ZPADKVER" -le 4004059 ]; then
-    echo "(Not Supported) nvmevolume-onthefly - ${1}, It does not work in UEFI boot mode on kernel versions 4.4.59 and earlier." 
+    echo "(Not Supported) nvmevolume-onthefly - ${1}, It does not work on kernel versions 4.4.59 and earlier." 
     exit 0
   fi  
 
