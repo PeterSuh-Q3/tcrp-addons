@@ -6,8 +6,16 @@
 # See /LICENSE for more information.
 #
 
+KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
+
 if [ "${1}" = "late" ]; then
   echo "Installing addon synoconfbkp - ${1}"
+
+  if [ "$ZPADKVER" -le 4004059 ]; then
+    echo "(Not Supported) synoconfbkp - ${1}, It does not work on kernel versions 4.4.59 and earlier." 
+    exit 0
+  fi  
 
   cp -vpf ./synoconfbkp.sh /tmpRoot/usr/sbin/synoconfbkp.sh
   chmod 755 /tmpRoot/usr/sbin/synoconfbkp.sh
