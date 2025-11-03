@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 # RR+mshell 완전 통합 install.sh (install, flock 제거 버전)
 
+KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
+
 set_key_value() {
     local file="$1"
     local key="$2"
@@ -20,7 +23,11 @@ set_key_value() {
 }
 
 GKV=$([ -x "/usr/syno/bin/synogetkeyvalue" ] && echo "/usr/syno/bin/synogetkeyvalue" || echo "/bin/get_key_value")
-SKV="set_key_value"
+if [ "$ZPADKVER" -le 4004059 ]; then
+    SKV="set_key_value"
+else
+    SKV=$([ -x "/usr/syno/bin/synosetkeyvalue" ] && echo "/usr/syno/bin/synosetkeyvalue" || echo "/bin/set_key_value")
+fi
 _log(){ echo "[install] $*"; /bin/logger -p info -t install "$@"; }
 
 copy_files(){
