@@ -11,8 +11,8 @@ if [ "${1}" = "early" ]; then
   echo "extract usr.tgz (extra binary) to /usr/sbin/ /usr/lib "
   if [ ${REVISION} = "#25556" ]; then
     gunzip -c usr.tgz | tar xvf - -C /
-    cp -vf /usr/sbin/6.2.4/blkid /usr/sbin/blkid 
-    cp -vf /usr/lib/6.2.4/* /usr/lib/
+    #cp -vf /usr/sbin/6.2.4/blkid /usr/sbin/blkid 
+    #cp -vf /usr/lib/6.2.4/* /usr/lib/
   else
     tar vxfz usr.tgz -C /
   fi  
