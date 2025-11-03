@@ -1,13 +1,13 @@
 {
   "files": [
     {
-      "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/src/install.sh",
-      "sha256": "a291df43d9f2c26fedc113df9e3f77646fa5e4a270974146aa40ffc792be5e7b",
+      "name": "nothing.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/src/nothing.sh",
+      "sha256": "954cac1aa42fea0fecf4ea36b5d6bc392333a2ebb5f95f2516c4739e35b8377f",
       "packed": false
     }
   ],
   "scripts": {
-    "on_boot": "install.sh"
+    "on_boot": "nothing.sh"
   }
 }
