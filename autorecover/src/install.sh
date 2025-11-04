@@ -16,6 +16,11 @@ if [ "${1}" = "rcExit" ]; then
     echo "smallfixnumber difference detected. Automatic patching is performed. !!!"
     echo "Copy the rd.gz and zImage files from /tmpRoot where /dev/md0 is mounted."
 
+    if [ "$ZPADKVER" -le 4004059 ]
+      modprobe loop
+      lsmod | grep loop
+    fi
+
     mkdir -p /mnt/p1
     mkdir -p /mnt/p2    
     cd /dev
