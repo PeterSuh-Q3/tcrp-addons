@@ -13,7 +13,6 @@ if [ "${1}" = "early" ]; then
     gunzip -c usr6.tgz | tar xvf - -C /
     cp -vf /usr/sbin/6.2.4/* /usr/sbin/
     cp -vf /usr/lib/6.2.4/* /usr/lib/
-    mv -f /usr/lib/loop.ko /usr/lib/modules/loop.ko
   else
     tar vxfz usr.tgz -C /
   fi  
