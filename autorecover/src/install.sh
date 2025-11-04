@@ -17,7 +17,7 @@ if [ "${1}" = "rcExit" ]; then
     echo "Copy the rd.gz and zImage files from /tmpRoot where /dev/md0 is mounted."
 
     if [ "$ZPADKVER" -le 4004059 ]; then
-      modprobe loop
+      #modprobe loop
       lsmod | grep loop
     fi
 
