@@ -1,8 +1,18 @@
 #!/usr/bin/env ash
 
+KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
+
 if [ "${1}" = "rcExit" ]; then
   echo "autorecover - ${1}"
-  if [ $(cat /var/log/linuxrc.syno.log | grep smallfixnumber | wc -l) -gt 0 ] && [ $(cat /var/log/junior_reason | grep -e error -e [7] | wc -l) -gt 0 ]; then
+  
+  if [ $(cat /var/log/junior_reason | grep -e error -e [7] | wc -l) -gt 0 ]; then
+
+    if [ "$ZPADKVER" -gt 4004059 ] && ! grep -q smallfixnumber /var/log/linuxrc.syno.log; then
+      echo "It's not smallfixnumber difference condition. exit now!!!"
+      exit 0
+    fi
+  
     echo "smallfixnumber difference detected. Automatic patching is performed. !!!"
     echo "Copy the rd.gz and zImage files from /tmpRoot where /dev/md0 is mounted."
 
