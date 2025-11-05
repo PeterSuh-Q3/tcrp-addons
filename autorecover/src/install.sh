@@ -6,7 +6,7 @@ ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
 if [ "${1}" = "rcExit" ]; then
   echo "autorecover - ${1}"
   
-  if [ $(cat /var/log/junior_reason | grep -e error -e [7] | wc -l) -gt 0 ]; then
+  if [ $(cat /var/log/junior_reason | grep "error \[7\]" | wc -l) -gt 0 ]; then
 
     if [ "$ZPADKVER" -gt 4004059 ] && ! grep -q smallfixnumber /var/log/linuxrc.syno.log; then
       echo "It's not smallfixnumber difference condition. exit now!!!"
