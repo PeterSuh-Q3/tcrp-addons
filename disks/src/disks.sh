@@ -225,7 +225,8 @@ dtModel() {
       [ ! -e "${F}" ] && continue
       PCIEPATH="$(grep 'pciepath' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
       ATAPORT="$(grep 'ata_port_no' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
-      if [ -z "${PCIEPATH}" ] || [ -z "${ATAPORT}" ]; then
+			DRIVER="$(cat "${F}/device/syno_block_info" 2>/dev/null | grep 'driver' | cut -d'=' -f2)"
+      if [ -z "${PCIEPATH}" ] || [ -z "${DRIVER}" ]; then
         _log "unknown: ${F}"
         continue
       fi
@@ -238,7 +239,7 @@ dtModel() {
       if [ "${HDDSORT}" = "true" ] && [ "${PORTNUM}" -gt 0 ]; then
         CONTPCI=${PCIEPATH}
         for I in $(seq 0 $((${PORTNUM} - 1))); do
-          if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && [ "${BOOTDISK_ATAPORT}" = "${I}" ]; then
+          if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && ([ -z "${ATAPORT}" ] || [ "${BOOTDISK_ATAPORT}" = "${I}" ]); then
             _log "bootloader: ${F}"
             continue
           fi
@@ -248,15 +249,15 @@ dtModel() {
             echo "    internal_slot@${COUNT} {"
             echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"            
             echo "        protocol_type = \"sata\";"
-            echo "        ahci {"
+            echo "        ${DRIVER} {"
             echo "            pcie_root = \"${PCIEPATH}\";"
-            echo "            ata_port = <0x$(printf '%02X' ${I})>;"
+            [ -n "${ATAPORT}" ] && echo "            ata_port = <0x$(printf '%02X' ${I})>;"
             echo "        };"
             echo "    };"
           } >>"${DEST}"
         done
       else
-        if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && [ "${BOOTDISK_ATAPORT}" = "${ATAPORT}" ]; then
+        if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && ([ -z "${ATAPORT}" ] || [ "${BOOTDISK_ATAPORT}" = "${ATAPORT}" ]); then
           _log "bootloader: ${F}"
           continue
         fi
@@ -266,9 +267,9 @@ dtModel() {
           echo "    internal_slot@${COUNT} {"
           echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"                      
           echo "        protocol_type = \"sata\";"
-          echo "        ahci {"
+          echo "        ${DRIVER} {"
           echo "            pcie_root = \"${PCIEPATH}\";"
-          echo "            ata_port = <0x$(printf '%02X' ${ATAPORT})>;"
+          [ -n "${ATAPORT}" ] && echo "            ata_port = <0x$(printf '%02X' ${ATAPORT})>;"
           echo "        };"
           echo "    };"
         } >>"${DEST}"
@@ -291,7 +292,7 @@ dtModel() {
       fi
       grep -q "pcie_root = \"${PCIEPATH}\";" ${DEST} && continue # An nvme controller only recognizes one disk
       [ $((${#POWER_LIMIT} + 2)) -gt 30 ] && break               # POWER_LIMIT string length limit 30 characters
-      POWER_LIMIT="${POWER_LIMIT:+${POWER_LIMIT},}100"
+      POWER_LIMIT="${POWER_LIMIT:+${POWER_LIMIT},}0"
       COUNT=$((COUNT + 1))
       REG_COUNT=$((REG_COUNT + 1))
       {
