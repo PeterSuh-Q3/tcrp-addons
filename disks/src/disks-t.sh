@@ -246,7 +246,7 @@ dtModel() {
       if [ "${HDDSORT}" = "true" ] && [ "${PORTNUM}" -gt 0 ]; then
         CONTPCI=${PCIEPATH}
         for I in $(seq 0 $((${PORTNUM} - 1))); do
-          if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && ([ -z "${ATAPORT}" ] || [ "${BOOTDISK_ATAPORT}" = "${I}" ]); then
+          if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && [ "${BOOTDISK_ATAPORT}" = "${I}" ]; then
             _log "bootloader: ${F}"
             continue
           fi
@@ -279,7 +279,7 @@ dtModel() {
           } >>"${DEST}"
         done
       else
-        if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && ([ -z "${ATAPORT}" ] || [ "${BOOTDISK_ATAPORT}" = "${ATAPORT}" ]); then
+        if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && [ "${BOOTDISK_ATAPORT}" = "${ATAPORT}" ]; then
           _log "bootloader: ${F}"
           continue
         fi
