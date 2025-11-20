@@ -240,9 +240,7 @@ dtModel() {
       CONTPCI=""
       # shellcheck disable=SC2046
       PORTNUM=$(ls -ld /sys/devices/pci0000:00/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/ata* 2>/dev/null | wc -l)
-  	  _log "PORTNUM=$PORTNUM"
 	  SASPORTNUM=$(ls -ld /sys/devices/pci0000:00/*/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/host*/port-* 2>/dev/null | wc -l)
-  	  _log "SASPORTNUM=$SASPORTNUM"	  
       if [ "${HDDSORT}" = "true" ] && [ "${PORTNUM}" -gt 0 ]; then
         CONTPCI=${PCIEPATH}
         for I in $(seq 0 $((${PORTNUM} - 1))); do
