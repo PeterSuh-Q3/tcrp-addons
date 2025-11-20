@@ -221,10 +221,18 @@ dtModel() {
     REG_COUNT=0
     HDDSORT="$(grep -wq "hddsort" /proc/cmdline 2>/dev/null && echo "true" || echo "false")"
 
+	MAX_SATANUM=0
+	for devpath in /sys/block/sata*; do
+	  dev=$(basename "$devpath")      # sata1, sata2 ...
+	  APORT=${dev#sata}             # 숫자만 추출
+	  # 정수 비교로 최대값 갱신
+	  if [ "$APORT" -gt "$MAX_SATANUM" ]; then
+	    MAX_SATANUM=$APORT
+	  fi
+	done
+
     for F in /sys/block/sata*; do
       [ ! -e "${F}" ] && continue
-	  dev=$(basename "$F")      # sata1, sata2 ...
-	  SATANUM=${dev#sata}       # 숫자만 추출	  
 	  FULLPATH=$(readlink -f "$F")
 	  PCIEPATH=$(echo "$FULLPATH" \
 	    | grep -oE '[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]' \
@@ -266,7 +274,7 @@ dtModel() {
 	  elif [ -n "${SASPORTNUM}" ] && [ "${SASPORTNUM}" -gt 0 ]; then
         for I in $(seq 0 $((${SASPORTNUM} - 1))); do
           COUNT=$((COUNT + 1))
-		  if [ "$COUNT" -gt "$SATANUM" ]; then
+		  if [ "$COUNT" -gt "$MAX_SATANUM" ]; then
 		    break
 		  fi		  
           REG_COUNT=$((REG_COUNT + 1))
