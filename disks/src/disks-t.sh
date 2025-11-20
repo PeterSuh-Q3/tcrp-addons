@@ -219,17 +219,7 @@ dtModel() {
     # SATA ports
     COUNT=0
     REG_COUNT=0
-	PORTNUM=0
     HDDSORT="$(grep -wq "hddsort" /proc/cmdline 2>/dev/null && echo "true" || echo "false")"
-
-	for devpath in /sys/block/sata*; do
-	  dev=$(basename "$devpath")      # sata1, sata2 ...
-	  ATAPORT=${dev#sata}             # 숫자만 추출
-	  # 정수 비교로 최대값 갱신
-	  if [ "$ATAPORT" -gt "$PORTNUM" ]; then
-	    PORTNUM=$ATAPORT
-	  fi
-	done
 
     for F in /sys/block/sata*; do
       [ ! -e "${F}" ] && continue
@@ -251,7 +241,8 @@ dtModel() {
       fi
       CONTPCI=""
       # shellcheck disable=SC2046
-      #PORTNUM=$(ls -ld /sys/devices/pci0000:00/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/ata* 2>/dev/null | wc -l)
+      PORTNUM=$(ls -ld /sys/devices/pci0000:00/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/ata* 2>/dev/null | wc -l)
+	  SASPORTNUM=$(ls -ld /sys/devices/pci0000:00/*/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/host*/port-* 2>/dev/null | wc -l)
       if [ "${HDDSORT}" = "true" ] && [ "${PORTNUM}" -gt 0 ]; then
         CONTPCI=${PCIEPATH}
         for I in $(seq 0 $((${PORTNUM} - 1))); do
@@ -259,6 +250,21 @@ dtModel() {
             _log "bootloader: ${F}"
             continue
           fi
+          COUNT=$((COUNT + 1))
+          REG_COUNT=$((REG_COUNT + 1))
+          {
+            echo "    internal_slot@${COUNT} {"
+            echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"            
+            echo "        protocol_type = \"sata\";"
+            echo "        ahci {"
+            echo "            pcie_root = \"${PCIEPATH}\";"
+            echo "            ata_port = <0x$(printf '%02X' ${I})>;"
+            echo "        };"
+            echo "    };"
+          } >>"${DEST}"
+        done
+	  elif [ "${HDDSORT}" = "true" ] && [ "${SASPORTNUM}" -gt 0 ]; then
+        for I in $(seq 0 $((${SASPORTNUM} - 1))); do
           COUNT=$((COUNT + 1))
           REG_COUNT=$((REG_COUNT + 1))
           {
