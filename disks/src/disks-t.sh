@@ -262,7 +262,7 @@ dtModel() {
           } >>"${DEST}"
         done
 	  elif [ "${HDDSORT}" = "true" ] && [ "${SASPORTNUM}" -gt 0 ]; then
-        for K in $(seq 0 $((${SASPORTNUM} - 1))); do
+        for I in $(seq 0 $((${SASPORTNUM} - 1))); do
           COUNT=$((COUNT + 1))
           REG_COUNT=$((REG_COUNT + 1))
           {
@@ -271,7 +271,7 @@ dtModel() {
             echo "        protocol_type = \"sata\";"
             echo "        ahci {"
             echo "            pcie_root = \"${PCIEPATH}\";"
-            echo "            ata_port = <0x$(printf '%02X' ${K})>;"
+            echo "            ata_port = <0x$(printf '%02X' ${I})>;"
             echo "        };"
             echo "    };"
           } >>"${DEST}"
