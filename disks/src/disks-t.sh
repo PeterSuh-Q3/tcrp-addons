@@ -223,14 +223,12 @@ dtModel() {
 
     for F in /sys/block/sata*; do
       [ ! -e "${F}" ] && continue
-	  dev=$(basename "$F")      # sata1, sata2 ...
-	  ATAPORT=${dev#sata}             # 숫자만 추출
 	  FULLPATH=$(readlink -f "$F")
 	  PCIEPATH=$(echo "$FULLPATH" \
 	    | grep -oE '[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]' \
 	    | tail -n1)
       #PCIEPATH="$(grep 'pciepath' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
-      #ATAPORT="$(grep 'ata_port_no' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
+      ATAPORT="$(grep 'ata_port_no' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
 	  #DRIVER="$(cat "${F}/device/syno_block_info" 2>/dev/null | grep 'driver' | cut -d'=' -f2)"
       if [ -z "${PCIEPATH}" ]; then
         _log "unknown: ${F}"
@@ -242,11 +240,13 @@ dtModel() {
       CONTPCI=""
       # shellcheck disable=SC2046
       PORTNUM=$(ls -ld /sys/devices/pci0000:00/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/ata* 2>/dev/null | wc -l)
+  	  _log "PORTNUM=$PORTNUM"
 	  SASPORTNUM=$(ls -ld /sys/devices/pci0000:00/*/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/host*/port-* 2>/dev/null | wc -l)
+  	  _log "SASPORTNUM=$SASPORTNUM"	  
       if [ "${HDDSORT}" = "true" ] && [ "${PORTNUM}" -gt 0 ]; then
         CONTPCI=${PCIEPATH}
         for I in $(seq 0 $((${PORTNUM} - 1))); do
-          if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && [ "${BOOTDISK_ATAPORT}" = "${I}" ]; then
+          if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && ([ -z "${ATAPORT}" ] || [ "${BOOTDISK_ATAPORT}" = "${I}" ]); then
             _log "bootloader: ${F}"
             continue
           fi
@@ -258,13 +258,13 @@ dtModel() {
             echo "        protocol_type = \"sata\";"
             echo "        ahci {"
             echo "            pcie_root = \"${PCIEPATH}\";"
-            echo "            ata_port = <0x$(printf '%02X' ${I})>;"
+            [ -n "${ATAPORT}" ] && echo "            ata_port = <0x$(printf '%02X' ${I})>;"
             echo "        };"
             echo "    };"
           } >>"${DEST}"
         done
 	  elif [ "${HDDSORT}" = "true" ] && [ "${SASPORTNUM}" -gt 0 ]; then
-        for I in $(seq 0 $((${SASPORTNUM} - 1))); do
+        for K in $(seq 0 $((${SASPORTNUM} - 1))); do
           COUNT=$((COUNT + 1))
           REG_COUNT=$((REG_COUNT + 1))
           {
@@ -273,7 +273,7 @@ dtModel() {
             echo "        protocol_type = \"sata\";"
             echo "        ahci {"
             echo "            pcie_root = \"${PCIEPATH}\";"
-            echo "            ata_port = <0x$(printf '%02X' ${I})>;"
+            echo "            ata_port = <0x$(printf '%02X' ${K})>;"
             echo "        };"
             echo "    };"
           } >>"${DEST}"
