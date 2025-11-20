@@ -261,7 +261,7 @@ dtModel() {
             echo "    };"
           } >>"${DEST}"
         done
-	  elif [ "${HDDSORT}" = "true" ] && [ "${SASPORTNUM}" -gt 0 ]; then
+	  elif [ -n "${SASPORTNUM}" ] && [ "${SASPORTNUM}" -gt 0 ]; then
         for I in $(seq 0 $((${SASPORTNUM} - 1))); do
           COUNT=$((COUNT + 1))
           REG_COUNT=$((REG_COUNT + 1))
