@@ -221,26 +221,12 @@ dtModel() {
     REG_COUNT=0
     HDDSORT="$(grep -wq "hddsort" /proc/cmdline 2>/dev/null && echo "true" || echo "false")"
 
-	MAX_SATANUM=0
-	for devpath in /sys/block/sata*; do
-	  dev=$(basename "$devpath")      # sata1, sata2 ...
-	  APORT=${dev#sata}             # 숫자만 추출
-	  # 정수 비교로 최대값 갱신
-	  if [ "$APORT" -gt "$MAX_SATANUM" ]; then
-	    MAX_SATANUM=$APORT
-	  fi
-	done
-
     for F in /sys/block/sata*; do
       [ ! -e "${F}" ] && continue
-	  FULLPATH=$(readlink -f "$F")
-	  PCIEPATH=$(echo "$FULLPATH" \
-	    | grep -oE '[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]' \
-	    | tail -n1)
-      #PCIEPATH="$(grep 'pciepath' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
+      PCIEPATH="$(grep 'pciepath' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
       ATAPORT="$(grep 'ata_port_no' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
-	  #DRIVER="$(cat "${F}/device/syno_block_info" 2>/dev/null | grep 'driver' | cut -d'=' -f2)"
-      if [ -z "${PCIEPATH}" ]; then
+			DRIVER="$(cat "${F}/device/syno_block_info" 2>/dev/null | grep 'driver' | cut -d'=' -f2)"
+      if [ -z "${PCIEPATH}" ] || [ -z "${DRIVER}" ]; then
         _log "unknown: ${F}"
         continue
       fi
@@ -250,7 +236,6 @@ dtModel() {
       CONTPCI=""
       # shellcheck disable=SC2046
       PORTNUM=$(ls -ld /sys/devices/pci0000:00/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/ata* 2>/dev/null | wc -l)
-	  SASPORTNUM=$(ls -ld /sys/devices/pci0000:00/*/*$(echo "${PCIEPATH}" | sed 's/,/\/*:/g')/host*/port-* 2>/dev/null | wc -l)
       if [ "${HDDSORT}" = "true" ] && [ "${PORTNUM}" -gt 0 ]; then
         CONTPCI=${PCIEPATH}
         for I in $(seq 0 $((${PORTNUM} - 1))); do
@@ -264,33 +249,15 @@ dtModel() {
             echo "    internal_slot@${COUNT} {"
             echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"            
             echo "        protocol_type = \"sata\";"
-            echo "        ahci {"
+            echo "        ${DRIVER} {"
             echo "            pcie_root = \"${PCIEPATH}\";"
             [ -n "${ATAPORT}" ] && echo "            ata_port = <0x$(printf '%02X' ${I})>;"
             echo "        };"
             echo "    };"
           } >>"${DEST}"
         done
-	  elif [ -n "${SASPORTNUM}" ] && [ "${SASPORTNUM}" -gt 0 ]; then
-        for I in $(seq 0 $((${SASPORTNUM} - 1))); do
-          COUNT=$((COUNT + 1))
-		  if [ "$COUNT" -gt "$MAX_SATANUM" ]; then
-		    break
-		  fi		  
-          REG_COUNT=$((REG_COUNT + 1))
-          {
-            echo "    internal_slot@${COUNT} {"
-            echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"            
-            echo "        protocol_type = \"sata\";"
-            echo "        ahci {"
-            echo "            pcie_root = \"${PCIEPATH}\";"
-            echo "            ata_port = <0x$(printf '%02X' ${I})>;"
-            echo "        };"
-            echo "    };"
-          } >>"${DEST}"
-        done
       else
-        if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && [ "${BOOTDISK_ATAPORT}" = "${ATAPORT}" ]; then
+        if [ "${BOOTDISK_PCIEPATH}" = "${PCIEPATH}" ] && ([ -z "${ATAPORT}" ] || [ "${BOOTDISK_ATAPORT}" = "${ATAPORT}" ]); then
           _log "bootloader: ${F}"
           continue
         fi
@@ -300,9 +267,9 @@ dtModel() {
           echo "    internal_slot@${COUNT} {"
           echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"                      
           echo "        protocol_type = \"sata\";"
-          echo "        ahci {"
+          echo "        ${DRIVER} {"
           echo "            pcie_root = \"${PCIEPATH}\";"
-          echo "            ata_port = <0x$(printf '%02X' ${ATAPORT})>;"
+          [ -n "${ATAPORT}" ] && echo "            ata_port = <0x$(printf '%02X' ${ATAPORT})>;"
           echo "        };"
           echo "    };"
         } >>"${DEST}"
@@ -420,13 +387,8 @@ dtUpdate() {
     return 1
   fi
 
-  ATAPORT=${F#sata}             # 숫자만 추출
-  FULLPATH=$(readlink -f "/sys/block/$F")
-  PCIEPATH=$(echo "$FULLPATH" \
-	| grep -oE '[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]' \
-	| tail -n1)
-  #PCIEPATH="$(grep 'pciepath' "/sys/block/${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
-  #ATAPORT="$(grep 'ata_port_no' "/sys/block/${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
+  PCIEPATH="$(grep 'pciepath' "/sys/block/${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
+  ATAPORT="$(grep 'ata_port_no' "/sys/block/${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
   USBPORT="$(grep 'usb_path' "/sys/block/${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
   if [ -z "${PCIEPATH}" ] && [ -z "${USBPORT}" ]; then
     _log "unknown: ${F}"
