@@ -182,7 +182,7 @@ _chk_slot_mapping() {
 
   echo "Internal Disk:"
   i=1
-  for dev in /sys/block/sata*; do
+  for dev in $(ls -d /sys/block/sata* 2>/dev/null | sort -t 'a' -k 3n); do
       devname=$(basename $dev)
       echo "$(printf '%02d' $i): /dev/$devname"
       i=$((i+1))
@@ -221,7 +221,7 @@ dtModel() {
     REG_COUNT=0
     HDDSORT="$(grep -wq "hddsort" /proc/cmdline 2>/dev/null && echo "true" || echo "false")"
 
-    for F in /sys/block/sata*; do
+    for F in $(ls -d /sys/block/sata* 2>/dev/null | sort -t 'a' -k 3n); do
       [ ! -e "${F}" ] && continue
       PCIEPATH="$(grep 'pciepath' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
       ATAPORT="$(grep 'ata_port_no' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
