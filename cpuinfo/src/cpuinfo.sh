@@ -6,13 +6,6 @@
 # See /LICENSE for more information.
 #
 
-TEMP="on"
-VENDOR=""
-FAMILY=""
-SERIES=""
-CORES=""
-SPEED=""
-
 FILE_JS="/usr/syno/synoman/webman/modules/AdminCenter/admin_center.js"
 FILE_GZ="${FILE_JS}.gz"
 
@@ -21,7 +14,7 @@ if [ ! -f "${FILE_JS}" ] && [ ! -f "${FILE_GZ}" ]; then
   exit 0
 fi
 
-restoreCpuinfo() {
+if [ "${1}" = "-r" ]; then
   if [ -f "${FILE_GZ}.bak" ]; then
     rm -f "${FILE_JS}" "${FILE_GZ}"
     mv -f "${FILE_GZ}.bak" "${FILE_GZ}"
@@ -35,122 +28,101 @@ restoreCpuinfo() {
   [ -f "/etc/nginx/nginx.conf.bak" ] && mv -f /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf
   [ -f "/usr/syno/share/nginx/nginx.mustache.bak" ] && mv -f /usr/syno/share/nginx/nginx.mustache.bak /usr/syno/share/nginx/nginx.mustache
   systemctl reload nginx
-}
-
-if options="$(getopt -o t:v:f:s:c:p:rh --long temp:,vendor:,family:,series:,cores:,speed:,restore,help -- "$@")"; then
-  eval set -- "$options"
-  while true; do
-    case "${1,,}" in
-    -t | --temp)
-      TEMP="${2}"
-      shift 2
-      ;;
-    -v | --vendor)
-      VENDOR="${2}"
-      shift 2
-      ;;
-    -f | --family)
-      FAMILY="${2}"
-      shift 2
-      ;;
-    -s | --series)
-      SERIES="${2}"
-      shift 2
-      ;;
-    -c | --cores)
-      CORES="${2}"
-      shift 2
-      ;;
-    -p | --speed)
-      SPEED="${2}"
-      shift 2
-      ;;
-    -r | --restore)
-      restoreCpuinfo
-      exit 0
-      ;;
-    -h | --help)
-      echo "Usage: cpuinfo.sh [OPTIONS]"
-      echo "Options:"
-      echo "  -t, --temp   <on/off>   Set the CPU&GPU temperature display"
-      echo "  -v, --vendor <VENDOR>   Set the CPU vendor"
-      echo "  -f, --family <FAMILY>   Set the CPU family"
-      echo "  -s, --series <SERIES>   Set the CPU series"
-      echo "  -c, --cores <CORES>     Set the number of CPU cores"
-      echo "  -p, --speed <SPEED>     Set the CPU clock speed"
-      echo "  -r, --restore           Restore the original cpuinfo"
-      echo "  -h, --help              Show this help message and exit"
-      echo "Example:"
-      echo "  cpuinfo.sh -t \"on\" -v \"AMD\" -f \"Ryzen\" -s \"Ryzen 7 5800X3D\" -c 64 -p 5200"
-      echo "  cpuinfo.sh -t \"on\" --vendor \"Intel\" --family \"Core i9\" --series \"i7-13900ks\" --cores 64 --speed 5200"
-      echo "  cpuinfo.sh --restore"
-      echo "  cpuinfo.sh --help"
-      exit 0
-      ;;
-    --)
-      break
-      ;;
-    *)
-      echo "Invalid option: $OPTARG" >&2
-      ;;
-    esac
-  done
 else
-  echo "getopt error"
-  exit 1
-fi
+  if [ -f "${FILE_GZ}" ]; then
+    [ ! -f "${FILE_GZ}.bak" ] && cp -pf "${FILE_GZ}" "${FILE_GZ}.bak"
+  else
+    [ ! -f "${FILE_JS}.bak" ] && cp -pf "${FILE_JS}" "${FILE_JS}.bak"
+  fi
 
-if [ -f "${FILE_GZ}" ]; then
-  [ ! -f "${FILE_GZ}.bak" ] && cp -pf "${FILE_GZ}" "${FILE_GZ}.bak"
-else
-  [ ! -f "${FILE_JS}.bak" ] && cp -pf "${FILE_JS}" "${FILE_JS}.bak"
-fi
+  rm -f "${FILE_JS}"
+  if [ -f "${FILE_GZ}.bak" ]; then
+    gzip -dc "${FILE_GZ}.bak" >"${FILE_JS}"
+  else
+    cp -pf "${FILE_JS}.bak" "${FILE_JS}"
+  fi
+  if [ "${1}" = "-s" ] || [ ! -f "/usr/sbin/synoscgiproxy" ]; then
+    VENDOR="" # str
+    FAMILY="" # str
+    SERIES="" # str
+    CORES=""  # str
+    SPEED=""  # int
+    IFS=' ' read -ra models <<<"$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2 | xargs)"
+    for P in "${models[@]}"; do
+      PL=$(echo "${P}" | sed 's/.*/\L&/')
+      if [[ "${PL:0:1}" == "@" ]] || [[ "${PL:0:1}" == "-" ]] || [[ "${PL}" == "with" ]] || [[ "${PL}" == "w/" ]]; then
+        break
+      fi
+      if [[ "${PL}" == "cpu" ]] || [[ "${PL}" == "processor" ]] || [[ "${PL}" == gen* ]] || [[ "${PL}" == *th ]] || [[ "${PL}" == *-core* ]]; then
+        continue
+      fi
+      if [[ -z "${VENDOR}" ]]; then
+        VENDOR="${P}"
+      elif [[ -z "${FAMILY}" ]]; then
+        FAMILY="${P}"
+      elif [[ -z "${SERIES}" ]]; then
+        SERIES="${P}"
+      else
+        SERIES="${SERIES} ${P}"
+      fi
+    done
 
-rm -f "${FILE_JS}"
-if [ -f "${FILE_GZ}.bak" ]; then
-  gzip -dc "${FILE_GZ}.bak" >"${FILE_JS}"
-else
-  cp -pf "${FILE_JS}.bak" "${FILE_JS}"
-fi
+    CORES="$(grep -c 'core id' /proc/cpuinfo 2>/dev/null)C\/$(grep -c 'processor' /proc/cpuinfo 2>/dev/null)T"
+    SPEED="$(grep 'MHz' /proc/cpuinfo 2>/dev/null | cut -d: -f2 | cut -d. -f1 | awk '{sum+=$1; count++} END {if(count>0) printf "%.0f", sum/count; else print "0"}')"
+    SPEED="${SPEED:-0}"
+    sed -i "s/\(\(,\)\|\((\)\).\.cpu_vendor/\1\"${VENDOR//\"/}\"/g" "${FILE_JS}"
+    sed -i "s/\(\(,\)\|\((\)\).\.cpu_family/\1\"${FAMILY//\"/}\"/g" "${FILE_JS}"
+    sed -i "s/\(\(,\)\|\((\)\).\.cpu_series/\1\"${SERIES//\"/}\"/g" "${FILE_JS}"
+    sed -i "s/\(\(,\)\|\((\)\).\.cpu_cores/\1\"${CORES//\"/}\"/g" "${FILE_JS}"
+    sed -i "s/\(\(,\)\|\((\)\).\.cpu_clock_speed/\1${SPEED//\"/}/g" "${FILE_JS}"
+    echo "CPU Info set to: \"${VENDOR}\" \"${FAMILY}\" \"${SERIES}\" \"${CORES}\" @ ${SPEED} MHz"
 
-if [ "${TEMP^^}" = "ON" ]; then
+    CARDN=$(ls -d /sys/class/drm/card* 2>/dev/null | head -1)
+    if [ -d "${CARDN}" ]; then
+      PCIDN="$(awk -F= '/PCI_SLOT_NAME/ {print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
+      LNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //")"
+      # LABLE="$(cat "/sys/class/drm/card0/device/label" 2>/dev/null)"
+      CLOCK="$(cat "${CARDN}/gt_max_freq_mhz" 2>/dev/null) MHz"
+      MEMORY="$(awk '{s=(strtonum($2)-strtonum($1)+1)/1048576} (and(strtonum($3),0x200))&&(and(strtonum($3),0x2000))&&(and(strtonum($3),0x40000))&&s>0{print int(s) " MiB"; exit}' "${CARDN}/device/resource" 2>/dev/null)"
+      if [ -n "${LNAME}" ] && [ -n "${CLOCK}" ] && [ -n "${MEMORY}" ]; then
+        echo "GPU Info set to: \"${LNAME}\" \"${CLOCK}\" \"${MEMORY}\""
+        # t.gpu={};t.gpu.clock=\"455 MHz\";t.gpu.memory=\"8192 MiB\";t.gpu.name=\"Tesla P4\";t.gpu.temperature_c=47;t.gpu.tempwarn=false;
+        sed -i "s/t=this.getActiveApi(t);let/t=this.getActiveApi(t);if(!t.gpu){t.gpu={};t.gpu.clock=\"${CLOCK}\";t.gpu.memory=\"${MEMORY}\";t.gpu.name=\"${LNAME}\";}let/g" "${FILE_JS}"
+      fi
+    fi
+  fi
+  sed -i "s/_D(\"support_nvidia_gpu\")},/_D(\"support_nvidia_gpu\")||true},/g" "${FILE_JS}"
   sed -i 's/,t,i,s)}/,t,i,e.sys_temp?s+" \| "+this.renderTempFromC(e.sys_temp):s)}/g' "${FILE_JS}"
   sed -i 's/,C,D);/,C,t.gpu.temperature_c?D+" \| "+this.renderTempFromC(t.gpu.temperature_c):D);/g' "${FILE_JS}"
   sed -i 's/_T("rcpower",n),/_T("rcpower", n)?e.fan_list?_T("rcpower", n) + e.fan_list.map(fan => ` | ${fan} RPM`).join(""):_T("rcpower", n):e.fan_list?e.fan_list.map(fan => `${fan} RPM`).join(" | "):_T("rcpower", n),/g' "${FILE_JS}"
-fi
 
-[ -n "${VENDOR//\"/}" ] && sed -i "s/\(\(,\)\|\((\)\).\.cpu_vendor/\1\"${VENDOR//\"/}\"/g" "${FILE_JS}" # str
-[ -n "${FAMILY//\"/}" ] && sed -i "s/\(\(,\)\|\((\)\).\.cpu_family/\1\"${FAMILY//\"/}\"/g" "${FILE_JS}" # str
-[ -n "${SERIES//\"/}" ] && sed -i "s/\(\(,\)\|\((\)\).\.cpu_series/\1\"${SERIES//\"/}\"/g" "${FILE_JS}" # str
-[ -n "${CORES//\"/}" ] && sed -i "s/\(\(,\)\|\((\)\).\.cpu_cores/\1\"${CORES//\"/}\"/g" "${FILE_JS}"    # str
-[ -n "${SPEED//\"/}" ] && sed -i "s/\(\(,\)\|\((\)\).\.cpu_clock_speed/\1${SPEED//\"/}/g" "${FILE_JS}"  # int
+  # sed -i 's/(d.push([_T("status","status_version"),t.firmware_ver,f]);)/\1d.push(["bootloader",t.bootloader_ver,f]);/g' "${FILE_JS}"
 
-# sed -i 's/(d.push([_T("status","status_version"),t.firmware_ver,f]);)/\1d.push(["bootloader",t.bootloader_ver,f]);/g' "${FILE_JS}"
+  [ -f "${FILE_GZ}.bak" ] && gzip -c "${FILE_JS}" >"${FILE_GZ}"
 
-CARDN=$(ls -d /sys/class/drm/card* 2>/dev/null | head -1)
-if [ -d "${CARDN}" ]; then
-  PCIDN="$(awk -F= '/DEVNAME/ {print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
-  LNAME="$(lspci -Q -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //")"
-  # LABLE="$(cat "/sys/class/drm/card0/device/label" 2>/dev/null)"
-  CLOCK="$(cat "${CARDN}/gt_max_freq_mhz" 2>/dev/null)"
-  [ -n "${CLOCK}" ] && CLOCK="${CLOCK} MHz"
-  if [ -n "${LNAME}" ]; then
-    echo "GPU Info set to: \"${LNAME}\" \"${CLOCK}\""
-    sed -i "s/_D(\"support_nvidia_gpu\")},/_D(\"support_nvidia_gpu\")||true},/g" "${FILE_JS}"
-    # t.gpu={};t.gpu.clock=\"455 MHz\";t.gpu.memory=\"8192 MiB\";t.gpu.name=\"Tesla P4\";t.gpu.temperature_c=47;t.gpu.tempwarn=false;
-    sed -i "s/t=this.getActiveApi(t);let/t=this.getActiveApi(t);if(!t.gpu){t.gpu={};t.gpu.clock=\"${CLOCK}\";t.gpu.name=\"${LNAME}\";}let/g" "${FILE_JS}"
+  if [ "${1}" = "-s" ] || [ ! -f "/usr/sbin/synoscgiproxy" ]; then
+    if ps -aux | grep -v grep | grep -q "/usr/sbin/synoscgiproxy" >/dev/null; then
+      /usr/bin/pkill -f "/usr/sbin/synoscgiproxy"
+    fi
+    [ -f "/etc/nginx/nginx.conf.bak" ] && mv -f /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf
+    [ -f "/usr/syno/share/nginx/nginx.mustache.bak" ] && mv -f /usr/syno/share/nginx/nginx.mustache.bak /usr/syno/share/nginx/nginx.mustache
+    systemctl reload nginx
+  else
+    if ! ps -aux | grep -v grep | grep -q "/usr/sbin/synoscgiproxy" >/dev/null; then
+      # 使用 nohup 和 disown 防止进程被杀死
+      nohup "/usr/sbin/synoscgiproxy" >/dev/null 2>&1 &
+      PROXY_PID=$!
+      disown ${PROXY_PID}
+      # 设置进程优先级，降低被 OOM killer 杀死的概率
+      if [ -d "/proc/${PROXY_PID}" ]; then
+        echo -1000 > "/proc/${PROXY_PID}/oom_score_adj" 2>/dev/null || true
+        renice -n -10 ${PROXY_PID} >/dev/null 2>&1 || true
+      fi
+      [ ! -f "/etc/nginx/nginx.conf.bak" ] && cp -pf /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+      sed -i 's|/run/synoscgi.sock;|/run/synoscgi_rr.sock;|' /etc/nginx/nginx.conf
+      [ ! -f "/usr/syno/share/nginx/nginx.mustache.bak" ] && cp -pf /usr/syno/share/nginx/nginx.mustache /usr/syno/share/nginx/nginx.mustache.bak
+      sed -i 's|/run/synoscgi.sock;|/run/synoscgi_rr.sock;|' /usr/syno/share/nginx/nginx.mustache
+      systemctl reload nginx
+    fi
   fi
 fi
-
-[ -f "${FILE_GZ}.bak" ] && gzip -c "${FILE_JS}" >"${FILE_GZ}"
-
-if ! ps -aux | grep -v grep | grep -q "/usr/sbin/synoscgiproxy" >/dev/null; then
-  "/usr/sbin/synoscgiproxy" &
-  [ ! -f "/etc/nginx/nginx.conf.bak" ] && cp -pf /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
-  sed -i 's|/run/synoscgi.sock;|/run/synoscgi_rr.sock;|' /etc/nginx/nginx.conf
-  [ ! -f "/usr/syno/share/nginx/nginx.mustache.bak" ] && cp -pf /usr/syno/share/nginx/nginx.mustache /usr/syno/share/nginx/nginx.mustache.bak
-  sed -i 's|/run/synoscgi.sock;|/run/synoscgi_rr.sock;|' /usr/syno/share/nginx/nginx.mustache
-  systemctl reload nginx
-fi
-
-exit 0
