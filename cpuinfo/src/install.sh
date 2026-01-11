@@ -17,7 +17,7 @@ if [ "${1}" = "late" ]; then
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=yes"
-    echo "ExecStart=-/usr/sbin/cpuinfo.sh" "$@"
+    echo "ExecStart=-/usr/sbin/cpuinfo.sh -s"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"
