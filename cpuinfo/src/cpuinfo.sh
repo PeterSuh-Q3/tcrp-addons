@@ -80,6 +80,7 @@ else
     CARDN=$(ls -d /sys/class/drm/card* 2>/dev/null | head -1)
     if [ -d "${CARDN}" ]; then
       PCIDN="$(awk -F= '/PCI_SLOT_NAME/ {print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
+      lspci -nnQ
       LNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //")"
       # LABLE="$(cat "/sys/class/drm/card0/device/label" 2>/dev/null)"
       CLOCK="$(cat "${CARDN}/gt_max_freq_mhz" 2>/dev/null) MHz"
