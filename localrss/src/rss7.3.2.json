@@ -1,4 +1,12 @@
 {
+    "version": "2.0",
+    "channel": {
+        "title": "RSS for DSM Auto Update",
+        "link": "https:\/\/update.synology.com\/autoupdate\/v2\/getList",
+        "pubDate": "Fri Jan 30 19:15:18 CST 2026",
+        "copyright": "Copyright 2026 Synology Inc",
+        "item": [
+{
     "title": "DSM 7.3.2-86009",
     "MajorVer": 7,
     "MinorVer": 3,
@@ -386,3 +394,4 @@
         }
     ]
 }
+]}}
