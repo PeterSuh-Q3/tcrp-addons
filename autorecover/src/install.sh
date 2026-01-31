@@ -16,11 +16,6 @@ if [ "${1}" = "rcExit" ]; then
     echo "smallfixnumber difference detected. Automatic patching is performed. !!!"
     echo "Copy the rd.gz and zImage files from /tmpRoot where /dev/md0 is mounted."
 
-    if [ "$ZPADKVER" -le 4004059 ]; then
-      [ -f /lib/modules/loop.ko ] && modprobe loop
-      lsmod | grep loop
-    fi
-
     mkdir -p /mnt/p1
     mkdir -p /mnt/p2    
     cd /dev
@@ -28,6 +23,12 @@ if [ "${1}" = "rcExit" ]; then
     file_type=$(ls -l /dev/synoboot1 | cut -c 1)
 
     if [ "$file_type" == "b" ]; then
+      if [ -f /lib/modules/loop.ko ] && [ $(lsmod | grep -c loop) -eq 0 ]; then
+          echo "Loading loop module..."
+          modprobe loop || echo "Module load attempt completed"
+          ls -l /dev/loop* 2>/dev/null || echo "No loop devices found, exit now!"
+          [ $(ls /dev/loop* 2>/dev/null | wc -l) -eq 0 ] && exit 0
+      fi
       # use loop device for safe mount
       losetup /dev/loop1 /dev/synoboot1
       losetup /dev/loop2 /dev/synoboot2
