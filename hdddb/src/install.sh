@@ -11,29 +11,23 @@ if [ "${1}" = "late" ]; then
   cp -vf hdddb.sh /tmpRoot/usr/sbin/hdddb.sh
   chmod +x /tmpRoot/usr/sbin/hdddb.sh
 
-  echo "Add drive_db_test_url to synoinfo.conf"
-  grep -q '^drive_db_test_url=' /tmpRoot/etc.defaults/synoinfo.conf || echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc.defaults/synoinfo.conf
-  grep -q '^drive_db_test_url=' /tmpRoot/etc/synoinfo.conf || echo 'drive_db_test_url="127.0.0.1"' >> /tmpRoot/etc/synoinfo.conf
-  #echo "Excute hdddb.sh with option n."
-  #/tmpRoot/usr/sbin/hdddb.sh -n
-
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
   DEST="/tmpRoot/usr/lib/systemd/system/hdddb.service"
   {
     echo "[Unit]"
-    echo "Description=mshell addon hdddb daemon"
+    echo "Description=RR addon hdddb daemon"
     echo "Wants=smpkg-custom-install.service pkgctl-StorageManager.service"
     echo "After=smpkg-custom-install.service"
     echo
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=yes"
-    echo "ExecStart=-/usr/sbin/hdddb.sh -nrwpeS"
+    echo "ExecStart=-/usr/bin/hdddb.sh -nrwpeSI"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"
   } >"${DEST}"
 
-  mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
-  ln -sf /usr/lib/systemd/system/hdddb.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/hdddb.service
+  mkdir -vp /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
+  ln -vsf /usr/lib/systemd/system/hdddb.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/hdddb.service
 fi
