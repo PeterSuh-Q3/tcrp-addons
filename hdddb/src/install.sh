@@ -15,14 +15,14 @@ if [ "${1}" = "late" ]; then
   DEST="/tmpRoot/usr/lib/systemd/system/hdddb.service"
   {
     echo "[Unit]"
-    echo "Description=RR addon hdddb daemon"
+    echo "Description=MSHELL addon hdddb daemon"
     echo "Wants=smpkg-custom-install.service pkgctl-StorageManager.service"
     echo "After=smpkg-custom-install.service"
     echo
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=yes"
-    echo "ExecStart=-/usr/bin/hdddb.sh -nrwpeSI"
+    echo "ExecStart=-/usr/sbin/hdddb.sh -nrwpeSI"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"
