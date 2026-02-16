@@ -8,7 +8,7 @@
 
 if [ "${1}" = "late" ]; then
   echo "Installing addon hdddb - ${1}"
-  cp -vf hdddb.sh /tmpRoot/usr/sbin/hdddb.sh
+  cp -f hdddb.sh /tmpRoot/usr/sbin/hdddb.sh
   chmod +x /tmpRoot/usr/sbin/hdddb.sh
 
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
@@ -28,6 +28,6 @@ if [ "${1}" = "late" ]; then
     echo "WantedBy=multi-user.target"
   } >"${DEST}"
 
-  mkdir -vp /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
-  ln -vsf /usr/lib/systemd/system/hdddb.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/hdddb.service
+  mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
+  ln -sf /usr/lib/systemd/system/hdddb.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/hdddb.service
 fi
