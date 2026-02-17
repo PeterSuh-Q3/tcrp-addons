@@ -1,9 +1,9 @@
 {
   "files": [
     {
-      "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acovermissingbin/src/install.sh",
-      "sha256": "948112ad1073127f6d2264f7ea60ae6698b053f64d5327a29d81bcc07dc693f6",
+      "name": "install2.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acovermissingbin/src/install2.sh",
+      "sha256": "ea4df8517910764e9d026139d719ca973bf45eb559bc32e3ce2244fff959dbc4",
       "packed": false
     },
     {
@@ -14,6 +14,6 @@
     }
   ],
   "scripts": {
-    "on_early": "install.sh"
+    "on_early": "install2.sh"
   }
 }
