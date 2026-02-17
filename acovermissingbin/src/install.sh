@@ -4,12 +4,13 @@
 # probably certain that system has finish init process
 set -e
 
-REVISION="$(uname -a | cut -d ' ' -f4)"
+KVER="$(uname -a | cut -d ' ' -f3)"
+KVER_FIRST="${KVER:0:1}"
 
 if [ "${1}" = "early" ]; then
   echo "Installing addon acovermissingbin - ${1}"
   echo "extract usr.tgz (extra binary) to /usr/sbin/ /usr/lib "
-  if [ ${REVISION} = "#25556" ]; then
+  if [ "${KVER_FIRST}" = "3" ]; then
     gunzip -c usr6.tgz | tar xvf - -C /
     cp -vf /usr/sbin/6.2.4/* /usr/sbin/
     cp -vf /usr/lib/6.2.4/* /usr/lib/
