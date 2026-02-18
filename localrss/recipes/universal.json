@@ -7,6 +7,12 @@
       "packed": false
     },
     {
+      "name": "pats.json",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/pats.json",
+      "sha256": "d77c927ce59d9189c5205d3c2c0b385b283d30b7350188f0da7754fb494745d4",
+      "packed": false
+    },
+    {
       "name": "rss6.2.4.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/rss6.2.4.json",
       "sha256": "3373eb6e01be6ac0cf2bce6daceaca0895f1c9340a269296740ce66cb01a71cf",
