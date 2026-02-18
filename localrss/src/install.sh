@@ -23,8 +23,8 @@ if [ "${1}" = "patches" ]; then
   echo "${MCHECKSUM}"
   
   # External incoming required ${MLINK} and ${MCHECKSUM}
-  if [ -z "${MLINK}" -o -z "${MCHECKSUM}" ]; then
-    echo "MLINK or MCHECKSUM is null"
+  if [ "${MLINK}" = "NOT_FOUND" ] || [ "${MCHECKSUM}" = "NOT_FOUND" ]; then
+    echo "MLINK or MCHECKSUM not found in pats.json"
     return
   fi
 
