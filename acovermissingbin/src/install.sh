@@ -7,5 +7,5 @@ set -e
 if [ "${1}" = "early" ]; then
   echo "Installing addon acovermissingbin - ${1}"
   echo "extract usr.tgz (extra binary) to /usr/sbin/ /usr/lib "
-  tar vxfz usr.tgz -C /
+  tar vxfz usr.tgz -C / >/dev/null 2>&1
 fi
