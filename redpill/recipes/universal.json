@@ -1,0 +1,14 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/redpill/src/install.sh",
+      "sha256": "3478866481eac902bb48d1346bc64503a395cd74c696505787a7e22189d71654",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_early": "install.sh"
+  }
+}
