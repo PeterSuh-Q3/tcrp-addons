@@ -3,7 +3,7 @@
 KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
 ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
 
-if [[ "${1}" = "rcExit" || "${1}" = "jrExit" ]]; then
+if [ "${1}" = "rcExit" ]; then
   echo "autorecover - ${1}"
   
   if [ $(cat /var/log/junior_reason | grep "error \[7\]" | wc -l) -gt 0 ]; then
