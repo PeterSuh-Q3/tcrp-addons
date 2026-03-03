@@ -9,7 +9,6 @@
   ],
 
   "scripts": {
-    "on_rcExit": "install.sh",
-    "on_jrExit": "install.sh"
+    "on_rcExit": "install.sh"
   }
 }
