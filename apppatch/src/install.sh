@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env ash
 #
 # Copyright (C) 2022 Ing <https://github.com/wjz304>
 #
@@ -19,14 +19,12 @@ if [ "${1}" = "late" ]; then
     echo "[Unit]"
     echo "Description=mshell addon apppatch daemon"
     echo "Wants=smpkg-custom-install.service pkgctl-StorageManager.service"
-    echo "After=smpkg-custom-install.service"
-    # echo "ConditionPathExists=|/var/packages/SynologyPhotos"
-    # echo "ConditionPathExists=|/var/packages/SurveillanceStation"
+    echo "After=smpkg-custom-install.service pkgctl-StorageManager.service"
     echo
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=no"
-    echo "ExecStart=-/usr/bin/apppatch.sh"
+    echo "ExecStart=/bin/bash -c 'sleep 30 && /usr/bin/apppatch.sh > /var/log/apppatch_firstboot.log 2>&1'"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"

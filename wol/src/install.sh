@@ -27,7 +27,7 @@ elif [ "${1}" = "late" ]; then
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=yes"
-    echo "ExecStart=-/usr/bin/wol.sh"
+    echo "ExecStart=/bin/bash -c '/usr/bin/wol.sh > /var/log/wol_firstboot.log 2>&1'"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"

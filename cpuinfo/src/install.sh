@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env ash
 
 if [ "${1}" = "late" ]; then
   echo "Installing daemon for CPU Info"
@@ -17,7 +17,7 @@ if [ "${1}" = "late" ]; then
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=yes"
-    echo "ExecStart=-/usr/sbin/cpuinfo.sh -s"
+    echo "ExecStart=/bin/bash -c 'sleep 15 && /usr/sbin/cpuinfo.sh -s > /var/log/cpuinfo_firstboot.log 2>&1'"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"

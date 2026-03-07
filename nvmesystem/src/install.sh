@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env ash
 #
 # Copyright (C) 2022 Ing <https://github.com/wjz304>
 #
@@ -63,13 +63,12 @@ elif [ "${1}" = "late" ]; then
     echo "[Unit]"
     echo "Description=RR addon nvmesystem daemon"
     echo "Wants=smpkg-custom-install.service pkgctl-StorageManager.service"
-    echo "After=smpkg-custom-install.service"
-    echo "After=storagepanel.service" # storagepanel
+    echo "After=smpkg-custom-install.service pkgctl-StorageManager.service"
     echo
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=yes"
-    echo "ExecStart=-/usr/bin/nvmesystem.sh"
+    echo "ExecStart=/bin/bash -c 'sleep 30 && /usr/bin/nvmesystem.sh > /var/log/nvmesystem_firstboot.log 2>&1'"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"
