@@ -4,7 +4,7 @@
       "name": "rp-lkms.zip",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/redpill/src/rp-lkms.zip",
       "sha256": "33b85a376c07de493ba8ea21c78cc98637dbff6650d6118ecb0a8f626ccaac24",
-      "packed": true
+      "packed": false
     },
     {
       "name": "install.sh",
