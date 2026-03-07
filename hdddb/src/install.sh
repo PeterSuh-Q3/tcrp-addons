@@ -22,7 +22,7 @@ if [ "${1}" = "late" ]; then
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=yes"
-    echo "ExecStart=/bin/bash -c 'sleep 30 && /usr/sbin/hdddb.sh -nrwpeSI > /var/log/hdddb_firstboot.log 2>&1'"
+    echo "ExecStart=/bin/bash -c 'sleep 30 && /usr/sbin/hdddb.sh -nrwpeSI --autoupdate=0 > /var/log/hdddb_firstboot.log 2>&1'"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"
