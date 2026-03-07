@@ -10,9 +10,11 @@ _release=$(/bin/uname -r)
 # Extract the major version (number before the first '.') using shell built-in string manipulation
 _major_version=${_release%%.*}
 
+_model=$(cat /proc/sys/kernel/syno_hw_version)
+
 # Exit script if the kernel version is less than 5
-if [ "$_major_version" -lt 5 ]; then
-  echo "Kernel version < 5 is not supported redpill addon!"
+if [[ "${_major_version:-0}" -lt 5 && "$_model" != "RS18016xs+" ]]; then
+  echo "Notice: Kernel version < 5 is not supported by this redpill addon! (Skipping)"
   exit 0
 fi
 
