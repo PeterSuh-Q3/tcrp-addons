@@ -17,12 +17,12 @@ if [ "${1}" = "late" ]; then
     echo "[Unit]"
     echo "Description=MSHELL addon hdddb daemon"
     echo "Wants=smpkg-custom-install.service pkgctl-StorageManager.service"
-    echo "After=smpkg-custom-install.service"
+    echo "After=smpkg-custom-install.service pkgctl-StorageManager.service"
     echo
     echo "[Service]"
     echo "Type=oneshot"
     echo "RemainAfterExit=yes"
-    echo "ExecStart=-/usr/sbin/hdddb.sh -nrwpeSI"
+    echo "ExecStart=/bin/bash -c 'sleep 30 && /usr/sbin/hdddb.sh -nrwpeSI > /var/log/hdddb_firstboot.log 2>&1'"
     echo
     echo "[Install]"
     echo "WantedBy=multi-user.target"
