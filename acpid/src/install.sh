@@ -12,7 +12,7 @@ if [ "${1}" = "late" ]; then
   tar -zxf ./acpid-7.1.tgz -C /tmpRoot/
 
   if [ -f /usr/lib/modules/button.ko ]; then
-    cp -vpf /usr/lib/modules/button.ko /tmpRoot/usr/lib/modules/button.ko
+    cp -vpf /usr/lib/modules/button.ko /tmpRoot/usr/lib/modules/button.ko || true
   else
     echo "No button.ko found"
   fi
