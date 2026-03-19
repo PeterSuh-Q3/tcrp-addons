@@ -203,6 +203,8 @@ dtModel() {
   _log dtModel
 
   DEST="/etc/model.dts"
+  [ -f "/addons/model.dts" ] && cp -vpf "/addons/model.dts" "${DEST}"
+  if [ ! -f "${DEST}" ]; then # Users can put their own dts.  
     mkdir -p "$(dirname "${DEST}" 2>/dev/null)"
     {
       echo "/dts-v1/;"
@@ -323,6 +325,7 @@ dtModel() {
       } >>"${DEST}"
     done
     echo "};" >>"${DEST}"
+  fi	
 
   # fix pcie_root prefix
   _release=$(/bin/uname -r)
