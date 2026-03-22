@@ -131,7 +131,7 @@ EOF
   
   if [ -c "$SERIAL_DEV" ]; then
       chmod 666 "$SERIAL_DEV"
-      /usr/local/bin/set_baud "$SERIAL_DEV" 115200
+      /usr/sbin/set_baud "$SERIAL_DEV" 115200
   
       # linuxrc.syno.log 최종 내용 출력
       if [ -f /var/log/linuxrc.syno.log ]; then
