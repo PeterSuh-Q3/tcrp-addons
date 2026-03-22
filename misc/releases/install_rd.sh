@@ -1,8 +1,8 @@
 #!/bin/sh
 
 if [ "${1}" = "modules" ]; then
-    echo "Install set_baud bin, Starting ttyd, listening on port: 7681"
-    tar -zxvf ./set_baud.tgz -C /usr/sbin
+    echo "Install stty bin, Starting ttyd, listening on port: 7681"
+    tar -zxvf ./stty.tgz -C /usr/sbin
     tar -zxvf ./lrzsz.tgz -C /usr/sbin
     tar -zxvf ./ttyd.tgz
     ./ttyd login > /dev/null 2>&1 &
@@ -123,35 +123,41 @@ EOF
     #done
   ip a    
 
+
   SERIAL_DEV="/dev/ttyUSB0"
-  
+
+  # ttyUSB0 생성 대기 (최대 5초)
   for i in $(seq 1 5); do
-      [ -c "$SERIAL_DEV" ] && break
-      sleep 1
+    [ -c "$SERIAL_DEV" ] && break
+    sleep 1
   done
-  
-  if [ -c "$SERIAL_DEV" ]; then
-      chmod 666 "$SERIAL_DEV"
-      /usr/sbin/set_baud "$SERIAL_DEV" 115200
-  
-      # linuxrc.syno.log 최종 내용 출력
-      if [ -f /var/log/linuxrc.syno.log ]; then
-          echo "===== linuxrc.syno.log =====" > "$SERIAL_DEV"
-          cat /var/log/linuxrc.syno.log > "$SERIAL_DEV"
-          echo "============================" > "$SERIAL_DEV"
-      fi
-  
-      # messages 최종 내용 출력
-      if [ -f /var/log/messages ]; then
-          echo "===== messages =====" > "$SERIAL_DEV"
-          cat /var/log/messages > "$SERIAL_DEV"
-          echo "====================" > "$SERIAL_DEV"
-          echo "===== tail start =====" > "$SERIAL_DEV"
-      fi
-  
-      # 이후 신규 내용만 tail로 추적
-      tail -f /var/log/messages > "$SERIAL_DEV" &
+
+  # 장치 없으면 종료
+  if [ ! -c "$SERIAL_DEV" ]; then
+    exit 0
   fi
+
+  # 권한 및 baud 설정
+  chmod 666 "$SERIAL_DEV"
+  stty -F "$SERIAL_DEV" 115200 cs8 -cstopb -parenb -crtscts -ixon -ixoff raw 2>/dev/null
+
+  # 1. messages 최종 내용 먼저 덤프
+  if [ -f /var/log/messages ]; then
+    echo "===== messages =====" > "$SERIAL_DEV"
+    cat /var/log/messages > "$SERIAL_DEV"
+    echo "====================" > "$SERIAL_DEV"
+  fi
+
+  # 2. linuxrc.syno.log 다음에 덤프
+  if [ -f /var/log/linuxrc.syno.log ]; then
+    echo "===== linuxrc.syno.log =====" > "$SERIAL_DEV"
+    cat /var/log/linuxrc.syno.log > "$SERIAL_DEV"
+    echo "============================" > "$SERIAL_DEV"
+  fi
+
+  # 3. tail 시작
+  echo "===== tail start =====" > "$SERIAL_DEV"
+  tail -f /var/log/messages > "$SERIAL_DEV" &
   
 fi
 
