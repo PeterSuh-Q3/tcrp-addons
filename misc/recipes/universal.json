@@ -9,7 +9,7 @@
     {
       "name": "install_rd.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install_rd.sh",
-      "sha256": "b1468c5a1494eb9e7ad3c3b01f7cae9c2aa694ebcf9875c5029c41aa1dc9b37b",
+      "sha256": "3ecf3a81908dabc7a7c77778060896f190aa297731e6d34f1a7cf196f97536e3",
       "packed": false
     },
     {
@@ -25,9 +25,9 @@
       "packed": false
     },
     {
-      "name": "set_baud.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/set_baud.tgz",
-      "sha256": "75b6f5de65b3bb3bedad9be85b3598b8913920f310ce96ebde3af65536ac2f8c",
+      "name": "stty.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/stty.tgz",
+      "sha256": "7e2acf5170929b95b061356fd368495c9608517f551d030ff5bb4190842fd734",
       "packed": false
     },
     {
