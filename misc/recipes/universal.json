@@ -25,6 +25,12 @@
       "packed": false
     },
     {
+      "name": "set_baud.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/set_baud.tgz",
+      "sha256": "75b6f5de65b3bb3bedad9be85b3598b8913920f310ce96ebde3af65536ac2f8c",
+      "packed": false
+    },
+    {
       "name": "i915ids",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/i915ids",
       "sha256": "5ddce01ad443313adfab940dfa9c7f524530bfb1bf9f7b8c93352ec2aff704ca",
