@@ -121,37 +121,6 @@ EOF
     #    fi
     #done
   ip a    
-
-  SERIAL_DEV="/dev/ttyUSB0"
-  
-  for i in $(seq 1 5); do
-      [ -c "$SERIAL_DEV" ] && break
-      sleep 1
-  done
-  
-  if [ -c "$SERIAL_DEV" ]; then
-      chmod 666 "$SERIAL_DEV"
-      /usr/sbin/set_baud "$SERIAL_DEV" 115200
-  
-      # linuxrc.syno.log 최종 내용 출력
-      if [ -f /var/log/linuxrc.syno.log ]; then
-          echo "===== linuxrc.syno.log =====" > "$SERIAL_DEV"
-          cat /var/log/linuxrc.syno.log > "$SERIAL_DEV"
-          echo "============================" > "$SERIAL_DEV"
-      fi
-  
-      # messages 최종 내용 출력
-      if [ -f /var/log/messages ]; then
-          echo "===== messages =====" > "$SERIAL_DEV"
-          cat /var/log/messages > "$SERIAL_DEV"
-          echo "====================" > "$SERIAL_DEV"
-          echo "===== tail start =====" > "$SERIAL_DEV"
-      fi
-  
-      # 이후 신규 내용만 tail로 추적
-      tail -f /var/log/messages > "$SERIAL_DEV" &
-  fi
-  
 fi
 
 #echo "Starting dufs ..."
