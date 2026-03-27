@@ -8,7 +8,7 @@
 
 if [ "${1}" = "patches" ]; then
   echo "Installing addon disks - ${1}"
-
+  cp -pf ./disks.sh /usr/bin/disks.sh && chmod 755 /usr/bin/disks.sh
   /usr/bin/disks.sh --create
 
 elif [ "${1}" = "late" ]; then
