@@ -3,13 +3,19 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acovermissingbin/src/install.sh",
-      "sha256": "bfd08057b4363bc3e1d68e02c0c6181eb43aa4bc2ce47b634e0bafa0864e7042",
+      "sha256": "ee9b18e59ea33853e1d14a47266521a2d4788bcb55f3fee3c7223ccbbe213adc",
       "packed": false
     },
     {
       "name": "usr.tgz",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acovermissingbin/auxfiles/usr.tgz",
       "sha256": "51cf551a6b5f2ee2482bbca3db454472a0787d62251b4d1705aa7da35697f229",
+      "packed": false
+    },
+    {
+      "name": "kmod.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acovermissingbin/auxfiles/kmod.tgz",
+      "sha256": "1b7fa7aa8cb91878879fa715a0952bb2de73b468b15b41ae9cbf7cb92393b56b",
       "packed": false
     }
   ],
