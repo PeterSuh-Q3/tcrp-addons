@@ -1,4 +1,6 @@
-rm -f ./usr/sbin/.DS_Store
+find ./usr -name '.DS_Store' -delete
 chmod +x ./usr/sbin/*
-tar -zcvf usr.tgz ./usr/* && sha256sum usr.tgz
+chmod +x ./usr/bin/*
+tar -zchf usr.tgz ./usr/
+sha256sum usr.tgz
 #tar -zcvf usr6.tgz ./usr/* && sha256sum usr6.tgz
