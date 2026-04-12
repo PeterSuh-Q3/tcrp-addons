@@ -1,9 +1,9 @@
 {
 "files": [
     {
-      "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/src/install.sh",
-      "sha256": "bc8b8f6fa6b1173edbf808a898f2bcda726b70fb08c5b3153541142940886253",
+      "name": "install-new.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/src/install-new.sh",
+      "sha256": "aa44bb0d8f5cf50207af2c9dc8df2dcdb2acd701f5abb9b3cc6f5f40981b8592",
       "packed": false
     },
     {
@@ -14,7 +14,7 @@
     }
   ],
   "scripts": {
-    "on_patches": "install.sh",	  
-    "on_os_load": "install.sh"
+    "on_patches": "install-new.sh",	  
+    "on_os_load": "install-new.sh"
   }
 }
