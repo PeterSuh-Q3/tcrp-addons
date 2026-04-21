@@ -63,7 +63,7 @@ case "$1" in
         /usr/bin/disks.sh --create
         ;;
     late)
-        /usr/bin/disks.sh --update
+        /usr/bin/disks.sh --update /tmpRoot
         late_stage_nvme_patch
         ;;
     uninstall)

@@ -678,9 +678,31 @@ case ${1} in
   fi
   ;;
 "--update")
-  if [ "$(__get_conf_kv supportportmappingv2)" = "yes" ]; then
+  ARG2="${2:-}"
+  # When the 2nd arg is a directory (e.g. /tmpRoot), treat it as the target
+  # root for late-stage propagation: recompute against current /sys/block
+  # state and sync the resulting synoinfo.conf / extensionPorts / model.dtb
+  # into the DSM rootfs being prepared. Otherwise fall back to the original
+  # udev path where ARG2 is a disk DEVNAME.
+  if [ -n "${ARG2}" ] && [ -d "${ARG2}" ]; then
+    TARGET_ROOT="${ARG2%/}"
+    _log "late update target=${TARGET_ROOT}"
+    if [ "$(__get_conf_kv supportportmappingv2)" = "yes" ]; then
+      # DT path: model.dtb was produced in --create; just propagate.
+      :
+    else
+      # Non-DT: recompute portcfg/maxdisks so late-appearing HBA disks
+      # (mpt3sas etc.) are reflected in the final synoinfo.conf.
+      nondtModel
+    fi
+    for F in /etc/synoinfo.conf /etc.defaults/synoinfo.conf \
+             /etc/extensionPorts /etc.defaults/extensionPorts \
+             /etc/model.dtb /etc.defaults/model.dtb; do
+      [ -f "${F}" ] && [ -d "${TARGET_ROOT}$(dirname ${F})" ] && cp -vpf "${F}" "${TARGET_ROOT}${F}"
+    done
+  elif [ "$(__get_conf_kv supportportmappingv2)" = "yes" ]; then
     if [ ! -f "/etc/user_model.dts" ]; then
-      dtUpdate "${2:-}"
+      dtUpdate "${ARG2}"
     fi
     cp -vpf /etc/model.dtb /tmpRoot/etc/model.dtb
     cp -vpf /etc/model.dtb /tmpRoot/etc.defaults/model.dtb
@@ -689,7 +711,7 @@ case ${1} in
     cp -vpf /etc/extensionPorts /tmpRoot/etc/extensionPorts
     cp -vpf /etc/extensionPorts /tmpRoot/etc.defaults/extensionPorts
     if ! _check_user_conf "usbportcfg" || ! _check_user_conf "esataportcfg" || ! _check_user_conf "internalportcfg"; then
-      nondtUpdate "${2:-}"
+      nondtUpdate "${ARG2}"
     fi
   fi
   ;;
