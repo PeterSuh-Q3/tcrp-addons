@@ -417,6 +417,12 @@ dtUpdate() {
 nondtModel() {
   _log nondtModel
 
+  # Wait for asynchronous HBA probes (mpt3sas/megaraid_sas/hpsa) to complete
+  # before enumerating /sys/block/sd* so all HBA disks are counted.
+  if type udevadm >/dev/null 2>&1; then
+    udevadm settle --timeout=30 2>/dev/null
+  fi
+
   MAXDISKS=0
   USBPORTCFG=0
   ESATAPORTCFG=0
@@ -449,8 +455,15 @@ nondtModel() {
   [ $((${USBMAXIDX} + 1)) -gt ${MAXDISKS} ] && MAXDISKS=$((${USBMAXIDX} + 1))
 
   if _check_user_conf "maxdisks"; then
-    MAXDISKS=$(($(__get_conf_kv maxdisks)))
-    printf "get maxdisks=%d\n" "${MAXDISKS}"
+    USER_MAXDISKS=$(($(__get_conf_kv maxdisks)))
+    # Grow to accommodate actually-detected disks (HBA etc.) even if the
+    # vendor-baked synoinfo value is smaller (e.g. DS918+ default=4).
+    if [ ${USER_MAXDISKS} -gt ${MAXDISKS} ]; then
+      MAXDISKS=${USER_MAXDISKS}
+      printf "get maxdisks=%d\n" "${MAXDISKS}"
+    else
+      printf "use detected maxdisks=%d (user=%d)\n" "${MAXDISKS}" "${USER_MAXDISKS}"
+    fi
   else
     # fix isSingleBay issue: if maxdisks is 1, there is no create button in the storage panel
     # [ ${MAXDISKS} -le 2 ] && MAXDISKS=4
