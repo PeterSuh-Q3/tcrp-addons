@@ -687,14 +687,12 @@ case ${1} in
   if [ -n "${ARG2}" ] && [ -d "${ARG2}" ]; then
     TARGET_ROOT="${ARG2%/}"
     _log "late update target=${TARGET_ROOT}"
-    if [ "$(__get_conf_kv supportportmappingv2)" = "yes" ]; then
-      # DT path: model.dtb was produced in --create; just propagate.
-      :
-    else
-      # Non-DT: recompute portcfg/maxdisks so late-appearing HBA disks
-      # (mpt3sas etc.) are reflected in the final synoinfo.conf.
-      nondtModel
-    fi
+    # Do NOT recompute at this stage: /sys/block/sd* may only contain
+    # the USB boot disk while AHCI/HBA drivers are still probing, which
+    # would trigger the min-6-slot USB extension starting at bit 0 and
+    # mis-classify AHCI/HBA disks as USB on later boot. The values
+    # produced by --create (run when all disks are visible) are
+    # canonical; only propagate the resulting files.
     for F in /etc/synoinfo.conf /etc.defaults/synoinfo.conf \
              /etc/extensionPorts /etc.defaults/extensionPorts \
              /etc/model.dtb /etc.defaults/model.dtb; do
