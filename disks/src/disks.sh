@@ -431,6 +431,7 @@ nondtModel() {
   hasUSB=false
   USBMINIDX=99
   USBMAXIDX=00
+  MAXNONUSBIDX=-1
   for F in $(LC_ALL=C printf '%s\n' /sys/block/sd* | sort -V); do
     [ ! -e "${F}" ] && continue
     IDX=$(_atoi "$(echo "${F}" | sed -E 's/^.*\/sd(.*)$/\1/')")
@@ -443,15 +444,23 @@ nondtModel() {
       else
         [ ${IDX} -gt ${USBMAXIDX} ] && USBMAXIDX=${IDX}
       fi
+    else
+      [ ${IDX} -gt ${MAXNONUSBIDX} ] && MAXNONUSBIDX=${IDX}
     fi
   done
-  # Define 6 is the minimum number of USB disks
+  # Reserve 6 USB slots minimum, but never across indices occupied by
+  # non-USB disks (AHCI/HBA). When USB sits at a middle index and HBA
+  # disks are at higher indices, extending USB range would swallow HBA
+  # bits and mis-classify them as USB (breaks HBA disk recognition).
   if [ "${hasUSB}" = "false" ]; then
-    USBMINIDX=${MAXDISKS}
+    USBMINIDX=$((${MAXNONUSBIDX} + 1))
+    [ ${USBMINIDX} -lt ${MAXDISKS} ] && USBMINIDX=${MAXDISKS}
     USBMAXIDX=$((${USBMINIDX} + 6 - 1))
-  else
+  elif [ ${MAXNONUSBIDX} -lt ${USBMINIDX} ]; then
+    # No non-USB disk above USB range -> safe to extend to 6 slots
     [ $((${USBMAXIDX} - ${USBMINIDX})) -lt $((6 - 1)) ] && USBMAXIDX=$((${USBMINIDX} + 6 - 1))
   fi
+  # else: USB is interleaved with non-USB disks -> keep measured bits only
   [ $((${USBMAXIDX} + 1)) -gt ${MAXDISKS} ] && MAXDISKS=$((${USBMAXIDX} + 1))
 
   if _check_user_conf "maxdisks"; then
