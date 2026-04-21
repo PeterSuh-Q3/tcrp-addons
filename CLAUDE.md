@@ -43,7 +43,7 @@ DSM Storage Manager에 표시되지 않음. DS3622xs+는 같은 Non-DT인데 정
   - `--update <DEVNAME>`: udev 룰 (기존)
   - `--update <directory>`: late 단계 /tmpRoot 전파 (신규 분기)
 
-### 검증된 최종 결과 (DVA3219, DS918+ 모델)
+### 검증된 최종 결과 (DS918+ 모델)
 
 ```
 /sys/block/sd*: sdb(1), sdd(3) = AHCI; sdf(5) = USB boot; sdg(6), ... = HBA
