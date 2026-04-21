@@ -590,7 +590,10 @@ nondtUpdate() {
     return 1
   fi
 
-  _log "TODO: ${F}"
+  # Recompute portcfg/maxdisks when a new disk appears (HBA hot-plug etc.)
+  # so internalportcfg/usbportcfg/esataportcfg stay in sync with the
+  # actual /sys/block/sd* layout without waiting for a reboot.
+  nondtModel
   return 0
 }
 
