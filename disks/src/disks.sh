@@ -692,9 +692,38 @@ case ${1} in
     # would trigger the min-6-slot USB extension starting at bit 0 and
     # mis-classify AHCI/HBA disks as USB on later boot. The values
     # produced by --create (run when all disks are visible) are
-    # canonical; only propagate the resulting files.
-    for F in /etc/synoinfo.conf /etc.defaults/synoinfo.conf \
-             /etc/extensionPorts /etc.defaults/extensionPorts \
+    # canonical; only propagate them.
+    #
+    # synoinfo.conf must be MERGED key-by-key (not cp -vpf): the file on
+    # the persistent rootfs holds DSM-side user state (auto-update wizard
+    # selection, first-boot flags, GUI preferences). A wholesale copy
+    # from the ramdisk would clobber those keys on every boot, causing
+    # symptoms like the update-options wizard reappearing each reboot.
+    # extensionPorts / model.dtb are addon-owned outputs and remain
+    # safe to copy whole.
+    MANAGED_SYNOINFO_KEYS="maxdisks supportnvme support_m2_pool usbportcfg esataportcfg internalportcfg supportportmappingv2 eunitseq"
+    for SF in /etc/synoinfo.conf /etc.defaults/synoinfo.conf; do
+      TF="${TARGET_ROOT}${SF}"
+      [ ! -f "${SF}" ] && continue
+      [ ! -d "$(dirname "${TF}")" ] && continue
+      if [ ! -f "${TF}" ]; then
+        # Target absent (rare): seed with ramdisk copy so subsequent
+        # SKV writes have a base file. User keys not present yet.
+        cp -vpf "${SF}" "${TF}"
+        _log "seed copy ${SF} -> ${TF}"
+        continue
+      fi
+      for K in ${MANAGED_SYNOINFO_KEYS}; do
+        V="$(${GKV} "${SF}" "${K}" 2>/dev/null)"
+        # Skip empty: keeps any DSM-baked default when addon did not
+        # set the key on this platform (e.g. supportnvme on apollolake
+        # without M.2). Empty-write would otherwise stamp "" over it.
+        [ -z "${V}" ] && continue
+        ${SKV} "${TF}" "${K}" "${V}" >/dev/null 2>&1
+        _log "merge ${K}=${V} -> ${TF}"
+      done
+    done
+    for F in /etc/extensionPorts /etc.defaults/extensionPorts \
              /etc/model.dtb /etc.defaults/model.dtb; do
       [ -f "${F}" ] && [ -d "${TARGET_ROOT}$(dirname ${F})" ] && cp -vpf "${F}" "${TARGET_ROOT}${F}"
     done
