@@ -136,15 +136,13 @@ fixservice() {
   ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/SynoInitEth.service 
   ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno_update_disk_logs.service
 
-  # [추가] securityscan.service 오버라이드 로직
-  # 재부팅 루프 방지를 위해 ExecStart를 무조건 성공하는 명령으로 교체
-  # 1. 디렉토리 생성
-  mkdir -p ${SERVICE_PATH}/securityscan.service.d
+  # [추가] securityscan.service 수정 로직
+  # 원본 파일을 직접 수정하여 재부팅 액션 원천 차단
+  ${SED_PATH} -i 's|ExecStart=.*|ExecStart=/bin/true|g' ${SERVICE_PATH}/securityscan.service
+  # RemainAfterExit를 수정하여 스크립트가 실행되지 않게 함
+  ${SED_PATH} -i 's|RemainAfterExit=yes|RemainAfterExit=no|g' ${SERVICE_PATH}/securityscan.service
   
-  # 2. 오버라이드 설정 파일 생성 (ExecStart=/bin/true)
-  echo -e "[Service]\nExecStart=\nExecStart=/bin/true" > ${SERVICE_PATH}/securityscan.service.d/override.conf
-  
-  echo "Applied securityscan.service override to prevent reboot loop."  
+  echo "Applied securityscan.service to prevent reboot loop."  
 }
 
 fixsdcard() {
