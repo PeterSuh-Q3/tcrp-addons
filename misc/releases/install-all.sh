@@ -135,14 +135,6 @@ fixservice() {
   ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno-oob-check-status.service 
   ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/SynoInitEth.service 
   ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno_update_disk_logs.service
-
-  # [추가] securityscan.service 수정 로직
-  # 원본 파일을 직접 수정하여 재부팅 액션 원천 차단
-  ${SED_PATH} -i 's|ExecStart=.*|ExecStart=/bin/true|g' ${SERVICE_PATH}/securityscan.service
-  # RemainAfterExit를 수정하여 스크립트가 실행되지 않게 함
-  ${SED_PATH} -i 's|RemainAfterExit=yes|RemainAfterExit=no|g' ${SERVICE_PATH}/securityscan.service
-  
-  echo "Applied securityscan.service to prevent reboot loop."  
 }
 
 fixsdcard() {
