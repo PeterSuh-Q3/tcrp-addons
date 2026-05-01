@@ -57,6 +57,8 @@ cleanup_files(){
 }
 
 case "$1" in
+    modules)
+        /usr/bin/disks.sh --modules
     patches)
         copy_files
         sync_synoinfo_keys
@@ -70,6 +72,6 @@ case "$1" in
         cleanup_files
         ;;
     *)
-        echo "Usage: $0 {patches|late|uninstall}"
+        echo "Usage: $0 {modules|patches|late|uninstall}"
         ;;
 esac
