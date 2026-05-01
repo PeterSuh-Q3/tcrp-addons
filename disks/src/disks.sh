@@ -684,8 +684,9 @@ checkSynoboot
 ###################
 
 case ${1} in
-"--create")
+"--modules")
   _apply_user_supportsas
+"--create")
   if [ "$(__get_conf_kv supportportmappingv2)" = "yes" ]; then
     dtModel
   else
@@ -693,7 +694,6 @@ case ${1} in
   fi
   ;;
 "--update")
-  _apply_user_supportsas
   ARG2="${2:-}"
   # When the 2nd arg is a directory (e.g. /tmpRoot), treat it as the target
   # root for late-stage propagation: recompute against current /sys/block
@@ -762,8 +762,9 @@ case ${1} in
     nvme_late_patch
     ;;  
 *)
-  echo "Usage: $0 [--create|--update]"
+  echo "Usage: $0 [--modules|--create|--update]"
   echo
+  echo "       --modules: update synoinfo.conf"  
   echo "       --create: create dts file and update synoinfo.conf"
   echo "       --update: update dts file and update synoinfo.conf"
   exit 1
