@@ -59,6 +59,7 @@ cleanup_files(){
 case "$1" in
     modules)
         /usr/bin/disks.sh --modules
+        ;;
     patches)
         copy_files
         sync_synoinfo_keys
