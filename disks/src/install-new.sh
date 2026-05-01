@@ -58,7 +58,7 @@ cleanup_files(){
 
 case "$1" in
     modules)
-        /usr/bin/disks.sh --modules
+        ./disks.sh --modules
         ;;
     patches)
         copy_files
