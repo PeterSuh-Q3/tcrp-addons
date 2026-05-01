@@ -14,6 +14,7 @@
     }
   ],
   "scripts": {
+    "on_boot": "install-new.sh",
     "on_patches": "install-new.sh",	  
     "on_os_load": "install-new.sh"
   }
