@@ -686,6 +686,7 @@ checkSynoboot
 case ${1} in
 "--modules")
   _apply_user_supportsas
+  ;;
 "--create")
   if [ "$(__get_conf_kv supportportmappingv2)" = "yes" ]; then
     dtModel
