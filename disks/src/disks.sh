@@ -59,6 +59,20 @@ _check_user_conf() {
   grep -Eq "^${1}=" "${UCONF}" 2>/dev/null
 }
 
+# Apply user-supplied supportsas override from /addons/synoinfo.conf
+# Required at on_modules time so synodiskd reads the correct value before
+# disk enumeration starts. Without this, SAS-HBA-based models on AHCI
+# environments (e.g. RS18016xs+ on VMware) cannot enumerate any disk
+# because /sys/class/sas_host/* glob is empty.
+_apply_user_supportsas() {
+  [ -f "/addons/synoinfo.conf" ] && UCONF="/addons/synoinfo.conf" || UCONF="/usr/rr/addons/synoinfo.conf"
+  [ ! -f "${UCONF}" ] && return 0
+  USER_SAS="$(grep '^supportsas=' "${UCONF}" 2>/dev/null | cut -d'=' -f2- | sed 's/^"//;s/"$//')"
+  [ -z "${USER_SAS}" ] && return 0
+  __set_conf_kv "supportsas" "${USER_SAS}"
+  _log "apply user supportsas=${USER_SAS}"
+}
+
 # Check if the raid has been completed currently
 # Returns: 0 if yes, 1 if no
 _check_rootraidstatus() {
@@ -671,6 +685,7 @@ checkSynoboot
 
 case ${1} in
 "--create")
+  _apply_user_supportsas
   if [ "$(__get_conf_kv supportportmappingv2)" = "yes" ]; then
     dtModel
   else
@@ -678,6 +693,7 @@ case ${1} in
   fi
   ;;
 "--update")
+  _apply_user_supportsas
   ARG2="${2:-}"
   # When the 2nd arg is a directory (e.g. /tmpRoot), treat it as the target
   # root for late-stage propagation: recompute against current /sys/block
