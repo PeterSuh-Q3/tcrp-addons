@@ -299,7 +299,7 @@ _chk_slot_mapping() {
 
   echo "Internal Disk:"
   i=1
-  for dev in $(ls -d /sys/block/sata* 2>/dev/null | $( [ -n "${SORT_CMD}" ] && echo "${SORT_CMD} -t 'a' -k 3n" || echo _sort_v_sata )); do
+  for dev in $(ls -d /sys/block/sata* 2>/dev/null | $( [ -n "${SORT_CMD}" ] && echo "${SORT_CMD} -ta -k 3n" || echo _sort_v_sata )); do
       devname=$(basename $dev)
       echo "$(printf '%02d' $i): /dev/$devname"
       i=$((i+1))
