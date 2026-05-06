@@ -11,10 +11,13 @@ _major_version=${_release%%.*}
 
 _model=$(cat /proc/sys/kernel/syno_hw_version)
 
-# Read DSM major.minor version (e.g., "7.3" from "7.3-12345")
-_dsm_version=$(cat /etc.defaults/VERSION 2>/dev/null | awk -F= '/^majorversion/{major=$2} /^minorversion/{minor=$2} END{print major"."minor}')
-_dsm_major=${_dsm_version%%.*}
-_dsm_minor=${_dsm_version##*.}
+# Read DSM major.minor version from /etc.defaults/VERSION
+# The file uses key="value" shell-compatible syntax (majorversion="7" minorversion="3")
+# so awk with " as field separator extracts the unquoted numeric value.
+_dsm_major=$(awk -F'"' '/^majorversion=/{print $2; exit}' /etc.defaults/VERSION 2>/dev/null)
+_dsm_minor=$(awk -F'"' '/^minorversion=/{print $2; exit}' /etc.defaults/VERSION 2>/dev/null)
+_dsm_major=${_dsm_major:-0}
+_dsm_minor=${_dsm_minor:-0}
 
 # Determine if this environment is allowed to proceed:
 # 1) kernel >= 5  (standard support)
