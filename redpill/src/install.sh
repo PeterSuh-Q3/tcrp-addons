@@ -42,32 +42,24 @@ if [ "${1}" = "early" ]; then
   echo "Installing addon redpill - ${1}"
 
   # Locate rp.ko. On kernel 5 it's pre-placed at /usr/lib/modules/rp.ko by the
-  # bootloader. On kernel 3/4 it ships inside the all-modules tarball which is
-  # only extracted later at the 'modules' event - so we extract rp.ko early.
+  # bootloader. On kernel 3/4 the bootloader stages it at /addons/rp.ko, so we
+  # copy it into /lib/modules/ first to load from a stable location.
   _rp_ko=""
   for _p in /usr/lib/modules/rp.ko /lib/modules/rp.ko; do
     [ -f "$_p" ] && _rp_ko="$_p" && break
   done
 
-  if [ -z "$_rp_ko" ]; then
-    _platform=$(uname -a | awk '{print $NF}' | cut -d '_' -f2)
-    _linux_ver=$(uname -r | cut -d '+' -f1)
-    _tgz=$(ls /exts/all-modules/*${_platform}*${_linux_ver}.tgz 2>/dev/null | head -1)
-    if [ -n "$_tgz" ] && [ -f "$_tgz" ]; then
-      echo "  Extracting rp.ko from $_tgz"
-      mkdir -p /lib/modules
-      # Selectively extract rp.ko only (not the full module set)
-      gunzip -c "$_tgz" | tar xf - -C /lib/modules/ rp.ko 2>/dev/null
-      [ -f /lib/modules/rp.ko ] && _rp_ko=/lib/modules/rp.ko
-    else
-      echo "  Warning: all-modules tarball not found at /exts/all-modules/*${_platform}*${_linux_ver}.tgz"
-    fi
+  if [ -z "$_rp_ko" ] && [ -f /addons/rp.ko ]; then
+    echo "  Staging /addons/rp.ko -> /lib/modules/rp.ko"
+    mkdir -p /lib/modules
+    cp -f /addons/rp.ko /lib/modules/rp.ko \
+      && _rp_ko=/lib/modules/rp.ko
   fi
 
   if [ -n "$_rp_ko" ] && [ -f "$_rp_ko" ]; then
     echo "  Loading $_rp_ko"
     insmod "$_rp_ko" || { echo "redpill load failed: $(dmesg | tail -5)"; true; }
   else
-    echo "Warning: rp.ko not found in any expected location (looked at /usr/lib/modules/, /lib/modules/, and /exts/all-modules tarball)"
+    echo "Warning: rp.ko not found (checked /usr/lib/modules/, /lib/modules/, /addons/)"
   fi
 fi
