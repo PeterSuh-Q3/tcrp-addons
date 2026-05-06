@@ -41,6 +41,15 @@ fi
 if [ "${1}" = "early" ]; then
   echo "Installing addon redpill - ${1}"
 
+  # If redpill is already loaded (rd.gz auto-load on kernel 3/4/5), rmmod first
+  # so the addon's rp.ko can be insmod'd cleanly without "File exists" failure.
+  # rmmod may fail in full-stealth builds (cleanup_ not compiled in) - tolerate.
+  if lsmod | grep -q '^redpill '; then
+    echo "  redpill already loaded - rmmod before reload"
+    rmmod redpill 2>/dev/null \
+      || echo "  rmmod redpill failed (module may be sealed; will attempt insmod anyway)"
+  fi
+
   # Locate rp.ko. On kernel 5 it's pre-placed at /usr/lib/modules/rp.ko by the
   # bootloader. On kernel 3/4 the bootloader stages it at /addons/rp.ko, so we
   # copy it into /lib/modules/ first to load from a stable location.
