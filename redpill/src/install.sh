@@ -9,32 +9,32 @@
 _release=$(/bin/uname -r)
 _major_version=${_release%%.*}
 
-_model=$(cat /proc/sys/kernel/syno_hw_version)
+_model=$(cat /proc/sys/kernel/syno_hw_version 2>/dev/null)
 
-# Read DSM major.minor version from /etc.defaults/VERSION
-# The file uses key="value" shell-compatible syntax (majorversion="7" minorversion="3")
-# so awk with " as field separator extracts the unquoted numeric value.
-_dsm_major=$(awk -F'"' '/^majorversion=/{print $2; exit}' /etc.defaults/VERSION 2>/dev/null)
-_dsm_minor=$(awk -F'"' '/^minorversion=/{print $2; exit}' /etc.defaults/VERSION 2>/dev/null)
-_dsm_major=${_dsm_major:-0}
-_dsm_minor=${_dsm_minor:-0}
+# Convert running kernel version (e.g. "4.4.59+", "4.4.302+", "5.10.55+") into a
+# comparable integer X*1000000 + Y*10000 + Z so we can decide activation by
+# specific kernel ranges instead of major-only.
+_kver=$(echo "$_release" | cut -d+ -f1 | cut -d- -f1)
+_kver_int=$(echo "$_kver" | awk -F. '{ printf "%d", $1*1000000 + $2*10000 + $3 }')
+_lo_int=4040059   # 4.4.59  (apollolake older builds need addon)
+_hi_int=5100055   # 5.10.55 (epyc7002 / kernel 5 family always needs addon)
 
-# Determine if this environment is allowed to proceed:
-# 1) kernel >= 5  (standard support)
-# 2) kernel < 5 AND model == RS18016xs+-j  (Junior mode exception)
-# 3) kernel < 5 AND DSM 7.3.x              (DSM 7.3 + kernel 3.x exception)
+# Activation policy:
+#   1) kernel <= 4.4.59           (covers all 3.x and old 4.4.x like apollolake-918+)
+#   2) kernel >= 5.10.55          (kernel 5 family)
+#   3) model == RS18016xs+-j      (Junior mode special case, preserved)
+# DSM version is no longer used to gate.
 _allowed=0
-
-if [[ "${_major_version:-0}" -ge 5 ]]; then
+if [ "${_kver_int:-0}" -le "${_lo_int}" ]; then
   _allowed=1
-elif [[ "$_model" == "RS18016xs+-j" ]]; then
+elif [ "${_kver_int:-0}" -ge "${_hi_int}" ]; then
   _allowed=1
-elif [[ "${_dsm_major:-0}" -eq 7 && "${_dsm_minor:-0}" -eq 3 ]]; then
+elif [ "${_model}" = "RS18016xs+-j" ]; then
   _allowed=1
 fi
 
-if [[ "$_allowed" -eq 0 ]]; then
-  echo "Notice: Kernel version < 5 is not supported by this redpill addon! (Skipping)"
+if [ "$_allowed" -eq 0 ]; then
+  echo "Notice: kernel ${_kver} not in addon-supported range (<=4.4.59 or >=5.10.55) - skipping"
   exit 0
 fi
 
@@ -42,17 +42,16 @@ if [ "${1}" = "early" ]; then
   echo "Installing addon redpill - ${1}"
 
   # Handle case where redpill was already loaded by rd.gz auto-load.
-  # - kernel >= 4: safe to rmmod and reload with addon's rp.ko
-  # - kernel  3 : rmmod triggers a kernel panic (likely stale synobios vtable
-  #               and shim refs that cleanup_ cannot tear down cleanly), so
-  #               we just skip the addon insmod and accept rd.gz's version.
+  # - kernel >= 5 : safe to rmmod and reload with addon's rp.ko
+  # - kernel < 5  : rmmod risks kernel panic (verified on k3 RS1219+; treat k4
+  #                 the same as a precaution). Accept rd.gz's version and skip.
   if lsmod | grep -q '^redpill '; then
-    if [ "${_major_version:-0}" -ge 4 ]; then
+    if [ "${_major_version:-0}" -ge 5 ]; then
       echo "  redpill already loaded - rmmod before reload"
       rmmod redpill 2>/dev/null \
         || echo "  rmmod redpill failed (module may be sealed; will attempt insmod anyway)"
     else
-      echo "  redpill already loaded - kernel 3 rmmod unsafe (panic risk), skipping"
+      echo "  redpill already loaded - kernel < 5 rmmod unsafe (panic risk), skipping"
       exit 0
     fi
   fi
