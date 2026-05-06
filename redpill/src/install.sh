@@ -41,11 +41,18 @@ fi
 if [ "${1}" = "early" ]; then
   echo "Installing addon redpill - ${1}"
 
-  # Handle case where redpill was already loaded by rd.gz auto-load.
-  # - kernel >= 5 : safe to rmmod and reload with addon's rp.ko
-  # - kernel < 5  : rmmod risks kernel panic (verified on k3 RS1219+; treat k4
-  #                 the same as a precaution). Accept rd.gz's version and skip.
+  # Detect prior load. STEALTH=NORMAL/FULL builds hide redpill from
+  # /proc/modules and possibly /sys/module, so a missing lsmod hit does NOT
+  # mean it's actually unloaded. Use a best-effort signal here for the rmmod
+  # decision; the insmod step below has its own stealth-aware tolerance.
+  _is_loaded=0
   if lsmod | grep -q '^redpill '; then
+    _is_loaded=1
+  elif [ -d /sys/module/redpill ]; then
+    _is_loaded=1
+  fi
+
+  if [ "$_is_loaded" -eq 1 ]; then
     if [ "${_major_version:-0}" -ge 5 ]; then
       echo "  redpill already loaded - rmmod before reload"
       rmmod redpill 2>/dev/null \
@@ -73,7 +80,19 @@ if [ "${1}" = "early" ]; then
 
   if [ -n "$_rp_ko" ] && [ -f "$_rp_ko" ]; then
     echo "  Loading $_rp_ko"
-    insmod "$_rp_ko" || { echo "redpill load failed: $(dmesg | tail -5)"; true; }
+    _load_out=$(insmod "$_rp_ko" 2>&1)
+    _load_rc=$?
+    if [ "$_load_rc" -ne 0 ]; then
+      # Distinguish stealth-hidden duplicate load (benign) from real failure.
+      # busybox insmod prints "File exists" or "Invalid argument"; the kernel
+      # log line "redpill: module is already loaded" is the authoritative signal.
+      if dmesg | tail -10 | grep -qE "redpill: module is already loaded|File exists"; then
+        echo "  redpill appears already loaded (stealth-hidden) - addon insmod no-op accepted"
+      else
+        echo "  redpill load failed (rc=$_load_rc): $_load_out"
+        echo "  recent dmesg: $(dmesg | tail -3)"
+      fi
+    fi
   else
     echo "Warning: rp.ko not found (checked /usr/lib/modules/, /lib/modules/, /addons/)"
   fi
