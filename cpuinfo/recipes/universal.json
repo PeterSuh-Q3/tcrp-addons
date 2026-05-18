@@ -15,7 +15,7 @@
     {
       "name": "mshellscgiproxy.tgz",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/mshellscgiproxy.tgz",
-      "sha256": "REPLACE_AFTER_BUILD",
+      "sha256": "4f3437b3184e26c55da6e2c2bac041a216cd6d0871975f99305329a3b0238280",
       "packed": false
     }
   ],
