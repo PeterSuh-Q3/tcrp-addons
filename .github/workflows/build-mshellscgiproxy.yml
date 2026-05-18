@@ -3,6 +3,10 @@ name: Build mshellscgiproxy
 on:
   workflow_dispatch:
     inputs:
+      ref:
+        description: 'Branch / tag / SHA to build (default: workflow ref)'
+        type: string
+        required: false
       commit_tgz:
         description: 'Commit rebuilt mshellscgiproxy.tgz back to the branch'
         type: boolean
@@ -18,19 +22,35 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: cpuinfo/src/mshellscgiproxy
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
-      - uses: actions/setup-go@v5
+      - name: Verify source tree
+        run: |
+          echo "Repo root: $(pwd)"
+          echo "Checked-out ref: ${{ inputs.ref || github.ref }}"
+          if [ ! -d cpuinfo/src/mshellscgiproxy ]; then
+            echo "::error::cpuinfo/src/mshellscgiproxy/ does not exist on this ref."
+            echo "Push the source directory first, or pass 'ref' to a branch that contains it."
+            ls -la cpuinfo/src/ || true
+            exit 1
+          fi
+          ls -la cpuinfo/src/mshellscgiproxy/
+          test -f cpuinfo/src/mshellscgiproxy/main.go
+          test -f cpuinfo/src/mshellscgiproxy/go.mod
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
           go-version: '1.24'
           cache: false
 
       - name: Cross-compile (linux/amd64, static)
+        working-directory: cpuinfo/src/mshellscgiproxy
         env:
           GOOS: linux
           GOARCH: amd64
@@ -41,10 +61,11 @@ jobs:
           ls -la mshellscgiproxy
 
       - name: Package tarball
+        working-directory: cpuinfo/src/mshellscgiproxy
         run: |
           tar -czvf ../mshellscgiproxy.tgz mshellscgiproxy
           ls -la ../mshellscgiproxy.tgz
-          sha256sum ../mshellscgiproxy.tgz
+          sha256sum ../mshellscgiproxy.tgz | tee ../mshellscgiproxy.tgz.sha256
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -53,10 +74,10 @@ jobs:
           path: |
             cpuinfo/src/mshellscgiproxy/mshellscgiproxy
             cpuinfo/src/mshellscgiproxy.tgz
+            cpuinfo/src/mshellscgiproxy.tgz.sha256
 
       - name: Commit tarball
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.commit_tgz }}
-        working-directory: ${{ github.workspace }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
