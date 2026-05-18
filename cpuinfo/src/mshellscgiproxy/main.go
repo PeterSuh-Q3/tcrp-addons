@@ -1,4 +1,4 @@
-// mshellscgiproxy is a FastCGI proxy that sits between nginx and DSM's
+// mshellscgiproxy is an SCGI proxy that sits between nginx and DSM's
 // synoscgi daemon, augmenting SYNO.Core.System.info responses with the
 // MSHELL bootloader version and live sensor data.
 //
@@ -6,20 +6,29 @@
 //
 //	nginx --unix:/run/synoscgi_ms.sock--> mshellscgiproxy --unix:/run/synoscgi.sock--> synoscgi
 //
+// SCGI protocol (RFC-ish): one request per connection.
+//
+//	Request : <netstring-length>:CONTENT_LENGTH\0<n>\0SCGI\01\0...,<body>
+//	Response: HTTP-style headers \r\n\r\n body
+//
 // Behavior:
-//   - Forwards every FastCGI record verbatim except FCGI_STDOUT from upstream.
-//   - Buffers STDOUT records per request, parses the trailing JSON body, and
-//     injects `firmware_ver` suffix, `sys_temp`, and `fan_list` fields when
-//     the body looks like a SYNO.Core.System.info response.
-//   - Rewrites HTTP Content-Length to match the modified body, then re-emits
-//     the body as a stream of STDOUT records terminated by an empty record.
+//   - Request leg (client → upstream) is forwarded byte-for-byte.
+//   - Response leg (upstream → client) is buffered up to maxBufferedBytes.
+//     When the buffered body contains a `"firmware_ver"` field we treat it
+//     as a SYNO.Core.System.info payload and inject:
+//
+//       firmware_ver : appended with " / <bootloader version>"
+//       sys_temp     : first non-zero hwmon temp*_input value (°C)
+//       fan_list     : every non-zero hwmon fan*_input value (RPM)
+//
+//     Content-Length is rewritten when present. Responses larger than the
+//     buffer cap stream through unmodified.
 //
 // Reimplementation of wjz304's synoscgiproxy for the MSHELL loader.
 package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"io"
@@ -38,6 +47,10 @@ const (
 	upstreamSock = "/run/synoscgi.sock"
 	listenSock   = "/run/synoscgi_ms.sock"
 	versionFile  = "/usr/mshell/VERSION"
+
+	// Hard cap for buffered responses. Larger payloads are streamed through
+	// without inspection. SYNO.Core.System.info is well under this.
+	maxBufferedBytes = 4 * 1024 * 1024
 )
 
 var loaderVerFlag = flag.String("LOADERVERSION", "",
@@ -55,7 +68,6 @@ func bootloaderVer() string {
 	return strings.TrimSpace(string(b))
 }
 
-// cpuTempC returns the first non-zero hwmon CPU temperature in degrees C.
 func cpuTempC() int {
 	matches, _ := filepath.Glob("/sys/class/hwmon/hwmon*/temp*_input")
 	for _, m := range matches {
@@ -71,7 +83,6 @@ func cpuTempC() int {
 	return 0
 }
 
-// fanSpeeds returns every non-zero hwmon fan RPM reading.
 func fanSpeeds() []int {
 	matches, _ := filepath.Glob("/sys/class/hwmon/hwmon*/fan*_input")
 	var out []int
@@ -90,27 +101,22 @@ func fanSpeeds() []int {
 
 var (
 	fwRe         = regexp.MustCompile(`"firmware_ver"\s*:\s*"([^"]+)"`)
-	contentLenRe = regexp.MustCompile(`(?i)(Content-Length:\s*)\d+`)
+	contentLenRe = regexp.MustCompile(`(?im)^(Content-Length:[ \t]*)\d+`)
 )
 
-// patchJSON modifies a SYNO.Core.System.info JSON body in place semantically.
-// Returns the original buffer untouched when no `firmware_ver` field is present.
 func patchJSON(body []byte) []byte {
 	if !bytes.Contains(body, []byte(`"firmware_ver"`)) {
 		return body
 	}
-
 	if ver := bootloaderVer(); ver != "" {
 		body = fwRe.ReplaceAllFunc(body, func(m []byte) []byte {
 			sub := fwRe.FindSubmatch(m)
 			return []byte(fmt.Sprintf(`"firmware_ver":"%s / %s"`, sub[1], ver))
 		})
 	}
-
 	if t := cpuTempC(); t > 0 {
 		body = injectField(body, "sys_temp", fmt.Sprintf(`,"sys_temp":%d`, t))
 	}
-
 	if fans := fanSpeeds(); len(fans) > 0 {
 		parts := make([]string, len(fans))
 		for i, f := range fans {
@@ -119,13 +125,12 @@ func patchJSON(body []byte) []byte {
 		body = injectField(body, "fan_list",
 			fmt.Sprintf(`,"fan_list":[%s]`, strings.Join(parts, ",")))
 	}
-
 	return body
 }
 
 // injectField splices snippet immediately before the closing `}` of the
 // JSON object that contains "firmware_ver". No-op if the key is already
-// present or the object cannot be parsed.
+// present or the surrounding object cannot be parsed.
 func injectField(body []byte, key, snippet string) []byte {
 	if bytes.Contains(body, []byte(`"`+key+`"`)) {
 		return body
@@ -171,153 +176,96 @@ func injectField(body []byte, key, snippet string) []byte {
 	return body
 }
 
-// fixContentLength rewrites the HTTP Content-Length header so it matches the
-// post-patch body. The CGI response is expected to use CRLF separators.
-func fixContentLength(data []byte) []byte {
-	sep := bytes.Index(data, []byte("\r\n\r\n"))
-	if sep < 0 {
-		return data
+// patchResponse splits a CGI/SCGI response at the first header/body
+// boundary (\r\n\r\n or \n\n), patches the body if it looks like
+// SYNO.Core.System.info, and rewrites Content-Length when present.
+// Returns the input unchanged when no patch applies.
+func patchResponse(resp []byte) []byte {
+	for _, sep := range []string{"\r\n\r\n", "\n\n"} {
+		idx := bytes.Index(resp, []byte(sep))
+		if idx < 0 {
+			continue
+		}
+		headers := resp[:idx]
+		body := resp[idx+len(sep):]
+
+		if !bytes.Contains(body, []byte(`"firmware_ver"`)) {
+			return resp
+		}
+
+		patched := patchJSON(body)
+		if bytes.Equal(patched, body) {
+			return resp
+		}
+
+		newHeaders := contentLenRe.ReplaceAll(headers,
+			[]byte(fmt.Sprintf("${1}%d", len(patched))))
+
+		out := make([]byte, 0, len(newHeaders)+len(sep)+len(patched))
+		out = append(out, newHeaders...)
+		out = append(out, sep...)
+		out = append(out, patched...)
+		return out
 	}
-	bodyLen := len(data) - sep - 4
-	return contentLenRe.ReplaceAll(data, []byte(fmt.Sprintf("${1}%d", bodyLen)))
+	return resp
 }
 
-// FastCGI record header (RFC: 8 bytes, big-endian).
-type fcgiHeader struct {
-	Version       uint8
-	Type          uint8
-	RequestID     uint16
-	ContentLength uint16
-	PaddingLength uint8
-	Reserved      uint8
-}
-
-const (
-	fcgiVersion1   = 1
-	fcgiStdout     = 6
-	maxRecordBytes = 65535
-)
-
-func writeRecord(w io.Writer, recType uint8, reqID uint16, content []byte) error {
-	hdr := fcgiHeader{
-		Version:       fcgiVersion1,
-		Type:          recType,
-		RequestID:     reqID,
-		ContentLength: uint16(len(content)),
-	}
-	if err := binary.Write(w, binary.BigEndian, hdr); err != nil {
+// proxyResponse reads up to maxBufferedBytes from upstream so it can splice
+// patches into the body. If the response exceeds the cap, the buffered
+// prefix is flushed and the remainder is streamed through unmodified.
+func proxyResponse(upstream, client net.Conn) error {
+	limited := io.LimitReader(upstream, maxBufferedBytes+1)
+	buf, err := io.ReadAll(limited)
+	if err != nil && len(buf) == 0 {
 		return err
 	}
-	if len(content) > 0 {
-		if _, err := w.Write(content); err != nil {
-			return err
+
+	if len(buf) > maxBufferedBytes {
+		// Response is larger than the buffer; flush prefix verbatim and
+		// stream the rest without inspecting it.
+		if _, werr := client.Write(buf); werr != nil {
+			return werr
 		}
+		_, werr := io.Copy(client, upstream)
+		return werr
 	}
-	return nil
-}
 
-// upstreamToClient is the response leg: it parses upstream FCGI records,
-// rebuilds STDOUT bodies, patches them, and re-emits chunked STDOUT records.
-// Non-STDOUT records pass through unchanged.
-func upstreamToClient(up, client net.Conn) {
-	defer func() {
-		if uc, ok := client.(*net.UnixConn); ok {
-			_ = uc.CloseWrite()
-		}
-	}()
-
-	buffers := make(map[uint16]*bytes.Buffer)
-
-	for {
-		var hdr fcgiHeader
-		if err := binary.Read(up, binary.BigEndian, &hdr); err != nil {
-			return
-		}
-
-		content := make([]byte, hdr.ContentLength)
-		if hdr.ContentLength > 0 {
-			if _, err := io.ReadFull(up, content); err != nil {
-				return
-			}
-		}
-		if hdr.PaddingLength > 0 {
-			pad := make([]byte, hdr.PaddingLength)
-			if _, err := io.ReadFull(up, pad); err != nil {
-				return
-			}
-		}
-
-		if hdr.Type != fcgiStdout {
-			if err := binary.Write(client, binary.BigEndian, hdr); err != nil {
-				return
-			}
-			if len(content) > 0 {
-				if _, err := client.Write(content); err != nil {
-					return
-				}
-			}
-			if hdr.PaddingLength > 0 {
-				if _, err := client.Write(make([]byte, hdr.PaddingLength)); err != nil {
-					return
-				}
-			}
-			continue
-		}
-
-		buf := buffers[hdr.RequestID]
-		if buf == nil {
-			buf = &bytes.Buffer{}
-			buffers[hdr.RequestID] = buf
-		}
-
-		if hdr.ContentLength > 0 {
-			buf.Write(content)
-			continue
-		}
-
-		// Empty STDOUT signals end-of-stream for this request.
-		patched := fixContentLength(patchJSON(buf.Bytes()))
-		for len(patched) > 0 {
-			n := len(patched)
-			if n > maxRecordBytes {
-				n = maxRecordBytes
-			}
-			if err := writeRecord(client, fcgiStdout, hdr.RequestID, patched[:n]); err != nil {
-				return
-			}
-			patched = patched[n:]
-		}
-		if err := writeRecord(client, fcgiStdout, hdr.RequestID, nil); err != nil {
-			return
-		}
-		delete(buffers, hdr.RequestID)
-	}
+	patched := patchResponse(buf)
+	_, werr := client.Write(patched)
+	return werr
 }
 
 func handleConnection(client net.Conn) {
 	defer client.Close()
 
-	up, err := net.Dial("unix", upstreamSock)
+	upstream, err := net.Dial("unix", upstreamSock)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "upstream dial %s: %v\n", upstreamSock, err)
 		return
 	}
-	defer up.Close()
+	defer upstream.Close()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 
+	// Request leg: client → upstream, byte-for-byte.
 	go func() {
 		defer wg.Done()
-		_, _ = io.Copy(up, client)
-		if uc, ok := up.(*net.UnixConn); ok {
+		_, _ = io.Copy(upstream, client)
+		if uc, ok := upstream.(*net.UnixConn); ok {
 			_ = uc.CloseWrite()
 		}
 	}()
 
+	// Response leg: upstream → client, with body patching.
 	go func() {
 		defer wg.Done()
-		upstreamToClient(up, client)
+		if err := proxyResponse(upstream, client); err != nil {
+			fmt.Fprintf(os.Stderr, "proxyResponse: %v\n", err)
+		}
+		if uc, ok := client.(*net.UnixConn); ok {
+			_ = uc.CloseWrite()
+		}
 	}()
 
 	wg.Wait()
