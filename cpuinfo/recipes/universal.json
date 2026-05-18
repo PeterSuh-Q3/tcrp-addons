@@ -3,19 +3,19 @@
     {
       "name": "cpuinfo.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/cpuinfo.sh",
-      "sha256": "d574d7fc305cf8c95aa424ae099f91969d062f3e9954192b1f9576411f6d868e",
+      "sha256": "5aae062b2a97d3b36d758e0e7a0365aca63707bd3eb2fb4145850bdb9de2a2be",
       "packed": false
     },
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/install.sh",
-      "sha256": "1c928d3849f1188aa9230970f0051d8156d72e277659a5f28dc9608fed5eb998",
+      "sha256": "46f865ea260099d772d56302778aa232bc92e746e8c6370c0d8df14182472e11",
       "packed": false
     },
     {
-      "name": "synoscgiproxy.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/synoscgiproxy.tgz",
-      "sha256": "2208344097d69b3a5772afc60a392bb297519c8d63ad43fde8416debd3651189",
+      "name": "mshellscgiproxy.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/mshellscgiproxy.tgz",
+      "sha256": "REPLACE_AFTER_BUILD",
       "packed": false
     }
   ],

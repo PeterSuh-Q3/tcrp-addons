@@ -1,0 +1,90 @@
+name: Build mshellscgiproxy
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch / tag / SHA to build (default: workflow ref)'
+        type: string
+        required: false
+      commit_tgz:
+        description: 'Commit rebuilt mshellscgiproxy.tgz back to the branch'
+        type: boolean
+        default: false
+  push:
+    paths:
+      - 'cpuinfo/src/mshellscgiproxy/**'
+      - '.github/workflows/build-mshellscgiproxy.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Verify source tree
+        run: |
+          echo "Repo root: $(pwd)"
+          echo "Checked-out ref: ${{ inputs.ref || github.ref }}"
+          if [ ! -d cpuinfo/src/mshellscgiproxy ]; then
+            echo "::error::cpuinfo/src/mshellscgiproxy/ does not exist on this ref."
+            echo "Push the source directory first, or pass 'ref' to a branch that contains it."
+            ls -la cpuinfo/src/ || true
+            exit 1
+          fi
+          ls -la cpuinfo/src/mshellscgiproxy/
+          test -f cpuinfo/src/mshellscgiproxy/main.go
+          test -f cpuinfo/src/mshellscgiproxy/go.mod
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: false
+
+      - name: Cross-compile (linux/amd64, static)
+        working-directory: cpuinfo/src/mshellscgiproxy
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          go build -trimpath -ldflags='-s -w' -o mshellscgiproxy .
+          file mshellscgiproxy
+          ls -la mshellscgiproxy
+
+      - name: Package tarball
+        working-directory: cpuinfo/src/mshellscgiproxy
+        run: |
+          tar -czvf ../mshellscgiproxy.tgz mshellscgiproxy
+          ls -la ../mshellscgiproxy.tgz
+          sha256sum ../mshellscgiproxy.tgz | tee ../mshellscgiproxy.tgz.sha256
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mshellscgiproxy
+          path: |
+            cpuinfo/src/mshellscgiproxy/mshellscgiproxy
+            cpuinfo/src/mshellscgiproxy.tgz
+            cpuinfo/src/mshellscgiproxy.tgz.sha256
+
+      - name: Commit tarball
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.commit_tgz }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cpuinfo/src/mshellscgiproxy.tgz
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Rebuild mshellscgiproxy.tgz"
+            git push
+          fi

@@ -26,7 +26,12 @@ if [ "${1}" = "late" ]; then
   mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
   ln -sf /usr/lib/systemd/system/cpuinfo.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/cpuinfo.service
 
-  # synoscgiproxy
-  tar -zxvf synoscgiproxy.tgz -C /tmpRoot/usr/sbin
-  
+  # mshellscgiproxy (built by .github/workflows/build-mshellscgiproxy.yml)
+  if [ -f mshellscgiproxy.tgz ]; then
+    tar -zxvf mshellscgiproxy.tgz -C /tmpRoot/usr/sbin
+    chmod 755 /tmpRoot/usr/sbin/mshellscgiproxy
+  else
+    echo "WARNING: mshellscgiproxy.tgz not found; run the GitHub Actions workflow to build it."
+  fi
+
 fi
