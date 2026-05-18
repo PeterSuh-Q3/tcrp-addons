@@ -34,4 +34,12 @@ if [ "${1}" = "late" ]; then
     echo "WARNING: mshellscgiproxy.tgz not found; run the GitHub Actions workflow to build it."
   fi
 
+  # Seed /usr/mshell/VERSION from the loader's /addons/VERSION (if present)
+  # so mshellscgiproxy has a bootloader version to report on first boot.
+  if [ -f /addons/VERSION ]; then
+    mkdir -p /tmpRoot/usr/mshell
+    cp -vpf /addons/VERSION /tmpRoot/usr/mshell/VERSION
+    chmod 644 /tmpRoot/usr/mshell/VERSION
+  fi
+
 fi
