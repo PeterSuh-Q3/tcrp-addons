@@ -197,8 +197,6 @@ hdmi_video
 amdgpu
 EOF
     echo "[OK] ${CONF} 작성 완료"
-  else
-    
   fi  
   
   return 0
