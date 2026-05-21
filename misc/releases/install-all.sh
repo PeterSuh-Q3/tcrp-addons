@@ -145,13 +145,15 @@ fixsdcard() {
 
 fixamdgpu() {
   # AMDGPU 모듈 강제 로더 systemd unit 생성.
-  # /exts/amd-modules 또는 /exts/custom-modules 디렉토리가 존재할 때만 활성.
-  # systemd 가 부팅 시 명시적으로 'depmod -a && modprobe amdgpu' 를 호출하여
-  # /dev/dri 노드를 Container Manager(Plex/Jellyfin) 시작 전에 생성한다.
-  # 이전에는 tcrp-modules/eudev/releases/install.sh 의 late 단계에 인라인되어 있었으나
-  # 플랫폼 비종속 공통 루틴이므로 misc 로 이전. 오류 발생 시에도 부팅 전체를 망치지
-  # 않도록 모든 단계에 || true 를 둔다.
-  if [ -d /exts/amd-modules ] || [ -d /exts/custom-modules ]; then
+  # /exts/custom-modules 디렉토리가 존재할 때만 활성.
+  # (amd-modules 는 DSM udev coldplug 가 PCI 매칭으로 amdgpu 를 자동 적재하므로 불필요.
+  #  검증된 SA6400+Radeon Pro WX 3100 환경에서 부팅 39초에 amdgpu 가 이미 적재됨이
+  #  확인됨 — 이 service 가 같이 동작하면 'module already loaded' 로 exit 1 표시되어
+  #  systemd 가 failed 로 마킹하므로 amd-modules 에서는 service 자체를 만들지 않음.)
+  # custom-modules 는 일반 모듈 팩 형식이라 coldplug 트리거가 보장되지 않을 수 있어
+  # 명시적 modprobe 가 필요.
+  # 오류 발생 시에도 부팅 전체를 망치지 않도록 모든 단계에 || true 를 둔다.
+  if [ -d /exts/custom-modules ]; then
     DEST="/tmpRoot/usr/lib/systemd/system/mshell-amdgpu.service"
     {
       echo "[Unit]"

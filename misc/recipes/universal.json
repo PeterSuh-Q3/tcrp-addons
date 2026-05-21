@@ -3,7 +3,7 @@
     {
       "name": "install-all.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install-all.sh",
-      "sha256": "7809567c695fdb43d8ffc846ffb82f97582fc8b60a62433abe5d95413fdd23b6",
+      "sha256": "49672027485b3422044f6045b4deb90886bf79580033ec51529afb34415ca517",
       "packed": false
     },
     {
@@ -41,12 +41,12 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/web_index.html",
       "sha256": "b0098c1597ebb2407a37470402051f048dbdd922ee49e83a25f4f27ed079ab51",
       "packed": false
-    }   
+    }
   ],
   "scripts": {
     "on_boot": "install_rd.sh",
     "on_patches": "install-all.sh",
     "on_rcExit": "install_rd.sh",
-    "on_os_load": "install-all.sh"	  
+    "on_os_load": "install-all.sh"
   }
 }
