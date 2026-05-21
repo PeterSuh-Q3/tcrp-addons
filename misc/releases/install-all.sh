@@ -143,6 +143,39 @@ fixsdcard() {
   printf '#!/bin/sh\nexit 0\n' >/tmpRoot/usr/lib/udev/script/sdcard.sh
 }
 
+fixamdgpu() {
+  # AMDGPU 모듈 강제 로더 systemd unit 생성.
+  # /exts/amd-modules 또는 /exts/custom-modules 디렉토리가 존재할 때만 활성.
+  # systemd 가 부팅 시 명시적으로 'depmod -a && modprobe amdgpu' 를 호출하여
+  # /dev/dri 노드를 Container Manager(Plex/Jellyfin) 시작 전에 생성한다.
+  # 이전에는 tcrp-modules/eudev/releases/install.sh 의 late 단계에 인라인되어 있었으나
+  # 플랫폼 비종속 공통 루틴이므로 misc 로 이전. 오류 발생 시에도 부팅 전체를 망치지
+  # 않도록 모든 단계에 || true 를 둔다.
+  if [ -d /exts/amd-modules ] || [ -d /exts/custom-modules ]; then
+    DEST="/tmpRoot/usr/lib/systemd/system/mshell-amdgpu.service"
+    {
+      echo "[Unit]"
+      echo "Description=MSHELL AMDGPU Module Loader"
+      echo "After=local-fs.target"
+      echo "Before=pkgctl.target"
+      echo
+      echo "[Service]"
+      echo "Type=oneshot"
+      echo "ExecStart=/bin/sh -c '/sbin/depmod -a && /sbin/modprobe amdgpu'"
+      echo "RemainAfterExit=yes"
+      echo
+      echo "[Install]"
+      echo "WantedBy=multi-user.target"
+    } > "${DEST}" 2>/dev/null || true
+    chmod 644 "${DEST}" 2>/dev/null || true
+    mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants 2>/dev/null || true
+    ln -sf /usr/lib/systemd/system/mshell-amdgpu.service \
+           /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/mshell-amdgpu.service 2>/dev/null || true
+    echo "mshell-amdgpu.service installed (amd-modules/custom-modules detected)"
+  fi
+  return 0
+}
+
 fixnetwork() {
   # network
   if grep -q 'network.' /proc/cmdline; then
@@ -211,8 +244,9 @@ elif [ "${1}" = "late" ]; then
 
     fixcpufreq
     fixcrypto
-    fixsdcard    
+    fixsdcard
     fixservice
+    fixamdgpu
 
   # packages
   if [ ! -f /tmpRoot/usr/syno/etc/packages/feeds ]; then
