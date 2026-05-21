@@ -174,7 +174,33 @@ fixamdgpu() {
     ln -sf /usr/lib/systemd/system/mshell-amdgpu.service \
            /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/mshell-amdgpu.service 2>/dev/null || true
     echo "mshell-amdgpu.service installed (amd-modules/custom-modules detected)"
-  fi
+  
+  elif [ -d /exts/amd-modules ]; then
+    CONF="/usr/lib/modules-load.d/70-video-kernel.conf"
+    # 기존 파일 백업
+    cp "${CONF}" "${CONF}.bak.$(date +%Y%m%d%H%M%S)" 2>/dev/null
+    # i915 블랙리스트 등록
+    echo "blacklist i915" > /etc/modprobe.d/blacklist-i915.conf
+    # conf 파일 새로 작성 (의존성 토폴로지 순서)
+    cat > "${CONF}" << 'EOF'
+# amdgpu DRM stack - generated for Lexa XT (1002:6985)
+# load order: leaf deps → amdgpu
+dmabuf
+drm
+gpu-sched
+ttm
+drm-ttm-helper
+drm_kms_helper
+i2c-algo-bit
+backlight
+hdmi_video
+amdgpu
+EOF
+    echo "[OK] ${CONF} 작성 완료"
+  else
+    
+  fi  
+  
   return 0
 }
 
@@ -207,18 +233,20 @@ fixnetwork() {
 if [ "${1}" = "patches" ]; then
     echo "Installing addon misc - ${1}"
 
-    cp -vf /exts/misc/i915ids /usr/sbin/i915ids
-    chmod +x /usr/sbin/i915ids
-
-    case "${PLATFORM}" in
-    apollolake)
-        fixintelgpu
-        ;;
-    geminilake)
-        fixintelgpu
-        ;;
-    esac
-
+    if [ -d /exts/all-modules ]; then
+        cp -vf /exts/misc/i915ids /usr/sbin/i915ids
+        chmod +x /usr/sbin/i915ids
+    
+        case "${PLATFORM}" in
+        apollolake)
+            fixintelgpu
+            ;;
+        geminilake)
+            fixintelgpu
+            ;;
+        esac
+    fi
+    
     fixnetwork
 
 elif [ "${1}" = "late" ]; then
@@ -229,26 +257,27 @@ elif [ "${1}" = "late" ]; then
     #chmod +x /tmpRoot/usr/bin/sed
 
     fixacpibutton
-    
-    case "${PLATFORM}" in
 
-    apollolake)
-        copyintelgpu
-        ;;
-    geminilake)
-        copyintelgpu
-        ;;
-    denverton)
-        fixnvidia
-        ;;
-
-    esac
+    if [ -d /exts/all-modules ]; then    
+        case "${PLATFORM}" in
+        apollolake)
+            copyintelgpu
+            ;;
+        geminilake)
+            copyintelgpu
+            ;;
+        denverton)
+            fixnvidia
+            ;;
+        esac
+    else
+        fixamdgpu        
+    fi    
 
     fixcpufreq
     fixcrypto
     fixsdcard
     fixservice
-    fixamdgpu
 
   # packages
   if [ ! -f /tmpRoot/usr/syno/etc/packages/feeds ]; then
