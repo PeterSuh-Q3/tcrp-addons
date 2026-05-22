@@ -153,7 +153,7 @@ fixamdgpu() {
   # custom-modules 는 일반 모듈 팩 형식이라 coldplug 트리거가 보장되지 않을 수 있어
   # 명시적 modprobe 가 필요.
   # 오류 발생 시에도 부팅 전체를 망치지 않도록 모든 단계에 || true 를 둔다.
-  if [[ -d /exts/amd-modules || -d /exts/custom-modules ]]; then
+  if [ -d /exts/custom-modules ]; then
     DEST="/tmpRoot/usr/lib/systemd/system/mshell-amdgpu.service"
     {
       echo "[Unit]"
@@ -174,15 +174,14 @@ fixamdgpu() {
     ln -sf /usr/lib/systemd/system/mshell-amdgpu.service \
            /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/mshell-amdgpu.service 2>/dev/null || true
     echo "mshell-amdgpu.service installed (amd-modules/custom-modules detected)"
-  fi
   
-  if [ -d /exts/amd-modules ]; then
+  elif [ -d /exts/amd-modules ]; then
     CONF="/tmpRoot/usr/lib/modules-load.d/70-video-kernel.conf"
     # 기존 파일 백업
     cp "${CONF}" "${CONF}.bak.$(date +%Y%m%d%H%M%S)" 2>/dev/null
     # conf 파일 새로 작성 (의존성 토폴로지 순서)
     cat > "${CONF}" << 'EOF'
-# amdgpu DRM stack - generated for Lexa XT (1002:6985)
+# amdgpu DRM stack - generated for geminilakenk (intel igpu)
 # load order: leaf deps → amdgpu
 dmabuf
 drm
