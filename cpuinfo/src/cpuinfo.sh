@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
 # Copyright (C) 2022 Ing <https://github.com/wjz304>
-# MSHELL adaptation: replaces wjz304's synoscgiproxy with mshellscgiproxy and
-# sources the loader version from /usr/mshell/VERSION.
+# MSHELL adaptation: replaces wjz304's synoscgiproxy with mshellscgiproxy,
+# an intercepting proxy that augments DSM API responses with the loader
+# version read from /usr/mshell/VERSION.
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
@@ -13,6 +14,38 @@ FILE_GZ="${FILE_JS}.gz"
 
 PROXY_BIN="/usr/sbin/mshellscgiproxy"
 PROXY_SOCK_NAME="synoscgi_ms"
+
+# repoint_nginx redirects nginx's primary synoscgi SCGI upstream to the
+# intercepting proxy socket. It is idempotent and migration-safe: any prior
+# proxy socket name — RR's legacy synoscgi_rr.sock or our own synoscgi_ms.sock
+# — is first collapsed back to the canonical synoscgi.sock, so (a) the .bak
+# snapshot always holds the pristine, proxy-free config and (b) repeated runs
+# never strand nginx on a dead socket (e.g. an RR leftover) regardless of
+# whether the proxy was already running.
+repoint_nginx() {
+  local f
+  for f in /etc/nginx/nginx.conf /usr/syno/share/nginx/nginx.mustache; do
+    [ -f "${f}" ] || continue
+    [ ! -f "${f}.bak" ] && cp -pf "${f}" "${f}.bak"
+    # Keep the backup pristine (collapse any proxy socket to canonical).
+    sed -i 's|/run/synoscgi_rr\.sock;|/run/synoscgi.sock;|g; s|/run/synoscgi_ms\.sock;|/run/synoscgi.sock;|g' "${f}.bak"
+    # Normalize the live file, then repoint to our proxy socket.
+    sed -i 's|/run/synoscgi_rr\.sock;|/run/synoscgi.sock;|g; s|/run/synoscgi_ms\.sock;|/run/synoscgi.sock;|g' "${f}"
+    sed -i "s|/run/synoscgi.sock;|/run/${PROXY_SOCK_NAME}.sock;|g" "${f}"
+  done
+}
+
+# restore_nginx reverts to the pristine upstream and removes the backup. It
+# also collapses any stray proxy socket name in case the backup predates the
+# migration-safe logic above.
+restore_nginx() {
+  local f
+  for f in /etc/nginx/nginx.conf /usr/syno/share/nginx/nginx.mustache; do
+    [ -f "${f}.bak" ] && mv -f "${f}.bak" "${f}"
+    [ -f "${f}" ] || continue
+    sed -i 's|/run/synoscgi_rr\.sock;|/run/synoscgi.sock;|g; s|/run/synoscgi_ms\.sock;|/run/synoscgi.sock;|g' "${f}"
+  done
+}
 
 if [ ! -f "${FILE_JS}" ] && [ ! -f "${FILE_GZ}" ]; then
   echo "File ${FILE_JS} does not exist"
@@ -30,8 +63,7 @@ if [ "${1}" = "-r" ]; then
   if ps -aux | grep -v grep | grep -q "${PROXY_BIN}" >/dev/null; then
     /usr/bin/pkill -f "${PROXY_BIN}"
   fi
-  [ -f "/etc/nginx/nginx.conf.bak" ] && mv -f /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf
-  [ -f "/usr/syno/share/nginx/nginx.mustache.bak" ] && mv -f /usr/syno/share/nginx/nginx.mustache.bak /usr/syno/share/nginx/nginx.mustache
+  restore_nginx
   systemctl reload nginx
 else
   if [ -f "${FILE_GZ}" ]; then
@@ -112,10 +144,10 @@ else
     if ps -aux | grep -v grep | grep -q "${PROXY_BIN}" >/dev/null; then
       /usr/bin/pkill -f "${PROXY_BIN}"
     fi
-    [ -f "/etc/nginx/nginx.conf.bak" ] && mv -f /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf
-    [ -f "/usr/syno/share/nginx/nginx.mustache.bak" ] && mv -f /usr/syno/share/nginx/nginx.mustache.bak /usr/syno/share/nginx/nginx.mustache
+    restore_nginx
     systemctl reload nginx
   else
+    # Launch the proxy only if it isn't already running ...
     if ! ps -aux | grep -v grep | grep -q "${PROXY_BIN}" >/dev/null; then
       # nohup + disown to survive shell exit
       nohup "${PROXY_BIN}" >/dev/null 2>&1 &
@@ -126,11 +158,11 @@ else
         echo -1000 > "/proc/${PROXY_PID}/oom_score_adj" 2>/dev/null || true
         renice -n -10 ${PROXY_PID} >/dev/null 2>&1 || true
       fi
-      [ ! -f "/etc/nginx/nginx.conf.bak" ] && cp -pf /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
-      sed -i "s|/run/synoscgi.sock;|/run/${PROXY_SOCK_NAME}.sock;|" /etc/nginx/nginx.conf
-      [ ! -f "/usr/syno/share/nginx/nginx.mustache.bak" ] && cp -pf /usr/syno/share/nginx/nginx.mustache /usr/syno/share/nginx/nginx.mustache.bak
-      sed -i "s|/run/synoscgi.sock;|/run/${PROXY_SOCK_NAME}.sock;|" /usr/syno/share/nginx/nginx.mustache
-      systemctl reload nginx
     fi
+    # ... but always (re)point nginx at the proxy socket. This is idempotent
+    # and migration-safe, so it heals an RR leftover (synoscgi_rr.sock) even
+    # when the proxy was already up from a previous run.
+    repoint_nginx
+    systemctl reload nginx
   fi
 fi
