@@ -232,15 +232,7 @@ if [ "${1}" = "patches" ]; then
     if [ -d /exts/all-modules ]; then
         cp -vf /exts/misc/i915ids /usr/sbin/i915ids
         chmod +x /usr/sbin/i915ids
-    
-        case "${PLATFORM}" in
-        apollolake)
-            fixintelgpu
-            ;;
-        geminilake)
-            fixintelgpu
-            ;;
-        esac
+        fixintelgpu
     fi
     
     fixnetwork
@@ -255,13 +247,8 @@ elif [ "${1}" = "late" ]; then
     fixacpibutton
 
     if [ -d /exts/all-modules ]; then    
+        copyintelgpu
         case "${PLATFORM}" in
-        apollolake)
-            copyintelgpu
-            ;;
-        geminilake)
-            copyintelgpu
-            ;;
         denverton)
             fixnvidia
             ;;
