@@ -85,6 +85,14 @@ fixintelgpu() {
     exit 0
   fi
 
+  # MSHELL 서명(MSHELL@PeterSuh-Q3) 이 있는 OOT i915 는 GPU ID 를 네이티브 지원하므로
+  # binary patch 자체가 불필요 — 패치 건너뛰고 modprobe 만 수행
+  if grep -qa "MSHELL@PeterSuh-Q3" "${KO_FILE}" 2>/dev/null; then
+    echo "MSHELL-signed i915.ko detected, skipping binary patch"
+    /usr/sbin/modprobe i915
+    return 0
+  fi
+
   # OOT i915(5.4)가 네이티브 지원하는 ID는 binary patch 불필요 — modprobe만 수행
   case "${GPU}" in
     80861912)
