@@ -72,6 +72,14 @@ fixintelgpu() {
   # Intel GPU
   echo "replace intel gpu info for i915le10th"
 
+  # 커널 5.10.55 는 fixintelgpu 처리 대상 아님 — 건너뜀
+  # (커널 버전 추출 방식은 all-modules install.sh 와 동일)
+  LINUX_VER="$(uname -r | cut -d '+' -f1)"
+  if [ "${LINUX_VER}" = "5.10.55" ]; then
+    echo "kernel ${LINUX_VER} detected, skipping fixintelgpu"
+    return 0
+  fi
+
   GPU="$(lspci -nd ::300 2>/dev/null | grep 8086 | cut -d' ' -f3 | sed 's/://g')"
   grep -iq "${GPU}" "/usr/sbin/i915ids" 2>/dev/null || GPU=""
   if [ -z "${GPU}" ] || [ $(echo -n "${GPU}" | wc -c) -ne 8 ]; then
