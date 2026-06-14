@@ -83,7 +83,16 @@ fixintelgpu() {
   if [ ! -f "${KO_FILE}" ]; then
     echo "i915.ko does not exist"
     exit 0
-  fi  
+  fi
+
+  # OOT i915(5.4)가 네이티브 지원하는 ID는 binary patch 불필요 — modprobe만 수행
+  case "${GPU}" in
+    80861912)
+      echo "GPU ${GPU} natively supported by OOT i915, skipping binary patch"
+      /usr/sbin/modprobe i915
+      return 0
+      ;;
+  esac
 
   isLoad=0
   if lsmod 2>/dev/null | grep -q "^i915"; then
