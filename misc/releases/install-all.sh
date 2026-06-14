@@ -76,31 +76,22 @@ fixintelgpu() {
   grep -iq "${GPU}" "/usr/sbin/i915ids" 2>/dev/null || GPU=""
   if [ -z "${GPU}" ] || [ $(echo -n "${GPU}" | wc -c) -ne 8 ]; then
     echo "GPU is not detected"
-    exit 0
+    return 0
   fi
 
   KO_FILE="/usr/lib/modules/i915.ko"
   if [ ! -f "${KO_FILE}" ]; then
     echo "i915.ko does not exist"
-    exit 0
-  fi
-
-  # MSHELL 서명(MSHELL@PeterSuh-Q3) 이 있는 OOT i915 는 GPU ID 를 네이티브 지원하므로
-  # binary patch 자체가 불필요 — 패치 건너뛰고 modprobe 만 수행
-  if grep -qa "MSHELL@PeterSuh-Q3" "${KO_FILE}" 2>/dev/null; then
-    echo "MSHELL-signed i915.ko detected, skipping binary patch"
-    /usr/sbin/modprobe i915
     return 0
   fi
 
-  # OOT i915(5.4)가 네이티브 지원하는 ID는 binary patch 불필요 — modprobe만 수행
-  case "${GPU}" in
-    80861912)
-      echo "GPU ${GPU} natively supported by OOT i915, skipping binary patch"
-      /usr/sbin/modprobe i915
-      return 0
-      ;;
-  esac
+  # MSHELL 서명(MSHELL@PeterSuh-Q3) 이 있는 OOT i915 는 GPU ID 를 네이티브 지원하므로
+  # binary patch 자체가 불필요 — 패치 건너뜀
+  # (modprobe 는 all-modules 에서 이미 수행됨 — 중복 처리 불필요)
+  if grep -qa "MSHELL@PeterSuh-Q3" "${KO_FILE}" 2>/dev/null; then
+    echo "MSHELL-signed i915.ko detected, skipping binary patch"
+    return 0
+  fi
 
   isLoad=0
   if lsmod 2>/dev/null | grep -q "^i915"; then
