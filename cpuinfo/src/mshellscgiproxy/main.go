@@ -17,12 +17,15 @@
 //     When the buffered body contains a `"firmware_ver"` field we treat it
 //     as a SYNO.Core.System.info payload and inject:
 //
+//     In SYNO.Core.System.info (matched by "firmware_ver"):
 //       firmware_ver : appended with " / <bootloader version>"
 //       sys_temp     : first non-zero hwmon temp*_input value (°C)
 //       fan_list     : every non-zero hwmon fan*_input value (RPM)
-//       support_gpu  : true when a gpu_info array was precomputed
-//       gpu_info     : GPU array from /run/mshell_gpu_info.json (DSM 7.4
-//                      Info Center GPU section; see gpuInfoFile)
+//
+//     In SYNO.Core.System.GpuInfo.list (matched by "support_gpu"), which is
+//     where DSM 7.4's Info Center reads the GPU section from:
+//       support_gpu  : flipped false -> true when a gpu_info array exists
+//       gpu_info     : GPU array from /run/mshell_gpu_info.json (see gpuInfoFile)
 //
 //     Content-Length is rewritten when present. Responses larger than the
 //     buffer cap stream through unmodified.
@@ -130,56 +133,63 @@ func fanSpeeds() []int {
 
 var (
 	fwRe         = regexp.MustCompile(`"firmware_ver"\s*:\s*"([^"]+)"`)
+	gpuFalseRe   = regexp.MustCompile(`"support_gpu"\s*:\s*false`)
 	contentLenRe = regexp.MustCompile(`(?im)^(Content-Length:[ \t]*)\d+`)
 )
 
 func patchJSON(body []byte) []byte {
-	if !bytes.Contains(body, []byte(`"firmware_ver"`)) {
-		return body
-	}
-	if ver := bootloaderVer(); ver != "" {
-		body = fwRe.ReplaceAllFunc(body, func(m []byte) []byte {
-			sub := fwRe.FindSubmatch(m)
-			return []byte(fmt.Sprintf(`"firmware_ver":"%s / %s"`, sub[1], ver))
-		})
-	}
-	if t := cpuTempC(); t > 0 {
-		body = injectField(body, "sys_temp", fmt.Sprintf(`,"sys_temp":%d`, t))
-	}
-	if fans := fanSpeeds(); len(fans) > 0 {
-		parts := make([]string, len(fans))
-		for i, f := range fans {
-			parts[i] = strconv.Itoa(f)
+	// SYNO.Core.System.info — append the loader version and splice in live
+	// CPU temperature / fan readings (read client-side from t.sys_temp etc).
+	if bytes.Contains(body, []byte(`"firmware_ver"`)) {
+		if ver := bootloaderVer(); ver != "" {
+			body = fwRe.ReplaceAllFunc(body, func(m []byte) []byte {
+				sub := fwRe.FindSubmatch(m)
+				return []byte(fmt.Sprintf(`"firmware_ver":"%s / %s"`, sub[1], ver))
+			})
 		}
-		body = injectField(body, "fan_list",
-			fmt.Sprintf(`,"fan_list":[%s]`, strings.Join(parts, ",")))
+		if t := cpuTempC(); t > 0 {
+			body = injectField(body, "firmware_ver", "sys_temp",
+				fmt.Sprintf(`,"sys_temp":%d`, t))
+		}
+		if fans := fanSpeeds(); len(fans) > 0 {
+			parts := make([]string, len(fans))
+			for i, f := range fans {
+				parts[i] = strconv.Itoa(f)
+			}
+			body = injectField(body, "firmware_ver", "fan_list",
+				fmt.Sprintf(`,"fan_list":[%s]`, strings.Join(parts, ",")))
+		}
 	}
-	if gpu := gpuInfoArray(); gpu != "" {
-		// DSM 7.4's Info Center renders the GPU section only when both the
-		// gate (support_gpu) and the data (gpu_info[]) are present in the
-		// SYNO.Core.System response. Inject each idempotently so a genuine
-		// field is never overwritten.
-		body = injectField(body, "gpu_info", fmt.Sprintf(`,"gpu_info":%s`, gpu))
-		body = injectField(body, "support_gpu", `,"support_gpu":true`)
+	// SYNO.Core.System.GpuInfo "list" — DSM 7.4's Info Center reads the GPU
+	// section from THIS api via processGpuInfo() (GetValByAPI(...,
+	// "SYNO.Core.System.GpuInfo","list")), not from SYNO.Core.System. The
+	// genuine response is {"support_gpu":false} on loader/non-GPU hosts, so
+	// flip the gate to true and splice our gpu_info array into the same
+	// object. (DSM <= 7.3 uses a different, client-side path covered by the
+	// admin_center.js patch in cpuinfo.sh.)
+	if gpu := gpuInfoArray(); gpu != "" && bytes.Contains(body, []byte(`"support_gpu"`)) {
+		body = gpuFalseRe.ReplaceAll(body, []byte(`"support_gpu":true`))
+		body = injectField(body, "support_gpu", "gpu_info",
+			fmt.Sprintf(`,"gpu_info":%s`, gpu))
 	}
 	return body
 }
 
 // injectField splices snippet immediately before the closing `}` of the
-// JSON object that contains "firmware_ver". No-op if the key is already
-// present or the surrounding object cannot be parsed.
-func injectField(body []byte, key, snippet string) []byte {
+// JSON object that contains the anchor key. No-op if key is already present
+// or the surrounding object cannot be parsed.
+func injectField(body []byte, anchor, key, snippet string) []byte {
 	if bytes.Contains(body, []byte(`"`+key+`"`)) {
 		return body
 	}
-	fwIdx := bytes.Index(body, []byte(`"firmware_ver"`))
-	if fwIdx < 0 {
+	aIdx := bytes.Index(body, []byte(`"`+anchor+`"`))
+	if aIdx < 0 {
 		return body
 	}
 	depth := 0
 	inStr := false
 	esc := false
-	for i := fwIdx; i < len(body); i++ {
+	for i := aIdx; i < len(body); i++ {
 		c := body[i]
 		if esc {
 			esc = false
@@ -226,7 +236,11 @@ func patchResponse(resp []byte) []byte {
 		headers := resp[:idx]
 		body := resp[idx+len(sep):]
 
-		if !bytes.Contains(body, []byte(`"firmware_ver"`)) {
+		// Patch SYNO.Core.System.info (firmware_ver) and/or
+		// SYNO.Core.System.GpuInfo.list (support_gpu) payloads, whether they
+		// arrive as separate responses or bundled in one compound response.
+		if !bytes.Contains(body, []byte(`"firmware_ver"`)) &&
+			!bytes.Contains(body, []byte(`"support_gpu"`)) {
 			return resp
 		}
 
