@@ -3,7 +3,7 @@
     {
       "name": "cpuinfo.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/cpuinfo.sh",
-      "sha256": "5be1c50d52ebb00826a866016c91b3640cff32308ed1a4e23bb0542efcd33fa9",
+      "sha256": "1b7e30c8a3c5a7d07cd41ac1f91604db663d840a4dea007e2d9145a101a1cc44",
       "packed": false
     },
     {
@@ -15,7 +15,7 @@
     {
       "name": "mshellscgiproxy.tgz",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpuinfo/src/mshellscgiproxy.tgz",
-      "sha256": "5fce73add4d32ff6c1685ea885fe60c1080473c93641d248efd117f7ad580c68",
+      "sha256": "ef55c61818bcbbd1d7500afc3c6380c0c0d3adf71906074bf41bc756da509d94",
       "packed": false
     }
   ],

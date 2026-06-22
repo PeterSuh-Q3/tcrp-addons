@@ -135,7 +135,9 @@ else
   if [ -d "${CARDN}" ]; then
     PCIDN="$(awk -F= '/PCI_SLOT_NAME/ {print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
     lspci -nnQ
-    LNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //")"
+    # Strip the trailing " (rev NN)" revision suffix that lspci appends; it is
+    # noise in the Info Center GPU name.
+    LNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //" | sed "s/ *(rev [0-9a-fA-F]*)//")"
     # LABLE="$(cat "/sys/class/drm/card0/device/label" 2>/dev/null)"
     CLOCK="0 MHz"
     [ -f "${CARDN}/gt_max_freq_mhz" ] && CLOCK="$(cat "${CARDN}/gt_max_freq_mhz" 2>/dev/null) MHz"
@@ -148,10 +150,12 @@ else
       sed -i 's|t=this.getActiveApi(t);let|t=this.getActiveApi(t);if(!t.gpu){t.gpu={};t.gpu.clock="'"${CLOCK}"'";t.gpu.memory="'"${MEMORY}"'";t.gpu.name="'"${LNAME}"'";}let|g' "${FILE_JS}"
       # DSM 7.4 path: hand the gpu_info[] array to the proxy (see GPU_INFO_FILE).
       # built_in_gpu_slot_num marks it as an integrated GPU; name/clock/memory
-      # map to formatGpuInfo()'s destructured fields. JSON-escape the name only
-      # (clock/memory are simple "<n> MHz"/"<n> MiB" strings).
+      # map to formatGpuInfo()'s destructured fields. status="compatible" makes
+      # formatGpuDisplayName() show the bare name (any other/absent status falls
+      # through to a "(unknown)" suffix). JSON-escape the name only (clock/memory
+      # are simple "<n> MHz"/"<n> MiB" strings).
       GPU_JSON_NAME=$(printf '%s' "${LNAME}" | sed 's/\\/\\\\/g; s/"/\\"/g')
-      printf '[{"name":"%s","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}]\n' \
+      printf '[{"name":"%s","status":"compatible","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}]\n' \
         "${GPU_JSON_NAME}" "${CLOCK}" "${MEMORY}" >"${GPU_INFO_FILE}"
     fi
   fi
