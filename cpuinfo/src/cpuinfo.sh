@@ -15,6 +15,15 @@ FILE_GZ="${FILE_JS}.gz"
 PROXY_BIN="/usr/sbin/mshellscgiproxy"
 PROXY_SOCK_NAME="synoscgi_ms"
 
+# GPU info handed to mshellscgiproxy for DSM 7.4. 7.4 rewrote the Info Center
+# GPU section to render from the SYNO.Core.System response fields
+# support_gpu + gpu_info[] instead of the 7.3 client-side t.gpu object. We
+# resolve the GPU here (lspci name + sysfs clock/memory) and drop a gpu_info
+# array into this file; the proxy injects it (plus support_gpu) into the live
+# response. The legacy admin_center.js patch below still covers DSM <= 7.3,
+# which ignores the unknown response fields.
+GPU_INFO_FILE="/run/mshell_gpu_info.json"
+
 # repoint_nginx redirects nginx's primary synoscgi SCGI upstream to the
 # intercepting proxy socket. It is idempotent and migration-safe: any prior
 # proxy socket name — RR's legacy synoscgi_rr.sock or our own synoscgi_ms.sock
@@ -53,6 +62,7 @@ if [ ! -f "${FILE_JS}" ] && [ ! -f "${FILE_GZ}" ]; then
 fi
 
 if [ "${1}" = "-r" ]; then
+  rm -f "${GPU_INFO_FILE}"
   if [ -f "${FILE_GZ}.bak" ]; then
     rm -f "${FILE_JS}" "${FILE_GZ}"
     mv -f "${FILE_GZ}.bak" "${FILE_GZ}"
@@ -117,6 +127,10 @@ else
   sed -i "s/\(\(,\)\|\((\)\).\.cpu_clock_speed/\1${SPEED//\"/}/g" "${FILE_JS}"
   echo "CPU Info set to: \"${VENDOR}\" \"${FAMILY}\" \"${SERIES}\" \"${CORES}\" @ ${SPEED} MHz"
 
+  # Start from a clean slate so a GPU-less host (or a removed card) never
+  # leaves stale gpu_info for the proxy to inject.
+  rm -f "${GPU_INFO_FILE}"
+
   CARDN=$(ls -d /sys/class/drm/card* 2>/dev/null | head -1)
   if [ -d "${CARDN}" ]; then
     PCIDN="$(awk -F= '/PCI_SLOT_NAME/ {print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
@@ -129,7 +143,16 @@ else
     MEMORY="$(awk '{s=(strtonum($2)-strtonum($1)+1)/1048576} (and(strtonum($3),0x200))&&(and(strtonum($3),0x2000))&&(and(strtonum($3),0x40000))&&s>0{print int(s) " MiB"; exit}' "${CARDN}/device/resource" 2>/dev/null)"
     if [ -n "${LNAME}" ] && [ -n "${CLOCK}" ] && [ -n "${MEMORY}" ]; then
       echo "GPU Info set to: \"${LNAME}\" \"${CLOCK}\" \"${MEMORY}\""
+      # DSM <= 7.3 path: inject the t.gpu object client-side (gated by the
+      # support_nvidia_gpu||true patch below).
       sed -i 's|t=this.getActiveApi(t);let|t=this.getActiveApi(t);if(!t.gpu){t.gpu={};t.gpu.clock="'"${CLOCK}"'";t.gpu.memory="'"${MEMORY}"'";t.gpu.name="'"${LNAME}"'";}let|g' "${FILE_JS}"
+      # DSM 7.4 path: hand the gpu_info[] array to the proxy (see GPU_INFO_FILE).
+      # built_in_gpu_slot_num marks it as an integrated GPU; name/clock/memory
+      # map to formatGpuInfo()'s destructured fields. JSON-escape the name only
+      # (clock/memory are simple "<n> MHz"/"<n> MiB" strings).
+      GPU_JSON_NAME=$(printf '%s' "${LNAME}" | sed 's/\\/\\\\/g; s/"/\\"/g')
+      printf '[{"name":"%s","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}]\n' \
+        "${GPU_JSON_NAME}" "${CLOCK}" "${MEMORY}" >"${GPU_INFO_FILE}"
     fi
   fi
 

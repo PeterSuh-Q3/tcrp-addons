@@ -20,6 +20,9 @@
 //       firmware_ver : appended with " / <bootloader version>"
 //       sys_temp     : first non-zero hwmon temp*_input value (°C)
 //       fan_list     : every non-zero hwmon fan*_input value (RPM)
+//       support_gpu  : true when a gpu_info array was precomputed
+//       gpu_info     : GPU array from /run/mshell_gpu_info.json (DSM 7.4
+//                      Info Center GPU section; see gpuInfoFile)
 //
 //     Content-Length is rewritten when present. Responses larger than the
 //     buffer cap stream through unmodified.
@@ -47,6 +50,16 @@ const (
 	upstreamSock = "/run/synoscgi.sock"
 	listenSock   = "/run/synoscgi_ms.sock"
 	versionFile  = "/usr/mshell/VERSION"
+
+	// gpuInfoFile holds the SYNO.Core.System "gpu_info" array (a JSON array
+	// of GPU objects) precomputed by cpuinfo.sh, which resolves the adapter
+	// name via lspci and the clock/memory via sysfs. DSM 7.4 rewrote the
+	// Info Center GPU section to render from the response fields
+	// `support_gpu` + `gpu_info[]` (replacing 7.3's client-side `t.gpu`
+	// object gated by support_nvidia_gpu). Injecting these here makes the
+	// section appear on 7.4; older DSMs ignore the unknown fields, so the
+	// legacy admin_center.js patch still covers them. See cpuinfo.sh.
+	gpuInfoFile = "/run/mshell_gpu_info.json"
 
 	// Hard cap for buffered responses. Larger payloads are streamed through
 	// without inspection. SYNO.Core.System.info is well under this.
@@ -81,6 +94,22 @@ func cpuTempC() int {
 		}
 	}
 	return 0
+}
+
+// gpuInfoArray returns the trimmed contents of gpuInfoFile when it holds a
+// non-empty JSON array (i.e. starts with '[' and is not the empty array).
+// Returns "" when the file is absent, unreadable, or empty so the caller
+// injects nothing on GPU-less hosts.
+func gpuInfoArray() string {
+	b, err := os.ReadFile(gpuInfoFile)
+	if err != nil {
+		return ""
+	}
+	s := strings.TrimSpace(string(b))
+	if len(s) < 2 || s[0] != '[' || s == "[]" {
+		return ""
+	}
+	return s
 }
 
 func fanSpeeds() []int {
@@ -124,6 +153,14 @@ func patchJSON(body []byte) []byte {
 		}
 		body = injectField(body, "fan_list",
 			fmt.Sprintf(`,"fan_list":[%s]`, strings.Join(parts, ",")))
+	}
+	if gpu := gpuInfoArray(); gpu != "" {
+		// DSM 7.4's Info Center renders the GPU section only when both the
+		// gate (support_gpu) and the data (gpu_info[]) are present in the
+		// SYNO.Core.System response. Inject each idempotently so a genuine
+		// field is never overwritten.
+		body = injectField(body, "gpu_info", fmt.Sprintf(`,"gpu_info":%s`, gpu))
+		body = injectField(body, "support_gpu", `,"support_gpu":true`)
 	}
 	return body
 }
