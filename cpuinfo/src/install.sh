@@ -26,6 +26,41 @@ if [ "${1}" = "late" ]; then
   mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
   ln -sf /usr/lib/systemd/system/cpuinfo.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/cpuinfo.service
 
+  # GPU readiness re-trigger: the NVIDIA proprietary driver is loaded late (by
+  # its DSM package), well after cpuinfo.service's fixed boot delay, so the
+  # first run misses the nvidia GPU. Watch /dev/nvidia0 and re-run cpuinfo.sh
+  # once it appears. Intel/AMD are loaded early and already covered by the boot
+  # run; on GPU-less or non-nvidia hosts this path simply never fires (inert).
+  #
+  # The path triggers a SEPARATE oneshot (not cpuinfo.service, which is already
+  # active from boot). RemainAfterExit=yes keeps it active after running so the
+  # PathExists condition does not retrigger it in a loop.
+  GDEST="/tmpRoot/usr/lib/systemd/system/cpuinfo-gpu.service"
+  {
+    echo "[Unit]"
+    echo "Description=MSHELL addon cpuinfo GPU refresh (nvidia readiness)"
+    echo
+    echo "[Service]"
+    echo "Type=oneshot"
+    echo "RemainAfterExit=yes"
+    echo "ExecStart=/usr/sbin/cpuinfo.sh"
+  } >"${GDEST}"
+
+  PDEST="/tmpRoot/usr/lib/systemd/system/cpuinfo-gpu.path"
+  {
+    echo "[Unit]"
+    echo "Description=MSHELL addon cpuinfo GPU watch (/dev/nvidia0)"
+    echo
+    echo "[Path]"
+    echo "PathExists=/dev/nvidia0"
+    echo "Unit=cpuinfo-gpu.service"
+    echo
+    echo "[Install]"
+    echo "WantedBy=multi-user.target"
+  } >"${PDEST}"
+
+  ln -sf /usr/lib/systemd/system/cpuinfo-gpu.path /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/cpuinfo-gpu.path
+
   # mshellscgiproxy (built by .github/workflows/build-mshellscgiproxy.yml)
   if [ -f mshellscgiproxy.tgz ]; then
     tar -zxvf mshellscgiproxy.tgz -C /tmpRoot/usr/sbin
