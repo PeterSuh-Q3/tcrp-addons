@@ -131,33 +131,67 @@ else
   # leaves stale gpu_info for the proxy to inject.
   rm -f "${GPU_INFO_FILE}"
 
-  CARDN=$(ls -d /sys/class/drm/card* 2>/dev/null | head -1)
-  if [ -d "${CARDN}" ]; then
+  # Accumulate one JSON object per GPU into GPU_ELEMS (comma-joined). FIRST_*
+  # captures the first GPU for the legacy DSM <= 7.3 single-object t.gpu path.
+  # status="compatible" makes formatGpuDisplayName() show the bare name (any
+  # other/absent status falls through to a "(unknown)" suffix). built_in_gpu_slot_num
+  # / name / clock / memory map to formatGpuInfo()'s destructured fields.
+  GPU_ELEMS=""
+  FIRST_NAME=""; FIRST_CLOCK=""; FIRST_MEMORY=""
+  _json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
+  _append_gpu() { [ -z "${GPU_ELEMS}" ] && GPU_ELEMS="$1" || GPU_ELEMS="${GPU_ELEMS},$1"; }
+
+  # 1. DRM cards (Intel i915 / AMD amdgpu). NVIDIA is skipped here and handled
+  #    via nvidia-smi below, since its proprietary driver exposes no
+  #    /sys/class/drm/card* node unless nvidia-drm modeset=1.
+  for CARDN in /sys/class/drm/card[0-9]*; do
+    [ -d "${CARDN}" ] || continue
+    case "${CARDN##*/}" in *-*) continue ;; esac          # skip connector nodes (card0-DP-1)
+    DRV="$(awk -F= '/^DRIVER=/{print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
+    case "${DRV}" in nvidia|nvidia-drm) continue ;; esac
     PCIDN="$(awk -F= '/PCI_SLOT_NAME/ {print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
-    lspci -nnQ
-    # Strip the trailing " (rev NN)" revision suffix that lspci appends; it is
-    # noise in the Info Center GPU name.
-    LNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //" | sed "s/ *(rev [0-9a-fA-F]*)//")"
-    # LABLE="$(cat "/sys/class/drm/card0/device/label" 2>/dev/null)"
-    CLOCK="0 MHz"
-    [ -f "${CARDN}/gt_max_freq_mhz" ] && CLOCK="$(cat "${CARDN}/gt_max_freq_mhz" 2>/dev/null) MHz"
-    [ -f "${CARDN}/device/pp_dpm_sclk" ] && CLOCK="$(cat "${CARDN}/device/pp_dpm_sclk" 2>/dev/null | grep '\*' | awk '{print $2}') MHz"
-    MEMORY="$(awk '{s=(strtonum($2)-strtonum($1)+1)/1048576} (and(strtonum($3),0x200))&&(and(strtonum($3),0x2000))&&(and(strtonum($3),0x40000))&&s>0{print int(s) " MiB"; exit}' "${CARDN}/device/resource" 2>/dev/null)"
-    if [ -n "${LNAME}" ] && [ -n "${CLOCK}" ] && [ -n "${MEMORY}" ]; then
-      echo "GPU Info set to: \"${LNAME}\" \"${CLOCK}\" \"${MEMORY}\""
-      # DSM <= 7.3 path: inject the t.gpu object client-side (gated by the
-      # support_nvidia_gpu||true patch below).
-      sed -i 's|t=this.getActiveApi(t);let|t=this.getActiveApi(t);if(!t.gpu){t.gpu={};t.gpu.clock="'"${CLOCK}"'";t.gpu.memory="'"${MEMORY}"'";t.gpu.name="'"${LNAME}"'";}let|g' "${FILE_JS}"
-      # DSM 7.4 path: hand the gpu_info[] array to the proxy (see GPU_INFO_FILE).
-      # built_in_gpu_slot_num marks it as an integrated GPU; name/clock/memory
-      # map to formatGpuInfo()'s destructured fields. status="compatible" makes
-      # formatGpuDisplayName() show the bare name (any other/absent status falls
-      # through to a "(unknown)" suffix). JSON-escape the name only (clock/memory
-      # are simple "<n> MHz"/"<n> MiB" strings).
-      GPU_JSON_NAME=$(printf '%s' "${LNAME}" | sed 's/\\/\\\\/g; s/"/\\"/g')
-      printf '[{"name":"%s","status":"compatible","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}]\n' \
-        "${GPU_JSON_NAME}" "${CLOCK}" "${MEMORY}" >"${GPU_INFO_FILE}"
-    fi
+    # Strip the trailing " (rev NN)" revision suffix that lspci appends.
+    GNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //" | sed "s/ *(rev [0-9a-fA-F]*)//")"
+    GCLOCK="0 MHz"
+    [ -f "${CARDN}/gt_max_freq_mhz" ] && GCLOCK="$(cat "${CARDN}/gt_max_freq_mhz" 2>/dev/null) MHz"
+    [ -f "${CARDN}/device/pp_dpm_sclk" ] && GCLOCK="$(cat "${CARDN}/device/pp_dpm_sclk" 2>/dev/null | grep '\*' | awk '{print $2}') MHz"
+    GMEM="$(awk '{s=(strtonum($2)-strtonum($1)+1)/1048576} (and(strtonum($3),0x200))&&(and(strtonum($3),0x2000))&&(and(strtonum($3),0x40000))&&s>0{print int(s) " MiB"; exit}' "${CARDN}/device/resource" 2>/dev/null)"
+    [ -n "${GNAME}" ] && [ -n "${GCLOCK}" ] && [ -n "${GMEM}" ] || continue
+    [ -z "${FIRST_NAME}" ] && { FIRST_NAME="${GNAME}"; FIRST_CLOCK="${GCLOCK}"; FIRST_MEMORY="${GMEM}"; }
+    echo "GPU Info (drm) set to: \"${GNAME}\" \"${GCLOCK}\" \"${GMEM}\""
+    _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}' \
+      "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}")"
+  done
+
+  # 2. NVIDIA via nvidia-smi (proprietary driver). One row per GPU:
+  #    name, max graphics clock (MHz), total memory (MiB), temperature (C).
+  if command -v nvidia-smi >/dev/null 2>&1 && ls /dev/nvidia[0-9]* >/dev/null 2>&1; then
+    while IFS=, read -r NVN NVC NVM NVT; do
+      NVN="$(printf '%s' "${NVN}" | sed 's/^ *//; s/ *$//')"
+      NVC="$(printf '%s' "${NVC}" | tr -dc '0-9')"
+      NVM="$(printf '%s' "${NVM}" | tr -dc '0-9')"
+      NVT="$(printf '%s' "${NVT}" | tr -dc '0-9')"
+      [ -n "${NVN}" ] || continue
+      NVNAME="NVIDIA ${NVN}"; NVCLOCK="${NVC:-0} MHz"; NVMEM="${NVM:-0} MiB"
+      [ -z "${FIRST_NAME}" ] && { FIRST_NAME="${NVNAME}"; FIRST_CLOCK="${NVCLOCK}"; FIRST_MEMORY="${NVMEM}"; }
+      echo "GPU Info (nvidia) set to: \"${NVNAME}\" \"${NVCLOCK}\" \"${NVMEM}\" ${NVT:-?}C"
+      # temperature_c + tempwarn (both must be defined for the temp row to render).
+      if [ -n "${NVT}" ]; then
+        _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","temperature_c":%s,"tempwarn":false,"built_in_gpu_slot_num":0}' \
+          "$(_json_escape "${NVNAME}")" "${NVCLOCK}" "${NVMEM}" "${NVT}")"
+      else
+        _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}' \
+          "$(_json_escape "${NVNAME}")" "${NVCLOCK}" "${NVMEM}")"
+      fi
+    done < <(nvidia-smi --query-gpu=name,clocks.max.graphics,memory.total,temperature.gpu --format=csv,noheader,nounits 2>/dev/null)
+  fi
+
+  if [ -n "${GPU_ELEMS}" ]; then
+    # DSM <= 7.3 path: inject the first GPU as the t.gpu object client-side
+    # (gated by the support_nvidia_gpu||true patch below).
+    sed -i 's|t=this.getActiveApi(t);let|t=this.getActiveApi(t);if(!t.gpu){t.gpu={};t.gpu.clock="'"${FIRST_CLOCK}"'";t.gpu.memory="'"${FIRST_MEMORY}"'";t.gpu.name="'"${FIRST_NAME}"'";}let|g' "${FILE_JS}"
+    # DSM 7.4 path: hand the gpu_info[] array to the proxy (see GPU_INFO_FILE).
+    printf '[%s]\n' "${GPU_ELEMS}" >"${GPU_INFO_FILE}"
   fi
 
   sed -i "s/_D(\"support_nvidia_gpu\")},/_D(\"support_nvidia_gpu\")||true},/g" "${FILE_JS}"
