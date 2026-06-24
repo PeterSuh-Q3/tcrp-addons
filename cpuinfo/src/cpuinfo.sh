@@ -153,9 +153,28 @@ else
     # Strip the trailing " (rev NN)" revision suffix that lspci appends.
     GNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //" | sed "s/ *(rev [0-9a-fA-F]*)//")"
     GCLOCK="0 MHz"
+    # Intel i915: gt_max_freq_mhz already holds the max in MHz.
     [ -f "${CARDN}/gt_max_freq_mhz" ] && GCLOCK="$(cat "${CARDN}/gt_max_freq_mhz" 2>/dev/null) MHz"
-    [ -f "${CARDN}/device/pp_dpm_sclk" ] && GCLOCK="$(cat "${CARDN}/device/pp_dpm_sclk" 2>/dev/null | grep '\*' | awk '{print $2}') MHz"
-    GMEM="$(awk '{s=(strtonum($2)-strtonum($1)+1)/1048576} (and(strtonum($3),0x200))&&(and(strtonum($3),0x2000))&&(and(strtonum($3),0x40000))&&s>0{print int(s) " MiB"; exit}' "${CARDN}/device/resource" 2>/dev/null)"
+    # AMD amdgpu: pp_dpm_sclk lists every DPM state; the '*' marks the CURRENT
+    # (often idle) state and each value carries its own "Mhz" unit. Pick the
+    # numeric MAX across all states and append the unit once.
+    if [ -f "${CARDN}/device/pp_dpm_sclk" ]; then
+      GMHZ="$(awk '{v=$2; gsub(/[^0-9]/,"",v); if(v+0>m)m=v+0} END{print m}' "${CARDN}/device/pp_dpm_sclk" 2>/dev/null)"
+      [ -n "${GMHZ}" ] && [ "${GMHZ}" != "0" ] && GCLOCK="${GMHZ} MHz"
+    fi
+    # Memory: the PCI BAR aperture is only the (possibly non-ReBAR, small)
+    # window, not the real VRAM size. Prefer amdgpu's reported VRAM total, then
+    # the amdgpu boot log, and fall back to the BAR aperture (e.g. Intel iGPU).
+    GMEM=""
+    if [ -f "${CARDN}/device/mem_info_vram_total" ]; then
+      GVB="$(tr -dc '0-9' < "${CARDN}/device/mem_info_vram_total" 2>/dev/null)"
+      [ -n "${GVB}" ] && [ "${GVB}" != "0" ] && GMEM="$((GVB / 1048576)) MiB"
+    fi
+    if [ -z "${GMEM}" ] && [ -n "${PCIDN}" ]; then
+      GVM="$(dmesg 2>/dev/null | grep -E "${PCIDN}.* VRAM: [0-9]+M" | head -1 | sed -E 's/.* VRAM: ([0-9]+)M.*/\1/')"
+      [ -n "${GVM}" ] && GMEM="${GVM} MiB"
+    fi
+    [ -z "${GMEM}" ] && GMEM="$(awk '{s=(strtonum($2)-strtonum($1)+1)/1048576} (and(strtonum($3),0x200))&&(and(strtonum($3),0x2000))&&(and(strtonum($3),0x40000))&&s>0{print int(s) " MiB"; exit}' "${CARDN}/device/resource" 2>/dev/null)"
     [ -n "${GNAME}" ] && [ -n "${GCLOCK}" ] && [ -n "${GMEM}" ] || continue
     [ -z "${FIRST_NAME}" ] && { FIRST_NAME="${GNAME}"; FIRST_CLOCK="${GCLOCK}"; FIRST_MEMORY="${GMEM}"; }
     echo "GPU Info (drm) set to: \"${GNAME}\" \"${GCLOCK}\" \"${GMEM}\""
