@@ -56,6 +56,45 @@ restore_nginx() {
   done
 }
 
+# _gpu_name_fallback resolves a GPU display name from PCI vendor:device IDs
+# when lspci's pci.ids database is missing/outdated and only prints the raw
+# "Device <vid>:<did>". Newer (2021+) Intel desktop iGPUs (Alder/Raptor Lake)
+# are the common victims. A curated table gives exact marketing names; anything
+# else falls back to a vendor-prefixed label so the result is never wrong.
+# Args: $1=vid (4 hex, no 0x), $2=did
+_gpu_name_fallback() {
+  local vid="$1" did="$2" dev="" vendor=""
+  case "${vid}:${did}" in
+    8086:5902) dev="Kaby Lake-S GT1 [HD Graphics 610]" ;;
+    8086:5912) dev="Kaby Lake-S GT2 [HD Graphics 630]" ;;
+    8086:3e90|8086:3e93) dev="CoffeeLake-S GT1 [UHD Graphics 610]" ;;
+    8086:3e91|8086:3e92|8086:3e98) dev="CoffeeLake-S GT2 [UHD Graphics 630]" ;;
+    8086:9ba8) dev="CometLake-S GT1 [UHD Graphics 610]" ;;
+    8086:9bc5|8086:9bc8) dev="CometLake-S GT2 [UHD Graphics 630]" ;;
+    8086:4c8a) dev="RocketLake-S GT1 [UHD Graphics 750]" ;;
+    8086:4c8b) dev="RocketLake-S GT1 [UHD Graphics 730]" ;;
+    8086:4680|8086:4690) dev="Alder Lake-S GT1 [UHD Graphics 770]" ;;
+    8086:4682|8086:4692) dev="Alder Lake-S GT1 [UHD Graphics 730]" ;;
+    8086:4693) dev="Alder Lake-S GT1 [UHD Graphics 710]" ;;
+    8086:46d0|8086:46d1|8086:46d2) dev="Alder Lake-N [UHD Graphics]" ;;
+    8086:a780) dev="Raptor Lake-S GT1 [UHD Graphics 770]" ;;
+    8086:a781|8086:a782|8086:a783|8086:a788|8086:a789|8086:a78a|8086:a78b) dev="Raptor Lake-S [UHD Graphics]" ;;
+    1002:6985) dev="Lexa XT [Radeon PRO WX 3100]" ;;
+  esac
+  case "${vid}" in
+    8086) vendor="Intel Corporation" ;;
+    10de) vendor="NVIDIA Corporation" ;;
+    1002) vendor="Advanced Micro Devices, Inc. [AMD/ATI]" ;;
+  esac
+  if [ -n "${dev}" ]; then
+    printf '%s %s' "${vendor:-Vendor ${vid}}" "${dev}"
+  elif [ -n "${vendor}" ]; then
+    printf '%s Graphics [%s:%s]' "${vendor}" "${vid}" "${did}"
+  else
+    printf 'Device [%s:%s]' "${vid}" "${did}"
+  fi
+}
+
 if [ ! -f "${FILE_JS}" ] && [ ! -f "${FILE_GZ}" ]; then
   echo "File ${FILE_JS} does not exist"
   exit 0
@@ -152,6 +191,13 @@ else
     PCIDN="$(awk -F= '/PCI_SLOT_NAME/ {print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
     # Strip the trailing " (rev NN)" revision suffix that lspci appends.
     GNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //" | sed "s/ *(rev [0-9a-fA-F]*)//")"
+    # When pci.ids is missing/outdated lspci yields the raw "Device <ids>" (or
+    # nothing); rebuild the name from the sysfs PCI vendor/device IDs.
+    if [ -z "${GNAME}" ] || printf '%s' "${GNAME}" | grep -qiE '^Device '; then
+      GVID="$(sed 's/^0x//' "${CARDN}/device/vendor" 2>/dev/null)"
+      GDID="$(sed 's/^0x//' "${CARDN}/device/device" 2>/dev/null)"
+      [ -n "${GVID}" ] && [ -n "${GDID}" ] && GNAME="$(_gpu_name_fallback "${GVID}" "${GDID}")"
+    fi
     GCLOCK="0 MHz"
     # Intel i915: gt_max_freq_mhz already holds the max in MHz.
     [ -f "${CARDN}/gt_max_freq_mhz" ] && GCLOCK="$(cat "${CARDN}/gt_max_freq_mhz" 2>/dev/null) MHz"
