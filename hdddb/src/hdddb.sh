@@ -29,7 +29,7 @@
 # /var/packages/StorageManager/target/ui/storage_panel.js
 
 
-scriptver="v3.6.123"
+scriptver="v3.6.132"
 script=Synology_HDD_db
 repo="007revad/Synology_HDD_db"
 scriptname=syno_hdd_db
@@ -282,8 +282,9 @@ minor=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION minorversion)
 dsmversion="$major$minor"
 
 # Get Synology model
-model=$(cat /proc/sys/kernel/syno_hw_version)
-modelname="$model"
+#model=$(cat /proc/sys/kernel/syno_hw_version)
+#modelname="$model"
+modelname=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/synoinfo.conf upnpmodelname)
 
 # Get CPU platform_name
 #platform_name=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/synoinfo.conf platform_name)
@@ -305,22 +306,24 @@ smallfixnumber=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION smallfixnum
 # Show DSM full version and model
 if [[ $buildphase == GM ]]; then buildphase=""; fi
 if [[ $smallfixnumber -gt "0" ]]; then smallfix="-$smallfixnumber"; fi
-echo "$model $arch DSM $productversion-$buildnumber$smallfix $buildphase"
+#echo "$model $arch DSM $productversion-$buildnumber$smallfix $buildphase"
+echo "$modelname $arch DSM $productversion-$buildnumber$smallfix $buildphase"
 
 
 # Convert model to lower case
-model=${model,,}
+#model=${model,,}
+model=${modelname,,}
 
 # Check for dodgy characters after model number
-if [[ $model =~ 'pv10-j'$ ]]; then  # GitHub issue #10
-    modelname=${modelname%??????}+  # replace last 6 chars with +
-    model=${model%??????}+          # replace last 6 chars with +
-    echo -e "\nUsing model: $model"
-elif [[ $model =~ '-j'$ ]]; then  # GitHub issue #2
-    modelname=${modelname%??}     # remove last 2 chars
-    model=${model%??}             # remove last 2 chars
-    echo -e "\nUsing model: $model"
-fi
+#if [[ $model =~ 'pv10-j'$ ]]; then  # GitHub issue #10
+#    modelname=${modelname%??????}+  # replace last 6 chars with +
+#    model=${model%??????}+          # replace last 6 chars with +
+#    echo -e "\nUsing model: $model"
+#elif [[ $model =~ '-j'$ ]]; then  # GitHub issue #2
+#    modelname=${modelname%??}     # remove last 2 chars
+#    model=${model%??}             # remove last 2 chars
+#    echo -e "\nUsing model: $model"
+#fi
 
 # Get StorageManager version
 storagemgrver=$(/usr/syno/bin/synopkg version StorageManager)
@@ -339,9 +342,13 @@ if [[ $dsmversion -gt "72" ]]; then
     else
         SOPinfo="/var/packages/SynoOnlinePack/INFO"
     fi
-    SOPpkgver="$(/usr/syno/bin/synogetkeyvalue $SOPinfo version)"
-    #echo -e "SynoOnlinePack$v2 version $SOPpkgver\n"
-    echo "- SynoOnlinePack$v2 version $SOPpkgver"
+    if [[ -f "$SOPinfo" ]]; then
+        SOPpkgver="$(/usr/syno/bin/synogetkeyvalue $SOPinfo version)"
+        #echo -e "SynoOnlinePack$v2 version $SOPpkgver\n"
+        echo "- SynoOnlinePack$v2 version $SOPpkgver"
+    else
+        echo "- SynoOnlinePack$v2 version not found"
+    fi
 #else
 #    echo ""
 fi
@@ -630,11 +637,14 @@ get_script_vol() {
         vol_name=$(df --output=source "/$script_root" | sed 1d)  # sed 1d = delete first line
     fi
 }
-get_script_vol # sets $vol_name to /dev/whatever
-if grep -qE "^${vol_name#/dev/} .+ nvme" /proc/mdstat; then
-    ding
-    echo -e "\n${Yellow}WARNING${Off} Don't store this script on an NVMe volume!"
-    exit 3
+if which lvm >/dev/null; then
+    # Single bay Synology NAS don't have lvm
+    get_script_vol # sets $vol_name to /dev/whatever
+    if grep -qE "^${vol_name#/dev/} .+ nvme" /proc/mdstat; then
+        ding
+        echo -e "\n${Yellow}WARNING${Off} Don't store this script on an NVMe volume!"
+        exit 3
+    fi
 fi
 
 
@@ -693,29 +703,37 @@ set_writemostly(){
     if [[ ${1::2} == "sd" ]]; then
         # sda etc
         # md0 DSM system partition
-        echo "$1" > /sys/block/md0/md/dev-"${2}"1/state
-        # Show setting
-        echo -n "  $2 DSM partition:  "
-        cat /sys/block/md0/md/dev-"${2}"1/state
+        if [[ -d /sys/block/md0/md/dev-"${2}"1 ]]; then
+            echo "$1" > /sys/block/md0/md/dev-"${2}"1/state
+            # Show setting
+            echo -n "  $2 DSM partition:  "
+            cat /sys/block/md0/md/dev-"${2}"1/state
+        fi
 
         # md1 DSM swap partition
-        echo "$1" > /sys/block/md1/md/dev-"${2}"2/state
-        # Show setting
-        echo -n "  $2 Swap partition: "
-        cat /sys/block/md1/md/dev-"${2}"2/state
+        if [[ -d /sys/block/md1/md/dev-"${2}"2 ]]; then
+            echo "$1" > /sys/block/md1/md/dev-"${2}"2/state
+            # Show setting
+            echo -n "  $2 Swap partition: "
+            cat /sys/block/md1/md/dev-"${2}"2/state
+        fi
     else
         # sata1 or sas1 etc
         # md0 DSM system partition
-        echo "$1" > /sys/block/md0/md/dev-"${2}"p1/state
-        # Show setting
-        echo -n "  $2 DSM partition:  "
-        cat /sys/block/md0/md/dev-"${2}"p1/state
+        if [[ -d /sys/block/md0/md/dev-"${2}"p1 ]]; then
+            echo "$1" > /sys/block/md0/md/dev-"${2}"p1/state
+            # Show setting
+            echo -n "  $2 DSM partition:  "
+            cat /sys/block/md0/md/dev-"${2}"p1/state
+        fi
 
         # md1 DSM swap partition
-        echo "$1" > /sys/block/md1/md/dev-"${2}"p2/state
-        # Show setting
-        echo -n "  $2 Swap partition: "
-        cat /sys/block/md1/md/dev-"${2}"p2/state
+        if [[ -d /sys/block/md1/md/dev-"${2}"p2 ]]; then
+            echo "$1" > /sys/block/md1/md/dev-"${2}"p2/state
+            # Show setting
+            echo -n "  $2 Swap partition: "
+            cat /sys/block/md1/md/dev-"${2}"p2/state
+        fi
     fi
 }
 
@@ -724,11 +742,7 @@ set_writemostly(){
 # Restore changes from backups
 
 if [[ $restore == "yes" ]]; then
-    dbbaklist=($(find $dbpath -maxdepth 1 \( -name "*.db.new.bak" -o -name "*.db.bak" \)))
-    # Sort array
-    IFS=$'\n'
-    dbbakfiles=($(sort <<<"${dbbaklist[*]}"))
-    unset IFS
+    readarray -t dbbakfiles < <(find "$dbpath" -maxdepth 1 \( -name "*.db.new.bak" -o -name "*.db.bak" \) ! -name "rule_*" | sort)
 
     echo ""
     if [[ ${#dbbakfiles[@]} -gt "0" || -f ${synoinfo}.bak ||\
@@ -773,8 +787,8 @@ if [[ $restore == "yes" ]]; then
 
             # Make sure they don't lose E10M20-T1 network connection
             modelrplowercase=${modelname//RP/rp}
-            /usr/syno/bin/set_section_key_value ${adapter_cards} E10M20-T1_sup_nic "$modelrplowercase"
-            /usr/syno/bin/set_section_key_value ${adapter_cards2} E10M20-T1_sup_nic "$modelrplowercase"
+            /usr/syno/bin/set_section_key_value ${adapter_cards} E10M20-T1_sup_nic "$modelrplowercase" yes
+            /usr/syno/bin/set_section_key_value ${adapter_cards2} E10M20-T1_sup_nic "$modelrplowercase" yes
         fi
 
         # Restore model.dtb from backup
@@ -1005,20 +1019,22 @@ fixdrivemodel(){
         hdmodel=${hdmodel#"FUJISTU "}   # Remove "FUJISTU " from start of model name
         
         # Remove any leading spaces
-        var=$(echo "$var" | sed -e 's/^[[:space:]]*//')
+        hdmodel=$(echo "$hdmodel" | sed -e 's/^[[:space:]]*//')
     elif [[ $1 =~ ^'APPLE HDD '.* ]]; then
         # Old drive brands
         hdmodel=${hdmodel#"APPLE HDD "} # Remove "APPLE HDD " from start of model name
         
         # Remove any leading spaces
-        var=$(echo "$var" | sed -e 's/^[[:space:]]*//')
+        hdmodel=$(echo "$hdmodel" | sed -e 's/^[[:space:]]*//')
     fi
 }
 
 get_size_gb(){ 
     # $1 is /sys/block/sata1 or /sys/block/nvme0n1 etc
     local disk_size_gb
-    disk_size_gb=$(synodisk --info /dev/"$(basename -- "$1")" 2>/dev/null | grep 'Total capacity' | awk '{print int($4 * 1.073741824)}')
+    #disk_size_gb=$(synodisk --info /dev/"$(basename -- "$1")" 2>/dev/null | grep 'Total capacity' | awk '{print int($4 * 1.073741824)}')
+    # Prevent 6 TB drives getting rounded up to 6001 !!!
+    disk_size_gb=$(synodisk --info /dev/"$(basename -- "$1")" 2>/dev/null | grep 'Total capacity' | awk '{gb = $4 * 1.073741824; printf "%d\n", int(gb / 4 + 0.5) * 4}')
     echo "$disk_size_gb"
 }
 
@@ -1136,7 +1152,11 @@ m2_drive(){
                 # Fix unknown vendor id if needed. GitHub issue #161
                 # "Failed to get disk vendor" from synonvme --vendor-get
                 # causes "Unsupported firmware version" warning.
-                get_vid /dev/"$(basename -- "$1")"
+
+                # Skip for models without nvme command
+                if which synonvme >/dev/null; then
+                    get_vid /dev/"$(basename -- "$1")"
+                fi
 
                 # Get M2 model and firmware version
                 getm2info "$1" "$2"
@@ -1296,6 +1316,30 @@ if [[ $m2 != "no" ]]; then
 fi
 
 
+get_eunit_container_aliases(){ 
+    # DSM can report one expansion unit with different model names.
+    # For example, detection can return RX1217RP while the attached disks'
+    # runtime container is RX1217-1 and DSM reads the rx1217 drive database.
+    local ebox_info="$1"
+    local runtime_root="${2:-/run/synostorage/disks}"
+    local disk
+    local container
+
+    while IFS= read -r disk; do
+        [[ -n $disk ]] || continue
+
+        container=$(cat "$runtime_root/${disk##*/}/container" 2>/dev/null)
+        container=$(printf "%s" "$container" | sed -E 's/-[0-9]+$//')
+
+        if printf "%s\n" "$container" |
+            grep -Eqi '^([FRD]XD?[0-9]{3,4})(rp|ii|sas)?$';
+        then
+            printf "%s\n" "$container"
+        fi
+    done < <(printf "%s\n" "$ebox_info" | awk '/Disk path:/ {print $NF}')
+}
+
+
 # Expansion units
 ebox_conected=$(synodisk --enum -t ebox)
 if [[ $ebox_conected ]]; then
@@ -1318,6 +1362,12 @@ if [[ $ebox_conected ]]; then
         file=$(ls $path | tail -n1)
         eunitlist=($(grep -Eowi "([FRD]XD?[0-9]{3,4})(rp|ii|sas){0,2}" "$path/$file" | uniq))
     fi
+
+    # Include the model name DSM uses for each expansion disk's runtime
+    # container. The existing sort below removes duplicates.
+    while IFS= read -r eunit_alias; do
+        [[ -n $eunit_alias ]] && eunitlist+=("$eunit_alias")
+    done < <(get_eunit_container_aliases "$ebox_conected")
 fi
 
 # Sort eunitlist array into new eunits array to remove duplicates
@@ -1346,27 +1396,35 @@ fi
 # Check databases and add our drives if needed
 
 # Host db files
-db1list=($(find "$dbpath" -maxdepth 1 -name "*_host*.db"))
-db2list=($(find "$dbpath" -maxdepth 1 -name "*_host*.db.new"))
-#db1list=($(find "$dbpath" -maxdepth 1 -regextype posix-extended\
-#    -iregex ".*_host(_v7)?.db"))
-#db2list=($(find "$dbpath" -maxdepth 1 -regextype posix-extended\
-#    -iregex ".*_host(_v7)?.db.new"))
+readarray -t db1list < <(find "$dbpath" -maxdepth 1 -name "*_host*.db" ! -name "rule_*" | sort)
+readarray -t db2list < <(find "$dbpath" -maxdepth 1 -name "*_host*.db.new" ! -name "rule_*" | sort)
+
+find_eunit_db_files(){ 
+    # Match an exact expansion-unit model family while allowing Synology's
+    # "_v7" and space-delimited filename suffixes. Do not let RX1217 also
+    # select RX1217RP or RX1217SAS.
+    local db_dir="$1"
+    local extension="$2"
+    local eunit
+    shift 2
+
+    for eunit in "$@"; do
+        find "$db_dir" -maxdepth 1 -type f \
+            \( -name "${eunit,,}${extension}" \
+            -o -name "${eunit,,}_*${extension}" \
+            -o -name "${eunit,,} *${extension}" \)
+    done | sort -u
+}
+
 
 # Expansion Unit db files
-for i in "${!eunits[@]}"; do
-    #eunitdb1list+=($(find "$dbpath" -maxdepth 1 -name "${eunits[i],,}*.db"))
-    eunitdb1list+=($(find "$dbpath" -maxdepth 1 -regextype posix-extended\
-        -iregex ".*${eunits[i],,}(_v7)?.db"))
-    #eunitdb2list+=($(find "$dbpath" -maxdepth 1 -name "${eunits[i],,}*.db.new"))
-    eunitdb2list+=($(find "$dbpath" -maxdepth 1 -regextype posix-extended\
-        -iregex ".*${eunits[i],,}(_v7)?.db.new"))
-done
+readarray -t eunitdb1list < <(find_eunit_db_files "$dbpath" ".db" "${eunits[@]}")
+readarray -t eunitdb2list < <(find_eunit_db_files "$dbpath" ".db.new" "${eunits[@]}")
 
 # M.2 Card db files
 for i in "${!m2cards[@]}"; do
-    m2carddb1list+=($(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db"))
-    m2carddb2list+=($(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db.new"))
+    m2carddb1list+=("$(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db")")
+    m2carddb2list+=("$(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db.new")")
 done
 
 
@@ -1402,23 +1460,58 @@ getdbtype(){
 
 backupdb(){ 
     # Backup database file if needed
+    local bakversion newversion fname
+    [[ -z "$1" || ! -f "$1" ]] || return 0  # Don't try to backup non-existent files
+    if [[ $2 == "long" ]]; then
+        fname="$1"
+    else
+        fname=$(basename -- "${1}")
+    fi
+
     if [[ ! -f "$1.bak" ]]; then
+        # No existing backup
         if [[ $(basename "$1") == "synoinfo.conf" ]]; then
             echo "" >&2  # Formatting for stdout
         fi
-        if [[ $2 == "long" ]]; then
-            fname="$1"
-        else
-            fname=$(basename -- "${1}")
-        fi
         if cp -p "$1" "$1.bak"; then
             echo -e "Backed up ${fname}" >&2
+            if [[ "${1##*.}" == "db" ]]; then
+                # Backup db version file as well
+                if [[ -f "${1%.db}.version" ]]; then
+                    cp -p "${1%.db}.version" "${1%.db}.bakver"
+                fi
+            fi
         else
             echo -e "${Error}ERROR 5${Off} Failed to backup ${fname}!" >&2
             return 1
         fi
+    elif [[ "${1##*.}" == "db" ]]; then
+        # Only .db files have version files
+        if [[ ! -f "${1%.db}.bakver" ]]; then
+            # Existing backup has no .bakver file, create one
+            if [[ -f "${1%.db}.version" ]]; then
+                cp -p "${1%.db}.version" "${1%.db}.bakver"
+            fi
+        fi
+        bakversion=$(cat "${1%.db}.bakver" 2>/dev/null)
+        newversion=$(cat "${1%.db}.version" 2>/dev/null)
+        if [[ "$newversion" -gt "$bakversion" ]]; then
+            # Newer version db files have been installed
+            if cp -p "$1" "$1.bak"; then
+                echo -e "Backed up ${fname}" >&2
+                # Update db version backup as well
+                if [[ -f "${1%.db}.version" ]]; then
+                    cp -p "${1%.db}.version" "${1%.db}.bakver"
+                fi
+            else
+                echo -e "${Error}ERROR 5${Off} Failed to backup ${fname}!" >&2
+                return 1
+            fi
+        fi
     fi
+
     # Fix permissions if needed
+    local octal
     octal=$(stat -c "%a %n" "$1" | cut -d" " -f1)
     if [[ ! $octal -eq 644 ]]; then
         chmod 644 "$1"
@@ -1563,9 +1656,12 @@ editcount(){
 
 
 editdb7(){ 
+    local hdmodel_sed
+    hdmodel_sed="${hdmodel//\"/\\\"}"   # escape " for sed/JSON
+    hdmodel_sed="${hdmodel_sed//\//\\/}"  # escape / for sed
+
     if [[ $1 == "append" ]]; then  # model not in db file
-        #if sed -i "s/}}}/}},\"$hdmodel\":{$fwstrng$default/" "$2"; then  # append
-        if sed -i "s/}}}/}},\"${hdmodel//\//\\/}\":{$fwstrng$default/" "$2"; then  # append
+        if sed -i "s/}}}/}},\"${hdmodel_sed}\":{$fwstrng$default/" "$2"; then  # append
             if jq -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
                 '.disk_compatbility_info[$hdmodel] | has($fwrev)' "$2" > /dev/null; then
                 echo -e "Added ${Yellow}$hdmodel ($fwrev)${Off} to ${Cyan}$(basename -- "$2")${Off}"
@@ -1579,8 +1675,7 @@ editdb7(){
         fi
 
     elif [[ $1 == "insert" ]]; then  # model and default exists
-        #if sed -i "s/\"$hdmodel\":{/\"$hdmodel\":{$fwstrng/" "$2"; then  # insert firmware
-        if sed -i "s/\"${hdmodel//\//\\/}\":{/\"${hdmodel//\//\\/}\":{$fwstrng/" "$2"; then  # insert firmware
+        if sed -i "s/\"${hdmodel_sed}\":{/\"${hdmodel_sed}\":{$fwstrng/" "$2"; then  # insert firmware
             if jq -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
                 '.disk_compatbility_info[$hdmodel] | has($fwrev)' "$2" > /dev/null; then
                 echo -e "Updated ${Yellow}$hdmodel ($fwrev)${Off} in ${Cyan}$(basename -- "$2")${Off}"
@@ -1594,9 +1689,7 @@ editdb7(){
         fi
 
     elif [[ $1 == "empty" ]]; then  # db file only contains {}
-        #if sed -i "s/{}/{\"$hdmodel\":{$fwstrng${default}}/" "$2"; then  # empty
-        #if sed -i "s/{}/{\"${hdmodel//\//\\/}\":{$fwstrng${default}}/" "$2"; then  # empty
-        if sed -i "s/{}/{\"${hdmodel//\//\\/}\":{$fwstrng${default}/" "$2"; then  # empty
+        if sed -i "s/{}/{\"${hdmodel_sed}\":{$fwstrng${default}/" "$2"; then  # empty
             if jq -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
                 '.disk_compatbility_info[$hdmodel] | has($fwrev)' "$2" > /dev/null; then
                 echo -e "Added ${Yellow}$hdmodel ($fwrev)${Off} to ${Cyan}$(basename -- "$2")${Off}"
@@ -1642,12 +1735,14 @@ updatedb(){
             common_string="$common_string"\"smart_test_ignore\":false,
             common_string="$common_string"\"smart_attr_ignore\":false
 
-            fwstrng=\"$fwrev\":{
+            #fwstrng=\"$fwrev\":{
+            fwstrng=\"$fwrev\":{\"fw_buildnumber\":1,  # Issue 585. Fix drive temperature for XPE
             fwstrng="$fwstrng$common_string"
             fwstrng="$fwstrng"}]},
 
             #default=\"default\":{
             default=\"default\":{\"size_gb\":$size_gb,
+            #default=\"default\":{\"fw_buildnumber\":1,\"size_gb\":$size_gb,  # Issue 585. Fix drive temperature for XPE
             default="$default$common_string"
             default="$default"}]}}}
 
@@ -1689,6 +1784,10 @@ updatedb(){
         fi
     elif [[ $dbtype -eq "6" ]]; then
         # db type 6 used up to DSM 7.0.1
+        local hdmodel_sed
+        hdmodel_sed="${hdmodel//\"/\\\"}"   # escape " for sed/JSON
+        hdmodel_sed="${hdmodel_sed//\//\\/}"  # escape / for sed
+
         if grep -q "$hdmodel" "$2"; then
             echo -e "${Yellow}$hdmodel${Off} already exists in ${Cyan}$(basename -- "$2")${Off}" >&2
         else
@@ -1696,7 +1795,8 @@ updatedb(){
             # {"model":"WD60EFRX-68MYMN1","firmware":"82.00A82","rec_intvl":[1]},
             # Don't need to add firmware version?
             #string="{\"model\":\"${hdmodel}\",\"firmware\":\"${fwrev}\",\"rec_intvl\":\[1\]},"
-            string="{\"model\":\"${hdmodel}\",\"firmware\":\"\",\"rec_intvl\":\[1\]},"
+            #string="{\"model\":\"${hdmodel}\",\"firmware\":\"\",\"rec_intvl\":\[1\]},"
+            string="{\"model\":\"${hdmodel_sed}\",\"firmware\":\"\",\"rec_intvl\":\[1\]},"
             # {"success":1,"list":[
             startstring="{\"success\":1,\"list\":\["
             # example:
@@ -1715,15 +1815,29 @@ updatedb(){
 }
 
 
-# Fix ,, instead of , bug caused by v3.3.75
+# Fix "size_gb": 6001, for 6 TB drives caused by v3.5.104 to v3.6.126
 if [[ "${#db1list[@]}" -gt "0" ]]; then
     for i in "${!db1list[@]}"; do
-        sed -i "s/,,/,/"  "${db1list[i]}"
+        sed -i 's/"size_gb": 6001/"size_gb": 6000/g' "${db1list[i]}"
+        sed -i 's/"size_gb":6001/"size_gb":6000/g' "${db1list[i]}"
     done
 fi
 if [[ "${#db2list[@]}" -gt "0" ]]; then
     for i in "${!db2list[@]}"; do
-        sed -i "s/,,/,/"  "${db2list[i]}"
+        sed -i 's/"size_gb": 6001/"size_gb": 6000/g' "${db2list[i]}"
+        sed -i 's/"size_gb":6001/"size_gb":6000/g' "${db2list[i]}"
+    done
+fi
+
+# Fix ,, instead of , bug caused by v3.3.75
+if [[ "${#db1list[@]}" -gt "0" ]]; then
+    for i in "${!db1list[@]}"; do
+        sed -i "s/,,/,/" "${db1list[i]}"
+    done
+fi
+if [[ "${#db2list[@]}" -gt "0" ]]; then
+    for i in "${!db2list[@]}"; do
+        sed -i "s/,,/,/" "${db2list[i]}"
     done
 fi
 
