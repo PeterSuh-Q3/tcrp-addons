@@ -134,6 +134,30 @@ checkAlldisk() {
 checkSynoboot() {
   if [ ! -b /dev/synoboot ] || [ ! -b /dev/synoboot1 ] || [ ! -b /dev/synoboot2 ] || [ ! -b /dev/synoboot3 ]; then
     [ -z "${BOOTDISK}" ] && return
+
+    # SAFETY GUARD: renaming the loader to synoboot below deletes
+    # /dev/${BOOTDISK}*. Only do that when the loader's boot/grub partition is
+    # actually mountable, otherwise a mis-detected/corrupt loader loses
+    # /dev/${BOOTDISK} while synoboot stays unusable. On any doubt keep
+    # /dev/${BOOTDISK}; a later disks.sh run retries once it becomes mountable.
+    _SB_NODE=""
+    for _SB_P in 1 p1; do
+      [ -b "/dev/${BOOTDISK}${_SB_P}" ] && { _SB_NODE="/dev/${BOOTDISK}${_SB_P}"; break; }
+    done
+    if [ -z "${_SB_NODE}" ]; then
+      echo "checkSynoboot: ${BOOTDISK} has no boot partition node yet - keeping /dev/${BOOTDISK}"
+      return
+    fi
+    _SB_MP="/tmp/.synoboot_chk.$$"
+    mkdir -p "${_SB_MP}" 2>/dev/null
+    if ! mount -t vfat -o ro "${_SB_NODE}" "${_SB_MP}" 2>/dev/null; then
+      rmdir "${_SB_MP}" 2>/dev/null
+      echo "checkSynoboot: ${_SB_NODE} is not mountable - keeping /dev/${BOOTDISK}, skip synoboot rename"
+      return
+    fi
+    umount "${_SB_MP}" 2>/dev/null
+    rmdir "${_SB_MP}" 2>/dev/null
+
     if [ ! -b "/dev/synoboot" ] && [ -d "/sys/block/${BOOTDISK}" ]; then
       MAJOR="$(cat "/sys/block/${BOOTDISK}/dev" | cut -d':' -f1)"
       MINOR="$(cat "/sys/block/${BOOTDISK}/dev" | cut -d':' -f2)"
