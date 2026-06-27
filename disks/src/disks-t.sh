@@ -679,7 +679,9 @@ fi
 
 BOOTDISK_PART3_PATH="$(blkid -U "6234-C863" 2>/dev/null)"
 if [ -n "${BOOTDISK_PART3_PATH}" ]; then
-  BOOTDISK_PART3_MAJORMINOR="$(stat -c '%t:%T' "${BOOTDISK_PART3_PATH}" | awk -F: '{printf "%d:%d", strtonum("0x" $1), strtonum("0x" $2)}')"
+  # coreutils stat(glibc 2.28+ 의존)은 구 DSM(7.0.x 등)에서 깨지므로 sysfs 로 major:minor 획득
+  # (/sys/class/block/<dev>/dev 는 십진 "major:minor" 를 직접 제공)
+  BOOTDISK_PART3_MAJORMINOR="$(cat "/sys/class/block/$(basename "${BOOTDISK_PART3_PATH}")/dev" 2>/dev/null)"
   BOOTDISK_PART3="$(awk -F= '/DEVNAME/ {print $2}' "/sys/dev/block/${BOOTDISK_PART3_MAJORMINOR}/uevent" 2>/dev/null)"
 fi
 
