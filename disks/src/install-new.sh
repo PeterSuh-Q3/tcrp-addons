@@ -110,7 +110,7 @@ TCRP_EOF
             close(patch)
         }
         { print }
-    ' "$TARGET" > "${TARGET}.tcrp" && mv "${TARGET}.tcrp" "$TARGET"
+    ' "$TARGET" > "${TARGET}.tcrp" && mv "${TARGET}.tcrp" "$TARGET" && chmod 755 "$TARGET"
 
     rm -f "$TMPF"
     _log "patched ${TARGET} with TCRP md0 fallback (inserted before Main call)"
