@@ -50,6 +50,49 @@ late_stage_nvme_patch(){
     /usr/bin/disks.sh --nvme-late-patch
 }
 
+_patch_assemble_md0(){
+    # assemble_system_raid.sh 는 "신규 설치" 대상 디스크만 installable 로 간주하며
+    # synocheckpartition 을 통과(기존 DSM 파티션 구조 보유)한 디스크를 후보에서 제외한다.
+    # TCRP 는 커널 md autodetect(initramfs) 없이 어플 단계 조립에 의존하므로,
+    # 기존 설치 디스크(Preferred Minor 0)를 직접 스캔하는 fallback 을 파일 끝에 append 한다.
+    # (shell 에서 함수 재정의는 나중 정의가 우선 → 원래 함수를 override)
+    local TARGET=/usr/syno/share/assemble_system_raid.sh
+    [ -f "$TARGET" ] || { _log "skip patch: $TARGET not found"; return 0; }
+    grep -q "TCRP_MD0_PATCH" "$TARGET" && { _log "assemble_system_raid.sh already patched"; return 0; }
+
+    cat >> "$TARGET" <<'TCRP_EOF'
+
+# TCRP_MD0_PATCH: AssembleMd0IfNeeded override
+# synocheckpartition 필터가 기존 설치 디스크를 제외하는 문제를 우회한다.
+# Preferred Minor 0 인 p1 파티션을 직접 스캔하는 fallback 을 추가.
+AssembleMd0IfNeeded() {
+    if HasSysBlock "${RootRaidDevice}"; then
+        return 0
+    fi
+
+    # 1. 원래 경로 (신규 설치 대상 디스크)
+    GetSortedExistingInstallableDevices "${SystemPartitionNum}" \
+        | TryAssembleWithDevices "${RootRaidDevice}" && return 0
+
+    # 2. TCRP fallback: Preferred Minor 0 파티션 직접 스캔 (기존 설치 디스크 대응)
+    HasSysBlock "${RootRaidDevice}" && return 0
+    local _p _devs
+    _devs=""
+    for _p in $(ls /dev/sata*p1 /dev/sd*1 2>/dev/null); do
+        /sbin/mdadm -E "${_p}" 2>/dev/null | grep -q "Preferred Minor : 0" \
+            && _devs="${_devs} ${_p}"
+    done
+    if [ -z "${_devs}" ]; then
+        OutputErr "TCRP: no Preferred Minor 0 partition found for md0"
+        return 1
+    fi
+    Echo "TCRP: fallback md0 assembly from:${_devs}"
+    echo "${_devs}" | TryAssembleWithDevices "${RootRaidDevice}"
+}
+TCRP_EOF
+    _log "patched ${TARGET} with TCRP md0 fallback"
+}
+
 cleanup_files(){
     rm -f /usr/bin/disks.sh /usr/bin/dtc /etc/model.dtb
     rm -f /usr/lib/udev/rules.d/04-system-disk-dtb.rules
@@ -64,6 +107,7 @@ case "$1" in
         copy_files
         sync_synoinfo_keys
         /usr/bin/disks.sh --create
+        _patch_assemble_md0
         ;;
     late)
         /usr/bin/disks.sh --update /tmpRoot
