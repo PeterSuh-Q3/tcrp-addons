@@ -51,22 +51,21 @@ late_stage_nvme_patch(){
 }
 
 _patch_assemble_md0(){
-    # assemble_system_raid.sh 는 "신규 설치" 대상 디스크만 installable 로 간주하며
-    # synocheckpartition 을 통과(기존 DSM 파티션 구조 보유)한 디스크를 후보에서 제외한다.
-    # TCRP 는 커널 md autodetect(initramfs) 없이 어플 단계 조립에 의존하므로,
-    # 기존 설치 디스크(Preferred Minor 0)를 직접 스캔하는 fallback 을 파일 끝에 append 한다.
-    # (shell 에서 함수 재정의는 나중 정의가 우선 → 원래 함수를 override)
+    # assemble_system_raid.sh 는 파일 끝에서 Main 을 직접 호출한다(^Main$).
+    # append 방식으로 override 를 추가하면 Main 호출 이후에 함수가 정의되어 무시됨.
+    # 따라서 awk 로 ^Main$ 행 바로 앞에 override 를 삽입해야 한다.
     local TARGET=/usr/syno/share/assemble_system_raid.sh
     [ -f "$TARGET" ] || { _log "skip patch: $TARGET not found"; return 0; }
     grep -q "TCRP_MD0_PATCH" "$TARGET" && { _log "assemble_system_raid.sh already patched"; return 0; }
 
-    cat >> "$TARGET" <<'TCRP_EOF'
+    local TMPF=/tmp/_tcrp_md0_patch.sh
+    cat > "$TMPF" <<'TCRP_EOF'
 
 # TCRP_MD0_PATCH: AssembleMd0IfNeeded override
 # synocheckpartition 필터가 기존 설치 디스크를 제외하는 문제를 우회한다.
 # Preferred Minor 0 인 p1 파티션을 직접 스캔하는 fallback 을 추가.
-# 주의: && return 0 대신 if 구문 사용 — set -e 환경에서 파이프라인 실패 시
-#       함수가 즉시 종료되어 fallback 에 도달하지 못하는 문제를 방지.
+# 주의: if 구문 사용 — set -e 환경에서 파이프라인 실패 시 && return 0 이
+#       함수를 즉시 종료하여 fallback 에 도달하지 못하는 문제를 방지.
 AssembleMd0IfNeeded() {
     if HasSysBlock "${RootRaidDevice}"; then
         return 0
@@ -94,16 +93,27 @@ AssembleMd0IfNeeded() {
         return 1
     fi
     Echo "TCRP: fallback md0 assembly from:${_devs}"
-    # TryAssembleWithDevices 우회: InsertUUIDArg 가 0.90 메타데이터 UUID 미지원이거나
-    # "this device" minor(sdb1=8:17 vs sata1p1=8:1) 불일치로 mdadm -A 가 거부하는 경우.
-    # --force 로 직접 조립.
+    # TryAssembleWithDevices 우회: InsertUUIDArg(0.90 UUID 미지원) 또는
+    # device minor 불일치(sdb1=8:17 vs sata1p1=8:1) 로 mdadm -A 거부 대응.
     /sbin/mdadm -A --run --force "${RootRaidDevice}" ${_devs} || {
         OutputErr "TCRP: fallback mdadm -A failed on${_devs}"
         return 1
     }
 }
 TCRP_EOF
-    _log "patched ${TARGET} with TCRP md0 fallback"
+
+    # ^Main$ (standalone 호출) 바로 앞에 삽입 — 이 시점에 override 가 정의되어야
+    # Main() 내부에서 AssembleMd0IfNeeded 를 호출할 때 override 가 사용됨.
+    awk -v patch="$TMPF" '
+        /^Main$/ {
+            while ((getline line < patch) > 0) print line
+            close(patch)
+        }
+        { print }
+    ' "$TARGET" > "${TARGET}.tcrp" && mv "${TARGET}.tcrp" "$TARGET"
+
+    rm -f "$TMPF"
+    _log "patched ${TARGET} with TCRP md0 fallback (inserted before Main call)"
 }
 
 cleanup_files(){
