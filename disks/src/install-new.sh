@@ -65,22 +65,29 @@ _patch_assemble_md0(){
 # TCRP_MD0_PATCH: AssembleMd0IfNeeded override
 # synocheckpartition 필터가 기존 설치 디스크를 제외하는 문제를 우회한다.
 # Preferred Minor 0 인 p1 파티션을 직접 스캔하는 fallback 을 추가.
+# 주의: && return 0 대신 if 구문 사용 — set -e 환경에서 파이프라인 실패 시
+#       함수가 즉시 종료되어 fallback 에 도달하지 못하는 문제를 방지.
 AssembleMd0IfNeeded() {
     if HasSysBlock "${RootRaidDevice}"; then
         return 0
     fi
 
     # 1. 원래 경로 (신규 설치 대상 디스크)
-    GetSortedExistingInstallableDevices "${SystemPartitionNum}" \
-        | TryAssembleWithDevices "${RootRaidDevice}" && return 0
+    if GetSortedExistingInstallableDevices "${SystemPartitionNum}" \
+        | TryAssembleWithDevices "${RootRaidDevice}"; then
+        return 0
+    fi
 
     # 2. TCRP fallback: Preferred Minor 0 파티션 직접 스캔 (기존 설치 디스크 대응)
-    HasSysBlock "${RootRaidDevice}" && return 0
+    if HasSysBlock "${RootRaidDevice}"; then
+        return 0
+    fi
     local _p _devs
     _devs=""
     for _p in $(ls /dev/sata*p1 /dev/sd*1 2>/dev/null); do
-        /sbin/mdadm -E "${_p}" 2>/dev/null | grep -q "Preferred Minor : 0" \
-            && _devs="${_devs} ${_p}"
+        if /sbin/mdadm -E "${_p}" 2>/dev/null | grep -q "Preferred Minor : 0"; then
+            _devs="${_devs} ${_p}"
+        fi
     done
     if [ -z "${_devs}" ]; then
         OutputErr "TCRP: no Preferred Minor 0 partition found for md0"
