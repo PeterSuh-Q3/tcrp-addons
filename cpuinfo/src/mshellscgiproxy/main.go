@@ -99,20 +99,99 @@ func cpuTempC() int {
 	return 0
 }
 
-// gpuInfoArray returns the trimmed contents of gpuInfoFile when it holds a
-// non-empty JSON array (i.e. starts with '[' and is not the empty array).
-// Returns "" when the file is absent, unreadable, or empty so the caller
-// injects nothing on GPU-less hosts.
-func gpuInfoArray() string {
-	b, err := os.ReadFile(gpuInfoFile)
-	if err != nil {
+// gpuTempsFromSysfs reads per-card GPU temperatures from DRM hwmon sysfs.
+// Returns a map of card-index → °C.
+func gpuTempsFromSysfs() map[int]int {
+	out := map[int]int{}
+	// /sys/class/drm/cardN/device/hwmon/hwmonM/temp1_input
+	entries, _ := filepath.Glob("/sys/class/drm/card*/device/hwmon/hwmon*/temp1_input")
+	for _, p := range entries {
+		// extract card index from "cardN" segment
+		parts := strings.Split(p, "/")
+		for _, seg := range parts {
+			if !strings.HasPrefix(seg, "card") {
+				continue
+			}
+			n, err := strconv.Atoi(strings.TrimPrefix(seg, "card"))
+			if err != nil {
+				break
+			}
+			b, err := os.ReadFile(p)
+			if err != nil {
+				break
+			}
+			v, err := strconv.Atoi(strings.TrimSpace(string(b)))
+			if err == nil && v > 0 {
+				out[n] = v / 1000
+			}
+			break
+		}
+	}
+	return out
+}
+
+// gpuInfoArrayWithTemp wraps gpuInfoArray(), injecting "temperature_c" into
+// array entries that lack it, using positional DRM hwmon sysfs data.
+func gpuInfoArrayWithTemp() string {
+	s := gpuInfoArray()
+	if s == "" {
 		return ""
 	}
-	s := strings.TrimSpace(string(b))
-	if len(s) < 2 || s[0] != '[' || s == "[]" {
-		return ""
+	temps := gpuTempsFromSysfs()
+	if len(temps) == 0 {
+		return s
 	}
-	return s
+
+	result := []byte(s)
+	cardIdx := 0
+	depth := 0
+	inStr, esc := false, false
+	objStart := -1
+
+	for i := 0; i < len(result); i++ {
+		c := result[i]
+		if esc {
+			esc = false
+			continue
+		}
+		if inStr {
+			if c == '\\' {
+				esc = true
+			} else if c == '"' {
+				inStr = false
+			}
+			continue
+		}
+		switch c {
+		case '"':
+			inStr = true
+		case '{':
+			depth++
+			if depth == 1 {
+				objStart = i
+			}
+		case '}':
+			if depth == 1 && objStart >= 0 {
+				obj := result[objStart : i+1]
+				// 이미 temperature_c가 있으면 skip
+				if !bytes.Contains(obj, []byte("temperature_c")) {
+					if t, ok := temps[cardIdx]; ok {
+						snippet := fmt.Sprintf(`,"temperature_c":%d`, t)
+						tmp := make([]byte, 0, len(result)+len(snippet))
+						tmp = append(tmp, result[:i]...)
+						tmp = append(tmp, snippet...)
+						tmp = append(tmp, result[i:]...)
+						result = tmp
+						i += len(snippet)
+					}
+				}
+				cardIdx++
+				objStart = -1
+			}
+			depth--
+		}
+	}
+	return string(result)
 }
 
 func fanSpeeds() []int {
@@ -167,7 +246,7 @@ func patchJSON(body []byte) []byte {
 	// flip the gate to true and splice our gpu_info array into the same
 	// object. (DSM <= 7.3 uses a different, client-side path covered by the
 	// admin_center.js patch in cpuinfo.sh.)
-	if gpu := gpuInfoArray(); gpu != "" && bytes.Contains(body, []byte(`"support_gpu"`)) {
+	if gpu := gpuInfoArrayWithTemp(); gpu != "" && bytes.Contains(body, []byte(`"support_gpu"`)) {
 		body = gpuFalseRe.ReplaceAll(body, []byte(`"support_gpu":true`))
 		body = injectField(body, "support_gpu", "gpu_info",
 			fmt.Sprintf(`,"gpu_info":%s`, gpu))
