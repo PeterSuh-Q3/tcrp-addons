@@ -137,7 +137,11 @@ case "$1" in
         late_stage_nvme_patch
         # 1.2 메타데이터 RAID(md2 등 데이터 풀)는 커널 자동 인식 안 됨.
         # DSM 스토리지 데몬 초기화 전에 조립해야 풀이 정상 인식됨.
-        /sbin/mdadm --assemble --scan --run 2>/dev/null || true
+        # late 단계에서 대부분 바이너리는 /tmpRoot 하위에 존재하므로 경로 우선순위 탐색.
+        _mdadm=$(which mdadm 2>/dev/null || echo "")
+        [ -z "$_mdadm" ] && [ -x /tmpRoot/sbin/mdadm ] && _mdadm=/tmpRoot/sbin/mdadm
+        [ -z "$_mdadm" ] && [ -x /sbin/mdadm ] && _mdadm=/sbin/mdadm
+        [ -n "$_mdadm" ] && $_mdadm --assemble --scan --run 2>/dev/null || true
         ;;
     uninstall)
         cleanup_files
