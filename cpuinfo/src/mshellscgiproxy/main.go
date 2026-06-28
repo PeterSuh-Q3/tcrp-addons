@@ -99,6 +99,22 @@ func cpuTempC() int {
 	return 0
 }
 
+// gpuInfoArray returns the trimmed contents of gpuInfoFile when it holds a
+// non-empty JSON array (i.e. starts with '[' and is not the empty array).
+// Returns "" when the file is absent, unreadable, or empty so the caller
+// injects nothing on GPU-less hosts.
+func gpuInfoArray() string {
+	b, err := os.ReadFile(gpuInfoFile)
+	if err != nil {
+		return ""
+	}
+	s := strings.TrimSpace(string(b))
+	if len(s) < 2 || s[0] != '[' || s == "[]" {
+		return ""
+	}
+	return s
+}
+
 // gpuTempsFromSysfs reads per-card GPU temperatures from DRM hwmon sysfs.
 // Returns a map of card-index → °C.
 func gpuTempsFromSysfs() map[int]int {
