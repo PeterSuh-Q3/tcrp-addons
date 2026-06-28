@@ -50,71 +50,12 @@ late_stage_nvme_patch(){
     /usr/bin/disks.sh --nvme-late-patch
 }
 
-_patch_assemble_md0(){
-    # assemble_system_raid.sh 는 파일 끝에서 Main 을 직접 호출한다(^Main$).
-    # append 방식으로 override 를 추가하면 Main 호출 이후에 함수가 정의되어 무시됨.
-    # 따라서 awk 로 ^Main$ 행 바로 앞에 override 를 삽입해야 한다.
-    local TARGET=/usr/syno/share/assemble_system_raid.sh
-    [ -f "$TARGET" ] || { _log "skip patch: $TARGET not found"; return 0; }
-    grep -q "TCRP_MD0_PATCH" "$TARGET" && { _log "assemble_system_raid.sh already patched"; return 0; }
-
-    local TMPF=/tmp/_tcrp_md0_patch.sh
-    cat > "$TMPF" <<'TCRP_EOF'
-
-# TCRP_MD0_PATCH: AssembleMd0IfNeeded override
-# synocheckpartition 필터가 기존 설치 디스크를 제외하는 문제를 우회한다.
-# Preferred Minor 0 인 p1 파티션을 직접 스캔하는 fallback 을 추가.
-# 주의: if 구문 사용 — set -e 환경에서 파이프라인 실패 시 && return 0 이
-#       함수를 즉시 종료하여 fallback 에 도달하지 못하는 문제를 방지.
-AssembleMd0IfNeeded() {
-    if HasSysBlock "${RootRaidDevice}"; then
-        return 0
-    fi
-
-    # 1. 원래 경로 (신규 설치 대상 디스크)
-    if GetSortedExistingInstallableDevices "${SystemPartitionNum}" \
-        | TryAssembleWithDevices "${RootRaidDevice}"; then
-        return 0
-    fi
-
-    # 2. TCRP fallback: Preferred Minor 0 파티션 직접 스캔 (기존 설치 디스크 대응)
-    if HasSysBlock "${RootRaidDevice}"; then
-        return 0
-    fi
-    local _p _devs
-    _devs=""
-    for _p in $(ls /dev/sata*p1 /dev/sd*1 2>/dev/null); do
-        if /sbin/mdadm -E "${_p}" 2>/dev/null | grep -q "Preferred Minor : 0"; then
-            _devs="${_devs} ${_p}"
-        fi
-    done
-    if [ -z "${_devs}" ]; then
-        OutputErr "TCRP: no Preferred Minor 0 partition found for md0"
-        return 1
-    fi
-    Echo "TCRP: fallback md0 assembly from:${_devs}"
-    # TryAssembleWithDevices 우회: InsertUUIDArg(0.90 UUID 미지원) 또는
-    # device minor 불일치(sdb1=8:17 vs sata1p1=8:1) 로 mdadm -A 거부 대응.
-    /sbin/mdadm -A --run --force "${RootRaidDevice}" ${_devs} || {
-        OutputErr "TCRP: fallback mdadm -A failed on${_devs}"
-        return 1
-    }
-}
-TCRP_EOF
-
-    # ^Main$ (standalone 호출) 바로 앞에 삽입 — 이 시점에 override 가 정의되어야
-    # Main() 내부에서 AssembleMd0IfNeeded 를 호출할 때 override 가 사용됨.
-    awk -v patch="$TMPF" '
-        /^Main$/ {
-            while ((getline line < patch) > 0) print line
-            close(patch)
-        }
-        { print }
-    ' "$TARGET" > "${TARGET}.tcrp" && mv "${TARGET}.tcrp" "$TARGET" && chmod 755 "$TARGET"
-
-    rm -f "$TMPF"
-    _log "patched ${TARGET} with TCRP md0 fallback (inserted before Main call)"
-}
+# [DISABLED] _patch_assemble_md0
+# expand-md0-8g.sh 의 Phase 4 가 --zero-superblock + --create 를 사용했기 때문에
+# TinyCore 디바이스 번호(sdb1=8:17)가 슈퍼블록에 기록되어 DSM(sata1p1=8:1)과
+# 불일치 → 주니어 모드 진입 문제를 우회하기 위해 추가한 패치.
+# Phase 4 를 --grow 방식으로 교체하여 슈퍼블록을 재생성하지 않으므로 이 패치는 불필요.
+# _patch_assemble_md0(){ ... }
 
 cleanup_files(){
     rm -f /usr/bin/disks.sh /usr/bin/dtc /etc/model.dtb
@@ -130,37 +71,16 @@ case "$1" in
         copy_files
         sync_synoinfo_keys
         /usr/bin/disks.sh --create
-        _patch_assemble_md0
+        # _patch_assemble_md0  # DISABLED: expand-md0-8g.sh --grow 방식으로 대체됨
         ;;
     late)
         /usr/bin/disks.sh --update /tmpRoot
         late_stage_nvme_patch
-        # 1.2 메타데이터 RAID(md2)는 커널 자동 인식 안 됨.
-        # DSM 스토리지 데몬 초기화 전에 조립해야 풀이 정상 인식됨.
-        # --scan 은 모든 디바이스를 대상으로 하므로 영향도가 크다.
-        # md2 가 없고 p3 파티션이 존재할 때만 해당 파티션을 직접 지정해 조립.
-        if [ ! -b /dev/md2 ]; then
-            _mdadm=$(which mdadm 2>/dev/null)
-            [ -z "$_mdadm" ] && [ -x /tmpRoot/sbin/mdadm ] && _mdadm=/tmpRoot/sbin/mdadm
-            [ -z "$_mdadm" ] && [ -x /sbin/mdadm ] && _mdadm=/sbin/mdadm
-            if [ -n "$_mdadm" ]; then
-                for _p3 in /dev/sata*p3 /dev/sd*3; do
-                    [ -b "$_p3" ] || continue
-                    $_mdadm -E "$_p3" 2>/dev/null | grep -q "Version : 1\." || continue
-                    _log "assembling md2 from ${_p3}"
-                    $_mdadm -A --run /dev/md2 "$_p3" 2>/dev/null && break || true
-                done
-                # md2 조립 후 LVM 활성화 — vgchange 없으면 /dev/vg1/volume_1 미생성 →
-                # DSM 스토리지 데몬이 볼륨을 찾지 못해 "attention" 상태가 됨.
-                _lvm=$(which lvm 2>/dev/null)
-                [ -z "$_lvm" ] && [ -x /tmpRoot/sbin/lvm ] && _lvm=/tmpRoot/sbin/lvm
-                [ -z "$_lvm" ] && [ -x /sbin/lvm ] && _lvm=/sbin/lvm
-                if [ -n "$_lvm" ] && [ -b /dev/md2 ]; then
-                    _log "activating LVM volume groups"
-                    $_lvm vgchange -ay 2>/dev/null || true
-                fi
-            fi
-        fi
+        # [DISABLED] md2 수동 조립 + LVM vgchange
+        # expand-md0-8g.sh 의 --update=devicesize 재조립으로 md2 슈퍼블록 Name 이
+        # TinyCore 호스트명으로 기록되어 DSM 자동 조립이 실패하는 문제를 우회하기 위해 추가.
+        # expand-md0-8g.sh Phase 4 를 --grow 방식으로 교체 후 md2 는 원본 슈퍼블록 유지.
+        # DSM 정상 부팅 시 커널/init 이 md2 조립 및 LVM 활성화를 자체적으로 처리함.
         ;;
     uninstall)
         cleanup_files
