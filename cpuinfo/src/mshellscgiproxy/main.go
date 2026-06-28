@@ -50,8 +50,6 @@ import (
 )
 
 const (
-	upstreamSock = "/run/synoscgi.sock"
-	listenSock   = "/run/synoscgi_ms.sock"
 	versionFile  = "/usr/mshell/VERSION"
 
 	// gpuInfoFile holds the SYNO.Core.System "gpu_info" array (a JSON array
@@ -69,8 +67,11 @@ const (
 	maxBufferedBytes = 4 * 1024 * 1024
 )
 
-var loaderVerFlag = flag.String("LOADERVERSION", "",
-	"Override bootloader version (default: read from "+versionFile+")")
+var (
+	loaderVerFlag    = flag.String("LOADERVERSION", "", "Override bootloader version (default: read from "+versionFile+")")
+	upstreamSockFlag = flag.String("upstream", "/run/synoscgi.sock", "upstream SCGI unix socket path")
+	listenSockFlag   = flag.String("listen", "/run/synoscgi_ms.sock", "listen unix socket path")
+)
 
 func bootloaderVer() string {
 	if v := strings.TrimSpace(*loaderVerFlag); v != "" {
@@ -381,7 +382,7 @@ func proxyResponse(upstream, client net.Conn) error {
 	return werr
 }
 
-func handleConnection(client net.Conn) {
+func handleConnection(client net.Conn, upstreamSock string) {
 	defer client.Close()
 
 	upstream, err := net.Dial("unix", upstreamSock)
@@ -420,14 +421,17 @@ func handleConnection(client net.Conn) {
 func main() {
 	flag.Parse()
 
-	_ = os.Remove(listenSock)
-	l, err := net.Listen("unix", listenSock)
+	upstream := *upstreamSockFlag
+	listen := *listenSockFlag
+
+	_ = os.Remove(listen)
+	l, err := net.Listen("unix", listen)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to listen on local socket: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to listen on %s: %v\n", listen, err)
 		os.Exit(1)
 	}
-	if err := os.Chmod(listenSock, 0o666); err != nil {
-		fmt.Fprintf(os.Stderr, "chmod %s: %v\n", listenSock, err)
+	if err := os.Chmod(listen, 0o666); err != nil {
+		fmt.Fprintf(os.Stderr, "chmod %s: %v\n", listen, err)
 	}
 
 	sig := make(chan os.Signal, 1)
@@ -435,7 +439,7 @@ func main() {
 	go func() {
 		<-sig
 		_ = l.Close()
-		_ = os.Remove(listenSock)
+		_ = os.Remove(listen)
 		os.Exit(0)
 	}()
 
@@ -444,6 +448,6 @@ func main() {
 		if err != nil {
 			continue
 		}
-		go handleConnection(c)
+		go handleConnection(c, upstream)
 	}
 }
