@@ -94,7 +94,13 @@ AssembleMd0IfNeeded() {
         return 1
     fi
     Echo "TCRP: fallback md0 assembly from:${_devs}"
-    echo "${_devs}" | TryAssembleWithDevices "${RootRaidDevice}"
+    # TryAssembleWithDevices 우회: InsertUUIDArg 가 0.90 메타데이터 UUID 미지원이거나
+    # "this device" minor(sdb1=8:17 vs sata1p1=8:1) 불일치로 mdadm -A 가 거부하는 경우.
+    # --force 로 직접 조립.
+    /sbin/mdadm -A --run --force "${RootRaidDevice}" ${_devs} || {
+        OutputErr "TCRP: fallback mdadm -A failed on${_devs}"
+        return 1
+    }
 }
 TCRP_EOF
     _log "patched ${TARGET} with TCRP md0 fallback"
