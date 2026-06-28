@@ -3,13 +3,13 @@
     {
       "name": "install-new.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/src/install-new.sh",
-      "sha256": "d1787c04108263077bf4e4916fde96da5c21d1264720e086c2bd26e0d2e30a21",
+      "sha256": "12e773b466fd05a99b2b0fb03597fb477ef25278d5c8908e4aee3071e2dfbd4a",
       "packed": false
     },
     {
       "name": "disks.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/src/disks.sh",
-      "sha256": "d1787c04108263077bf4e4916fde96da5c21d1264720e086c2bd26e0d2e30a21",
+      "sha256": "12e773b466fd05a99b2b0fb03597fb477ef25278d5c8908e4aee3071e2dfbd4a",
       "packed": false
     }
   ],
