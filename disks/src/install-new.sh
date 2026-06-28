@@ -150,6 +150,15 @@ case "$1" in
                     _log "assembling md2 from ${_p3}"
                     $_mdadm -A --run /dev/md2 "$_p3" 2>/dev/null && break || true
                 done
+                # md2 조립 후 LVM 활성화 — vgchange 없으면 /dev/vg1/volume_1 미생성 →
+                # DSM 스토리지 데몬이 볼륨을 찾지 못해 "attention" 상태가 됨.
+                _lvm=$(which lvm 2>/dev/null)
+                [ -z "$_lvm" ] && [ -x /tmpRoot/sbin/lvm ] && _lvm=/tmpRoot/sbin/lvm
+                [ -z "$_lvm" ] && [ -x /sbin/lvm ] && _lvm=/sbin/lvm
+                if [ -n "$_lvm" ] && [ -b /dev/md2 ]; then
+                    _log "activating LVM volume groups"
+                    $_lvm vgchange -ay 2>/dev/null || true
+                fi
             fi
         fi
         ;;
