@@ -1,12 +1,9 @@
 #!/usr/bin/env sh
 # patch-md0 addon
 #
-# DSM md0 조립 우회 패치 — TinyCore 에서 expand-md0-8g.sh 로 8GB 확장 후
-# md0 슈퍼블록의 device minor 가 sata1p1(8:1) 과 불일치하는 경우(DISK=/dev/sdb 등)
-# FilterInOfSynoPartition 이 조립 후보를 제외해 주니어 모드로 진입하는 문제를 우회한다.
-#
-# 사용 조건 : DISK=/dev/sda 환경(sda1=8:1)이면 이 addon 은 불필요.
-#            DISK=/dev/sdb 이상(sdb1=8:17 등)일 때만 설치할 것.
+# DSM md0 조립 fallback 패치 — FilterInOfSynoPartition 이 조립 후보를 제외하거나
+# synocheckpartition 이 8GB p1 을 비표준으로 판단해 md0 조립이 실패할 때 우회한다.
+# assemble_system_raid.sh 파일 끝에 fallback 블록을 추가 (Main 함수 불필요).
 
 _log(){ echo "[patch-md0] $*"; /bin/logger -p info -t patch-md0 "$@"; }
 
@@ -15,55 +12,20 @@ _patch_assemble_md0(){
     [ -f "$TARGET" ] || { _log "skip: $TARGET not found"; return 0; }
     grep -q "TCRP_MD0_PATCH" "$TARGET" && { _log "already patched"; return 0; }
 
-    local TMPF=/tmp/_tcrp_md0_patch.sh
-    cat > "$TMPF" <<'TCRP_EOF'
+    cat >> "$TARGET" <<'TCRP_EOF'
 
-# TCRP_MD0_PATCH: AssembleMd0IfNeeded override
-AssembleMd0IfNeeded() {
-    if HasSysBlock "${RootRaidDevice}"; then
-        return 0
-    fi
-
-    if GetSortedExistingInstallableDevices "${SystemPartitionNum}" \
-        | TryAssembleWithDevices "${RootRaidDevice}"; then
-        return 0
-    fi
-
-    if HasSysBlock "${RootRaidDevice}"; then
-        return 0
-    fi
-
-    local _p _devs
-    _devs=""
-    for _p in $(ls /dev/sata*p1 /dev/sd*1 2>/dev/null); do
-        if /sbin/mdadm -E "${_p}" 2>/dev/null | grep -q "Preferred Minor : 0"; then
-            _devs="${_devs} ${_p}"
+# TCRP_MD0_PATCH: fallback scan — bypass FilterInOfSynoPartition
+# 기존 로직이 md0 조립에 실패한 경우 Preferred Minor=0 파티션을 직접 스캔해 강제 조립한다.
+if [ ! -d /sys/block/md0 ]; then
+    for _tcrp_p in $(ls /dev/sata*p1 /dev/sd*1 2>/dev/null); do
+        if /sbin/mdadm -E "${_tcrp_p}" 2>/dev/null | grep -q "Preferred Minor : 0"; then
+            /sbin/mdadm -A --run --force "${RootRaidDevice}" "${_tcrp_p}" && break
         fi
     done
-    if [ -z "${_devs}" ]; then
-        OutputErr "TCRP: no Preferred Minor 0 partition found for md0"
-        return 1
-    fi
-    Echo "TCRP: fallback md0 assembly from:${_devs}"
-    /sbin/mdadm -A --run --force "${RootRaidDevice}" ${_devs} || {
-        OutputErr "TCRP: fallback mdadm -A failed on${_devs}"
-        return 1
-    }
-}
+fi
 TCRP_EOF
 
-    awk -v patch="$TMPF" '
-        /^Main$/ {
-            while ((getline line < patch) > 0) print line
-            close(patch)
-        }
-        { print }
-    ' "$TARGET" > "${TARGET}.tcrp" \
-        && mv "${TARGET}.tcrp" "$TARGET" \
-        && chmod 755 "$TARGET"
-
-    rm -f "$TMPF"
-    _log "patched ${TARGET}: AssembleMd0IfNeeded fallback inserted before Main"
+    _log "patched ${TARGET}: fallback md0 scan appended"
 }
 
 case "$1" in
