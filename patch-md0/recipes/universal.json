@@ -1,0 +1,13 @@
+{
+  "files": [
+    {
+      "name": "patch.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/patch-md0/src/patch.sh",
+      "sha256": "3d2457614ce2f21c9ca9f47d0a976c7e654c7f3cecfb262c3153934b46873be5",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_patches": "patch.sh"
+  }
+}
