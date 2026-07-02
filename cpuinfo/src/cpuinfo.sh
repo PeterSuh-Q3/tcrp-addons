@@ -233,9 +233,11 @@ else
       [ -n "${_TV}" ] && [ "${_TV}" -gt 0 ] 2>/dev/null && { GTEMP="$((_TV / 1000))"; break; }
     done
     echo "GPU Info (drm) set to: \"${GNAME}\" \"${GCLOCK}\" \"${GMEM}\"${GTEMP:+ ${GTEMP}C}${PCIDN:+ [${PCIDN}]}"
-    # Use pci_slot_num (PCIe card) when PCIDN is available; fall back to
-    # built_in_gpu_slot_num for iGPUs that expose no PCI_SLOT_NAME.
-    if [ -n "${PCIDN}" ]; then
+    # i915 (Intel iGPU) is physically integrated → built_in_gpu_slot_num.
+    # All other DRM drivers (amdgpu, etc.) are discrete PCIe cards → pci_slot_num.
+    if [ "${DRV}" = "i915" ]; then
+      _GSLOT='"built_in_gpu_slot_num":0'
+    elif [ -n "${PCIDN}" ]; then
       _GSLOT='"pci_slot_num":"'"${PCIDN}"'"'
     else
       _GSLOT='"built_in_gpu_slot_num":0'
