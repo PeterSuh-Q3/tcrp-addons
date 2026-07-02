@@ -232,37 +232,46 @@ else
       _TV="$(cat "${_HTMP}" 2>/dev/null)"
       [ -n "${_TV}" ] && [ "${_TV}" -gt 0 ] 2>/dev/null && { GTEMP="$((_TV / 1000))"; break; }
     done
-    echo "GPU Info (drm) set to: \"${GNAME}\" \"${GCLOCK}\" \"${GMEM}\"${GTEMP:+ ${GTEMP}C}"
-    if [ -n "${GTEMP}" ]; then
-      _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","temperature_c":%s,"tempwarn":false,"built_in_gpu_slot_num":0}' \
-        "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}" "${GTEMP}")"
+    echo "GPU Info (drm) set to: \"${GNAME}\" \"${GCLOCK}\" \"${GMEM}\"${GTEMP:+ ${GTEMP}C}${PCIDN:+ [${PCIDN}]}"
+    # Use pci_slot_num (PCIe card) when PCIDN is available; fall back to
+    # built_in_gpu_slot_num for iGPUs that expose no PCI_SLOT_NAME.
+    if [ -n "${PCIDN}" ]; then
+      _GSLOT='"pci_slot_num":"'"${PCIDN}"'"'
     else
-      _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}' \
-        "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}")"
+      _GSLOT='"built_in_gpu_slot_num":0'
+    fi
+    if [ -n "${GTEMP}" ]; then
+      _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s",%s,"temperature_c":%s,"tempwarn":false}' \
+        "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}" "${_GSLOT}" "${GTEMP}")"
+    else
+      _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s",%s}' \
+        "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}" "${_GSLOT}")"
     fi
   done
 
   # 2. NVIDIA via nvidia-smi (proprietary driver). One row per GPU:
-  #    name, max graphics clock (MHz), total memory (MiB), temperature (C).
+  #    name, max graphics clock (MHz), total memory (MiB), temperature (C), pci.bus_id.
   if command -v nvidia-smi >/dev/null 2>&1 && ls /dev/nvidia[0-9]* >/dev/null 2>&1; then
-    while IFS=, read -r NVN NVC NVM NVT; do
+    while IFS=, read -r NVN NVC NVM NVT NVPCI; do
       NVN="$(printf '%s' "${NVN}" | sed 's/^ *//; s/ *$//')"
       NVC="$(printf '%s' "${NVC}" | tr -dc '0-9')"
       NVM="$(printf '%s' "${NVM}" | tr -dc '0-9')"
       NVT="$(printf '%s' "${NVT}" | tr -dc '0-9')"
+      # nvidia-smi pci.bus_id: "00000000:01:00.0" → strip leading 4 zeros → "0000:01:00.0"
+      NVPCI="$(printf '%s' "${NVPCI}" | tr -d ' ' | cut -c5-)"
       [ -n "${NVN}" ] || continue
       NVNAME="NVIDIA ${NVN}"; NVCLOCK="${NVC:-0} MHz"; NVMEM="${NVM:-0} MiB"
       [ -z "${FIRST_NAME}" ] && { FIRST_NAME="${NVNAME}"; FIRST_CLOCK="${NVCLOCK}"; FIRST_MEMORY="${NVMEM}"; }
-      echo "GPU Info (nvidia) set to: \"${NVNAME}\" \"${NVCLOCK}\" \"${NVMEM}\" ${NVT:-?}C"
+      echo "GPU Info (nvidia) set to: \"${NVNAME}\" \"${NVCLOCK}\" \"${NVMEM}\" ${NVT:-?}C${NVPCI:+ [${NVPCI}]}"
       # temperature_c + tempwarn (both must be defined for the temp row to render).
       if [ -n "${NVT}" ]; then
-        _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","temperature_c":%s,"tempwarn":false,"built_in_gpu_slot_num":0}' \
-          "$(_json_escape "${NVNAME}")" "${NVCLOCK}" "${NVMEM}" "${NVT}")"
+        _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","pci_slot_num":"%s","temperature_c":%s,"tempwarn":false}' \
+          "$(_json_escape "${NVNAME}")" "${NVCLOCK}" "${NVMEM}" "${NVPCI:-}" "${NVT}")"
       else
-        _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}' \
-          "$(_json_escape "${NVNAME}")" "${NVCLOCK}" "${NVMEM}")"
+        _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","pci_slot_num":"%s"}' \
+          "$(_json_escape "${NVNAME}")" "${NVCLOCK}" "${NVMEM}" "${NVPCI:-}")"
       fi
-    done < <(nvidia-smi --query-gpu=name,clocks.max.graphics,memory.total,temperature.gpu --format=csv,noheader,nounits 2>/dev/null)
+    done < <(nvidia-smi --query-gpu=name,clocks.max.graphics,memory.total,temperature.gpu,pci.bus_id --format=csv,noheader,nounits 2>/dev/null)
   fi
 
   if [ -n "${GPU_ELEMS}" ]; then
@@ -273,11 +282,21 @@ else
     printf '[%s]\n' "${GPU_ELEMS}" >"${GPU_INFO_FILE}"
   fi
 
-  # ── GPU section gate + GPU temp (only when DSM build has the GPU section) ──
+  # ── GPU section gate + GPU temp ─────────────────────────────────────────────
   if grep -q 'support_nvidia_gpu' "${FILE_JS}"; then
+    # DSM <= 7.3: force GPU section visible; append temp to single t.gpu object.
     sed -i 's/_D("support_nvidia_gpu")},/_D("support_nvidia_gpu")||true},/g' "${FILE_JS}"
-    # GPU temperature: uppercase C/D are stable across builds; only relevant here.
     sed -i 's/,C,D);/,C,t.gpu.temperature_c?D+" \| "+this.renderTempFromC(t.gpu.temperature_c):D);/g' "${FILE_JS}"
+  else
+    # DSM 7.4: patch formatGpuInfo() so each GPU row shows "보통 | 62 °C / 143 °F"
+    # instead of just "보통". The ternary (u?over:normal) is wrapped and the
+    # actual temp string from renderTempFromC(h) is appended conditionally.
+    if grep -q 'u?_T("system","over_temperature"):_T("helpbrowser","font_normal"),"</div>","</div>"].join' "${FILE_JS}"; then
+      sed -i 's#u?_T("system","over_temperature"):_T("helpbrowser","font_normal"),"</div>","</div>"].join#(u?_T("system","over_temperature"):_T("helpbrowser","font_normal"))+(h?" | "+this.renderTempFromC(h):""),"</div>","</div>"].join#g' "${FILE_JS}"
+      echo "gpu_thermal_status temp patch applied (DSM 7.4 formatGpuInfo)"
+    else
+      echo "WARN: gpu_thermal_status — formatGpuInfo pattern not found; patch skipped"
+    fi
   fi
 
   # ── CPU temperature ─────────────────────────────────────────────────────────
