@@ -259,10 +259,40 @@ else
     printf '[%s]\n' "${GPU_ELEMS}" >"${GPU_INFO_FILE}"
   fi
 
-  sed -i "s/_D(\"support_nvidia_gpu\")},/_D(\"support_nvidia_gpu\")||true},/g" "${FILE_JS}"
-  sed -i 's/,t,i,s)}/,t,i,e.sys_temp?s+" \| "+this.renderTempFromC(e.sys_temp):s)}/g' "${FILE_JS}"
-  sed -i 's/,C,D);/,C,t.gpu.temperature_c?D+" \| "+this.renderTempFromC(t.gpu.temperature_c):D);/g' "${FILE_JS}"
-  sed -i 's/_T("rcpower",n),/_T("rcpower", n)?e.fan_list?_T("rcpower", n) + e.fan_list.map(fan => ` | ${fan} RPM`).join(""):_T("rcpower", n):e.fan_list?e.fan_list.map(fan => `${fan} RPM`).join(" | "):_T("rcpower", n),/g' "${FILE_JS}"
+  # ── GPU section gate + GPU temp (only when DSM build has the GPU section) ──
+  if grep -q 'support_nvidia_gpu' "${FILE_JS}"; then
+    sed -i 's/_D("support_nvidia_gpu")},/_D("support_nvidia_gpu")||true},/g' "${FILE_JS}"
+    # GPU temperature: uppercase C/D are stable across builds; only relevant here.
+    sed -i 's/,C,D);/,C,t.gpu.temperature_c?D+" \| "+this.renderTempFromC(t.gpu.temperature_c):D);/g' "${FILE_JS}"
+  fi
+
+  # ── CPU temperature ─────────────────────────────────────────────────────────
+  # The minified variable carrying the system uptime string differs by DSM build
+  # (observed: 's' with GPU section, 'n' without). Detect it dynamically so a
+  # single code path covers both.
+  _CPUVAR=$(grep -oE ',t,i,[a-z]\)' "${FILE_JS}" | head -1 | sed 's/.*,//; s/)//')
+  if [ -n "${_CPUVAR}" ]; then
+    sed -i "s/,t,i,${_CPUVAR})}/,t,i,e.sys_temp?${_CPUVAR}+\" | \"+this.renderTempFromC(e.sys_temp):${_CPUVAR})}/g" "${FILE_JS}"
+    echo "sys_temp patch applied (var=${_CPUVAR})"
+  else
+    echo "WARN: sys_temp — pattern ',t,i,X)' not found in ${FILE_JS}; patch skipped"
+  fi
+
+  # ── Fan RPM ─────────────────────────────────────────────────────────────────
+  # Same minification variation as CPU temp ('n' or 's'). Write the sed script
+  # to a temp file to avoid backtick/dollar-sign escaping in the shell.
+  _FANVAR=$(grep -oE '"rcpower",[a-z]\)' "${FILE_JS}" | head -1 | sed 's/.*,//; s/)//')
+  if [ -n "${_FANVAR}" ]; then
+    _FV="${_FANVAR}"
+    cat >/tmp/_cpuinfo_fan_patch.sed <<SEDEOF
+s/_T("rcpower",${_FV}),/_T("rcpower", ${_FV})?e.fan_list?_T("rcpower", ${_FV}) + e.fan_list.map(fan => \` | \${fan} RPM\`).join(""):_T("rcpower", ${_FV}):e.fan_list?e.fan_list.map(fan => \`\${fan} RPM\`).join(" | "):_T("rcpower", ${_FV}),/g
+SEDEOF
+    sed -i -f /tmp/_cpuinfo_fan_patch.sed "${FILE_JS}"
+    rm -f /tmp/_cpuinfo_fan_patch.sed
+    echo "fan_list patch applied (var=${_FANVAR})"
+  else
+    echo "WARN: fan_list — pattern '_T(\"rcpower\",X)' not found in ${FILE_JS}; patch skipped"
+  fi
 
   [ -f "${FILE_GZ}.bak" ] && gzip -c "${FILE_JS}" >"${FILE_GZ}"
 
