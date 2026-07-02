@@ -223,9 +223,23 @@ else
     [ -z "${GMEM}" ] && GMEM="$(awk '{s=(strtonum($2)-strtonum($1)+1)/1048576} (and(strtonum($3),0x200))&&(and(strtonum($3),0x2000))&&(and(strtonum($3),0x40000))&&s>0{print int(s) " MiB"; exit}' "${CARDN}/device/resource" 2>/dev/null)"
     [ -n "${GNAME}" ] && [ -n "${GCLOCK}" ] && [ -n "${GMEM}" ] || continue
     [ -z "${FIRST_NAME}" ] && { FIRST_NAME="${GNAME}"; FIRST_CLOCK="${GCLOCK}"; FIRST_MEMORY="${GMEM}"; }
-    echo "GPU Info (drm) set to: \"${GNAME}\" \"${GCLOCK}\" \"${GMEM}\""
-    _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}' \
-      "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}")"
+    # GPU temperature via hwmon (Intel i915 / AMD amdgpu). Values are in
+    # millidegrees C; divide by 1000. Walk hwmon* subdirs and pick the first
+    # temp1_input that reports a sane (> 0) value.
+    GTEMP=""
+    for _HTMP in "${CARDN}/device/hwmon"/hwmon*/temp1_input; do
+      [ -f "${_HTMP}" ] || continue
+      _TV="$(cat "${_HTMP}" 2>/dev/null)"
+      [ -n "${_TV}" ] && [ "${_TV}" -gt 0 ] 2>/dev/null && { GTEMP="$((_TV / 1000))"; break; }
+    done
+    echo "GPU Info (drm) set to: \"${GNAME}\" \"${GCLOCK}\" \"${GMEM}\"${GTEMP:+ ${GTEMP}C}"
+    if [ -n "${GTEMP}" ]; then
+      _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","temperature_c":%s,"tempwarn":false,"built_in_gpu_slot_num":0}' \
+        "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}" "${GTEMP}")"
+    else
+      _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s","built_in_gpu_slot_num":0}' \
+        "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}")"
+    fi
   done
 
   # 2. NVIDIA via nvidia-smi (proprietary driver). One row per GPU:
