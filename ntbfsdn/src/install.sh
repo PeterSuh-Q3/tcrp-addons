@@ -72,6 +72,7 @@ log "acting as controller $LOC ($MYIP) via $NIC, ntb_eth0 vlan $VLANID"
 #   - keeps it forced to "1" for the install window, re-asserting if the source
 #     file in /tmp gets cleaned or the bind mount is lost.
 (
+  trap '' HUP   # survive parent/session teardown (no setsid/nohup in junior)
   hb_src=/tmp/ntb_hb
   i=0
   while [ ! -e /proc/ntb_heartbeat ] && [ $i -lt 300 ]; do sleep 2; i=$((i+2)); done
