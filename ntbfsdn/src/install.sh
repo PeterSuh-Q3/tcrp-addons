@@ -62,18 +62,35 @@ done
 [ -z "$NIC" ] && { log "no physical NIC with MAC $WANT_MAC found, skipping"; exit 0; }
 log "acting as controller $LOC ($MYIP) via $NIC, ntb_eth0 vlan $VLANID"
 
-# --- 1) fake NTB heartbeat ---------------------------------------------------
-# /proc/ntb_heartbeat is created by the synology ntb driver; wait briefly for it.
-i=0
-while [ ! -e /proc/ntb_heartbeat ] && [ $i -lt 15 ]; do sleep 1; i=$((i+1)); done
-if [ -e /proc/ntb_heartbeat ]; then
-  if ! mount | grep -q ' /proc/ntb_heartbeat '; then
-    echo 1 > /tmp/ntb_hb
-    mount -o bind /tmp/ntb_hb /proc/ntb_heartbeat && log "heartbeat forced up"
+# --- 1) fake NTB heartbeat (backgrounded) ------------------------------------
+# The synology ntb driver creates /proc/ntb_heartbeat asynchronously, sometimes
+# well after this phase runs (observed: present within 15s on one box, much
+# later on another). Do NOT block the patches phase waiting for it - that would
+# delay boot and can deadlock the very driver load we are waiting on. Instead
+# spawn a background watcher that:
+#   - waits (up to 5 min) for /proc/ntb_heartbeat to appear, then
+#   - keeps it forced to "1" for the install window, re-asserting if the source
+#     file in /tmp gets cleaned or the bind mount is lost.
+(
+  hb_src=/tmp/ntb_hb
+  i=0
+  while [ ! -e /proc/ntb_heartbeat ] && [ $i -lt 300 ]; do sleep 2; i=$((i+2)); done
+  if [ ! -e /proc/ntb_heartbeat ]; then
+    log "warning: /proc/ntb_heartbeat never appeared - heartbeat may fail"
+    exit 0
   fi
-else
-  log "warning: /proc/ntb_heartbeat absent - heartbeat check may fail"
-fi
+  logged=0
+  j=0
+  while [ $j -lt 900 ]; do
+    if [ ! -e "$hb_src" ] || [ "$(cat /proc/ntb_heartbeat 2>/dev/null)" != "1" ]; then
+      echo 1 > "$hb_src"
+      umount /proc/ntb_heartbeat 2>/dev/null
+      mount -o bind "$hb_src" /proc/ntb_heartbeat
+      [ "$logged" = "0" ] && { log "heartbeat forced up"; logged=1; }
+    fi
+    sleep 5; j=$((j+5))
+  done
+) &
 
 # --- 2) build ntb_eth0 as a VLAN on the primary NIC --------------------------
 modprobe 8021q 2>/dev/null
