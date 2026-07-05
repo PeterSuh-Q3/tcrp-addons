@@ -35,31 +35,32 @@ touches a fully installed DSM, to avoid interfering with runtime HA logic.
 
 ## Configuration
 
-Which box is controller 0 vs 1 is decided by MAC address. Add to
-`user_config.json`:
+Junior cannot read `user_config.json`, so the role is baked into the ramdisk at
+build time. `tinycore-redpill/functions_t.sh` (ramdisk reassembly) prompts, for
+an `epyc7003ntb` build, which controller this loader is, then writes
+`/addons/ntb_eth0.json` using the NIC MAC from `.extra_cmdline.mac1`:
 
 ```json
-{
-  "ntbfsdn": {
-    "mac0": "aa:bb:cc:dd:ee:01",
-    "mac1": "aa:bb:cc:dd:ee:02",
-    "vlan": 100
-  }
-}
+{ "mac0": "aa:bb:cc:dd:ee:01", "vlan": 100 }   // controller 0 -> 169.254.4.1
+```
+```json
+{ "mac1": "aa:bb:cc:dd:ee:02", "vlan": 100 }   // controller 1 -> 169.254.4.2
 ```
 
-- `mac0` — primary NIC MAC of the box that becomes controller 0 (`169.254.4.1`)
-- `mac1` — primary NIC MAC of the box that becomes controller 1 (`169.254.4.2`)
+- `mac0` present → this box is controller 0 (`169.254.4.1`)
+- `mac1` present → this box is controller 1 (`169.254.4.2`)
+- the recorded MAC selects which physical NIC carries `ntb_eth0`
 - `vlan` — optional VLAN id for `ntb_eth0` (default `100`)
 
-If the local MAC matches neither `mac0` nor `mac1`, the addon is a no-op — safe
-to include for single-node epyc7003ntb builds.
+If `/addons/ntb_eth0.json` is absent (non-FSDN build), the addon is a no-op —
+safe to include for single-node epyc7003ntb builds.
 
 ## Usage
 
-1. Add `ntbfsdn` to both boxes' loaders and set `mac0`/`mac1` in
-   `user_config.json`.
-2. Boot both boxes to the DSM installer (junior).
+1. Build each box's loader with `ntbfsdn` in the addon list. At ramdisk
+   reassembly the build prompts for the controller role (0 or 1) — pick `0` for
+   one box and `1` for the other.
+2. Boot both boxes (same L2 switch) to the DSM installer (junior).
 3. Start the DSM install from either box's web UI. The addon has already set up
    the peer link on both sides, so the coordinated install proceeds.
 

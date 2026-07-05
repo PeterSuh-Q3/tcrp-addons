@@ -17,10 +17,12 @@
 # clusterInstall.sh then performs the real coordinated dual-node install over
 # regular LAN posing as ntb_eth0.
 #
-# Which box is controller 0 (.1) vs 1 (.2) is decided by MAC address, read from
-# user_config.json:
-#   { "ntbfsdn": { "mac0": "aa:bb:..", "mac1": "cc:dd:..", "vlan": 100 } }
-# If the local MAC matches neither, the addon is a no-op (safe for single node).
+# Junior cannot read user_config.json, so the loader build (functions_t.sh) bakes
+# this box's role + NIC MAC into /addons/ntb_eth0.json:
+#   { "mac0": "aa:bb:.." , "vlan": 100 }   -> this box is controller 0 (169.254.4.1)
+#   { "mac1": "cc:dd:.." , "vlan": 100 }   -> this box is controller 1 (169.254.4.2)
+# The recorded MAC selects which physical NIC carries ntb_eth0. If the file is
+# absent (non-FSDN build), the addon is a no-op.
 #
 # Runs in the junior installer runtime (on_patches phase).
 
@@ -31,43 +33,32 @@
 
 log(){ echo "ntbfsdn: $*" >&2; }
 
-# --- read config -------------------------------------------------------------
-MAC0=""; MAC1=""; VLANID=""
-if [ -b /dev/synoboot3 ]; then
-  mkdir -p /mnt/tcrp
-  mount /dev/synoboot3 /mnt/tcrp 2>/dev/null
-  MAC0=$(jq -r -e '.ntbfsdn.mac0' /mnt/tcrp/user_config.json 2>/dev/null)
-  MAC1=$(jq -r -e '.ntbfsdn.mac1' /mnt/tcrp/user_config.json 2>/dev/null)
-  VLANID=$(jq -r '.ntbfsdn.vlan' /mnt/tcrp/user_config.json 2>/dev/null)
-  umount /mnt/tcrp 2>/dev/null
-fi
+# --- read baked config -------------------------------------------------------
+CFG=/addons/ntb_eth0.json
+[ -f "$CFG" ] || { log "no $CFG (non-FSDN build), skipping"; exit 0; }
+
+MAC0=$(jq -r '.mac0 // empty' "$CFG" 2>/dev/null | tr 'A-Z' 'a-z')
+MAC1=$(jq -r '.mac1 // empty' "$CFG" 2>/dev/null | tr 'A-Z' 'a-z')
+VLANID=$(jq -r '.vlan // 100' "$CFG" 2>/dev/null)
 [ "$VLANID" = "null" ] || [ -z "$VLANID" ] && VLANID=100
 
-MAC0=$(echo "$MAC0" | tr 'A-Z' 'a-z')
-MAC1=$(echo "$MAC1" | tr 'A-Z' 'a-z')
-if [ -z "$MAC0" ] || [ -z "$MAC1" ] || [ "$MAC0" = "null" ] || [ "$MAC1" = "null" ]; then
-  log "mac0/mac1 not configured in user_config.json (.ntbfsdn), skipping"
+if [ -n "$MAC0" ]; then
+  LOC=0; MYIP="169.254.4.1"; WANT_MAC="$MAC0"
+elif [ -n "$MAC1" ]; then
+  LOC=1; MYIP="169.254.4.2"; WANT_MAC="$MAC1"
+else
+  log "neither mac0 nor mac1 recorded in $CFG, skipping"
   exit 0
 fi
 
-# --- pick primary physical NIC and its MAC -----------------------------------
+# --- pick the physical NIC that carries the recorded MAC ---------------------
 NIC=""
 for d in /sys/class/net/*; do
   n=$(basename "$d")
   [ -e "$d/device" ] || continue   # physical only (skip lo, vlans, dummies)
-  NIC="$n"; break
+  [ "$(tr 'A-Z' 'a-z' < "$d/address")" = "$WANT_MAC" ] && { NIC="$n"; break; }
 done
-[ -z "$NIC" ] && { log "no physical NIC found, skipping"; exit 0; }
-LMAC=$(tr 'A-Z' 'a-z' < "/sys/class/net/$NIC/address")
-
-if [ "$LMAC" = "$MAC0" ]; then
-  LOC=0; MYIP="169.254.4.1"
-elif [ "$LMAC" = "$MAC1" ]; then
-  LOC=1; MYIP="169.254.4.2"
-else
-  log "local MAC $LMAC ($NIC) matches neither mac0 nor mac1, skipping"
-  exit 0
-fi
+[ -z "$NIC" ] && { log "no physical NIC with MAC $WANT_MAC found, skipping"; exit 0; }
 log "acting as controller $LOC ($MYIP) via $NIC, ntb_eth0 vlan $VLANID"
 
 # --- 1) fake NTB heartbeat ---------------------------------------------------
