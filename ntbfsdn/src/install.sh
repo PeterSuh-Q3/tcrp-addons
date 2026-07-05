@@ -37,8 +37,9 @@ log(){ echo "ntbfsdn: $*" >&2; }
 CFG=/addons/ntb_eth0.json
 [ -f "$CFG" ] || { log "no $CFG (non-FSDN build), skipping"; exit 0; }
 
-MAC0=$(jq -r '.mac0 // empty' "$CFG" 2>/dev/null | tr 'A-Z' 'a-z')
-MAC1=$(jq -r '.mac1 // empty' "$CFG" 2>/dev/null | tr 'A-Z' 'a-z')
+# MACs may be stored with or without colons (tcrp mac1 has none); normalize.
+MAC0=$(jq -r '.mac0 // empty' "$CFG" 2>/dev/null | tr 'A-Z' 'a-z' | tr -d ':')
+MAC1=$(jq -r '.mac1 // empty' "$CFG" 2>/dev/null | tr 'A-Z' 'a-z' | tr -d ':')
 VLANID=$(jq -r '.vlan // 100' "$CFG" 2>/dev/null)
 [ "$VLANID" = "null" ] || [ -z "$VLANID" ] && VLANID=100
 
@@ -56,7 +57,7 @@ NIC=""
 for d in /sys/class/net/*; do
   n=$(basename "$d")
   [ -e "$d/device" ] || continue   # physical only (skip lo, vlans, dummies)
-  [ "$(tr 'A-Z' 'a-z' < "$d/address")" = "$WANT_MAC" ] && { NIC="$n"; break; }
+  [ "$(tr 'A-Z' 'a-z' < "$d/address" | tr -d ':')" = "$WANT_MAC" ] && { NIC="$n"; break; }
 done
 [ -z "$NIC" ] && { log "no physical NIC with MAC $WANT_MAC found, skipping"; exit 0; }
 log "acting as controller $LOC ($MYIP) via $NIC, ntb_eth0 vlan $VLANID"
