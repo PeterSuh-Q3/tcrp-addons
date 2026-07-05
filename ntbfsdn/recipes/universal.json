@@ -1,0 +1,14 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/ntbfsdn/src/install.sh",
+      "sha256": "b4fe32fd8a0cf12bd952efdc54f0f261ca7593c61a65a0e8a53e89e61f240a12",
+      "packed": false
+    }
+  ],
+
+  "scripts": {
+    "on_patches": "install.sh"
+  }
+}

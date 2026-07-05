@@ -1,0 +1,13 @@
+{
+  "id": "ntbfsdn",
+  "info": {
+    "description": "epyc7003ntb (PAS7700/FS3420) FSDN dual-controller install helper: lets two ordinary boxes pose as the two NTB controllers so the Enterprise installer completes",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/ntbfsdn",
+    "name": "ntbfsdn helper",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/ntbfsdn"
+  },
+  "releases": {
+    "epyc7003ntb_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/ntbfsdn/recipes/universal.json"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/ntbfsdn/rpext-index.json"
+}
