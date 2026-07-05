@@ -772,15 +772,19 @@ nvme_late_patch(){
 }
 
 
-# lock
+# lock (best-effort; must tolerate BusyBox flock which lacks -w)
+# util-linux flock supports "-w SECS" (wait); BusyBox flock does NOT and errors
+# out with "invalid option -- 'w'", which previously aborted the whole addon on
+# DSM junior mode. Try -w first, fall back to non-blocking -n, and if neither
+# works just proceed without the lock rather than failing.
 if type flock >/dev/null 2>&1 && type trap >/dev/null 2>&1; then
   LOCKFILE="/var/run/disks.lock"
   exec 3>"$LOCKFILE"
-  flock -w 60 3 || {
-    _log "Failed to acquire lock after 60 seconds. Exiting."
-    exit 1
-  }                                                      # 60 seconds timeout
-  trap 'flock -u 3; rm -f "$LOCKFILE"' EXIT INT TERM HUP # Release lock on exit or error or signal or hangup
+  if flock -w 60 3 2>/dev/null || flock -n 3 2>/dev/null; then
+    trap 'flock -u 3; rm -f "$LOCKFILE"' EXIT INT TERM HUP # release on exit/signal
+  else
+    _log "flock lock not acquired (busybox flock or contention) - proceeding without it"
+  fi
 fi
 
 # get the boot disk info
