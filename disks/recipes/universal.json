@@ -1,5 +1,5 @@
 {
-"files": [
+  "files": [
     {
       "name": "install-new.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/src/install-new.sh",
@@ -9,13 +9,13 @@
     {
       "name": "disks.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/disks/src/disks.sh",
-      "sha256": "81dc5cd31d39606874bf26ed0004475dd86e129172a8c91bbd366dbaa58e340b",
+      "sha256": "cbaf2cd4f100208608dce3ef55489291a1f67f83db5d4fe5a215c9d394831512",
       "packed": false
     }
   ],
   "scripts": {
     "on_boot": "install-new.sh",
-    "on_patches": "install-new.sh",	  
+    "on_patches": "install-new.sh",
     "on_os_load": "install-new.sh"
   }
 }

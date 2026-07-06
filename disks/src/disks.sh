@@ -813,9 +813,14 @@ fi
 
 BOOTDISK_PART3_PATH="$(blkid -U "6234-C863" 2>/dev/null)"
 if [ -n "${BOOTDISK_PART3_PATH}" ]; then
-  # coreutils stat(glibc 2.28+ 의존)은 구 DSM(7.0.x 등)에서 깨지므로 sysfs 로 major:minor 획득
-  # (/sys/class/block/<dev>/dev 는 십진 "major:minor" 를 직접 제공)
-  BOOTDISK_PART3_MAJORMINOR="$(cat "/sys/class/block/$(basename "${BOOTDISK_PART3_PATH}")/dev" 2>/dev/null)"
+  # coreutils stat(glibc 2.28+ 의존)은 구 DSM(7.0.x 등)에서 깨지므로 sysfs 로 major:minor 획득.
+  # 단, automount/boot-wait 가 먼저 실행되어 로더 파티션을 /dev/synoboot3(심링크/ mknod)로
+  # 노출한 경우 blkid 는 /dev/synoboot3 을 돌려주는데, 이 이름은 /sys/class/block 에 없어서
+  # (실제 sysfs 이름은 sata1p3 등) by-name 조회가 실패한다. 그래서 노드에서 major:minor 를 직접
+  # 읽고(-L 로 심링크 추적) /sys/dev/block/<mm> 로 실제 sysfs 이름을 역참조한다.
+  BOOTDISK_PART3_MAJORMINOR="$(ls -lLn "${BOOTDISK_PART3_PATH}" 2>/dev/null | awk '{gsub(/,/,"",$5); print $5":"$6}')"
+  [ -e "/sys/dev/block/${BOOTDISK_PART3_MAJORMINOR}" ] || \
+    BOOTDISK_PART3_MAJORMINOR="$(cat "/sys/class/block/$(basename "${BOOTDISK_PART3_PATH}")/dev" 2>/dev/null)"
   BOOTDISK_PART3="$(awk -F= '/DEVNAME/ {print $2}' "/sys/dev/block/${BOOTDISK_PART3_MAJORMINOR}/uevent" 2>/dev/null)"
 fi
 
