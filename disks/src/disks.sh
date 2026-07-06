@@ -422,6 +422,15 @@ dtModel() {
     done
 
     # NVME ports
+    # PAS7700(NVMe 올플래시) 정품 model.dtb 는 NVMe 를 M.2 SSD 캐시
+    # (nvme_slot + port_type="ssdcache") 가 아니라 데이터 베이(internal_slot)로
+    # 정의한다. 실측 정품 스키마: internal_slot@N { nvme { pcie_root = "..."; }; }
+    # (reg / port_type 없음). syno_hw_version 으로 모델을 판별해 이 모델에서만
+    # 데이터-볼륨 스키마로 생성하고, 그 외 모델은 기존 캐시 슬롯 동작을 유지한다.
+    NVME_AS_DATA=""
+    case "$(cat /proc/sys/kernel/syno_hw_version 2>/dev/null | tr 'A-Z' 'a-z')" in
+      *pas7700*) NVME_AS_DATA="yes" ;;
+    esac
     COUNT=0
     POWER_LIMIT=""
 	for F in $(LC_ALL=C printf '%s\n' /sys/block/nvme* | $( [ -n "${SORT_CMD}" ] && echo "${SORT_CMD} -V" || echo _sort_v_nvme )); do
@@ -440,13 +449,25 @@ dtModel() {
       POWER_LIMIT="${POWER_LIMIT:+${POWER_LIMIT},}0"
       COUNT=$((COUNT + 1))
       REG_COUNT=$((REG_COUNT + 1))
-      {
-        echo "    nvme_slot@${COUNT} {"
-        echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"
-        echo "        pcie_root = \"${PCIEPATH}\";"
-        echo "        port_type = \"ssdcache\";"
-        echo "    };"
-      } >>"${DEST}"
+      if [ -n "${NVME_AS_DATA}" ]; then
+        # PAS7700: NVMe 데이터 볼륨 (정품 스키마 — reg/port_type 없음)
+        {
+          echo "    internal_slot@${COUNT} {"
+          echo "        nvme {"
+          echo "            pcie_root = \"${PCIEPATH}\";"
+          echo "        };"
+          echo "    };"
+        } >>"${DEST}"
+      else
+        # 기타 모델: 기존 M.2 SSD 캐시 슬롯
+        {
+          echo "    nvme_slot@${COUNT} {"
+          echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"
+          echo "        pcie_root = \"${PCIEPATH}\";"
+          echo "        port_type = \"ssdcache\";"
+          echo "    };"
+        } >>"${DEST}"
+      fi
     done
     [ -n "${POWER_LIMIT}" ] && sed -i "s/power_limit = .*/power_limit = \"${POWER_LIMIT}\";/" "${DEST}" || sed -i '/power_limit/d' "${DEST}"
 
