@@ -53,14 +53,14 @@ if [ "${1}" = "early" ]; then
   fi
 
   if [ "$_is_loaded" -eq 1 ]; then
-    if [ "${_major_version:-0}" -ge 5 ]; then
-      echo "  redpill already loaded - rmmod before reload"
-      rmmod redpill 2>/dev/null \
-        || echo "  rmmod redpill failed (module may be sealed; will attempt insmod anyway)"
-    else
-      echo "  redpill already loaded - kernel < 5 rmmod unsafe (panic risk), skipping"
-      exit 0
-    fi
+    # redpill was already loaded (e.g. injected via rd.gz). Do NOT rmmod+reload it.
+    # On kernel 5 the reload makes register_fake_sata_boot_shim() run scsi_force_replug()
+    # on already-probed SATA disks (remove + rescan), which corrupts the CFS runqueue and
+    # panics (rb_erase NULL deref / preempt_count leak). On kernel <5 rmmod is unsafe too.
+    # This addon only exists to guarantee a load when rd.gz injection FAILED, so if it's
+    # already loaded there is nothing to do.
+    echo "  redpill already loaded - keeping existing instance (reload disabled to avoid unload/replug panic)"
+    exit 0
   fi
 
   # Locate rp.ko. On kernel 5 it's pre-placed at /usr/lib/modules/rp.ko by the
