@@ -451,20 +451,17 @@ dtModel() {
       REG_COUNT=$((REG_COUNT + 1))
       if [ -n "${NVME_AS_DATA}" ]; then
         # PAS7700: NVMe 데이터 볼륨 (정품 스키마 — reg/port_type 없음)
-        # 정품 dtb 의 내장 NVMe 베이는 pcie_root 를 domain:bus 접두 없는
-        # dev.func hop-chain 축약형으로 기록한다 (예: "17.0,00.0").
-        # NVMe 슬롯은 ata_port 없이 pcie_root 만으로 바인딩되므로 형식이 정확해야 함.
-        # 첫 요소의 domain:bus 접두만 제거 → 아래 "fix pcie_root prefix" sed(콜론 기준)
-        # 에 걸리지 않아 축약형이 그대로 유지된다.
-        PCIE_SHORT=$(printf '%s' "${PCIEPATH}" | sed 's/^[0-9a-f:]*:\([0-9a-f]*\.[0-9a-f]*\)/\1/')
+        # pcie_root 은 syno_block_info(pciepath) 값과 정확히 일치해야 슬롯
+        # 바인딩된다. 그 값은 full 형식(예: "0000:00:16.0,00.0")이므로
+        # PCIEPATH 를 그대로 사용한다(아래 "fix pcie_root prefix" 로 접두 정규화).
         {
           echo "    internal_slot@${COUNT} {"
           echo "        nvme {"
-          echo "            pcie_root = \"${PCIE_SHORT}\";"
+          echo "            pcie_root = \"${PCIEPATH}\";"
           echo "        };"
           echo "    };"
         } >>"${DEST}"
-      else
+	  else
         # 기타 모델: 기존 M.2 SSD 캐시 슬롯
         {
           echo "    nvme_slot@${COUNT} {"
