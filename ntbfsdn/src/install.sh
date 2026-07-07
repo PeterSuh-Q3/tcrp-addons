@@ -115,12 +115,15 @@ if [ ! -e "$REALDIR/synomulticontroller" ]; then
 fi
 cat > /tmp/ntbfsdn_wrap.sh <<WEOF
 #!/bin/sh
+# NOTE: callers (cluster_sed_operation.sh, clusterInstall.sh) capture stdout
+# via \$(...) and compare against exact strings - NOT exit codes. Each faked
+# branch below must therefore echo the expected text, not just exit.
 for a in "\$@"; do
   case "\$a" in
-    --is_remote_power_on)  exit 1 ;;   # 1 = remote power on (per clusterInstall.sh)
-    --location)            exit $LOC ;; # 0 -> .1, 1 -> .2
-    --ntb_heartbeat_check) exit 0 ;;
-    --check_chassis_match) exit 0 ;;
+    --is_remote_power_on)  echo "Remote controller power is on"; exit 1 ;;
+    --location)            echo "location:$LOC"; exit $LOC ;; # 0 -> .1, 1 -> .2
+    --ntb_heartbeat_check) echo "Current link is up"; exit 0 ;;
+    --check_chassis_match) echo "Chassis match"; exit 0 ;;
   esac
 done
 exec $REALDIR/synomulticontroller "\$@"
