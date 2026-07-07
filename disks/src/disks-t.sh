@@ -362,9 +362,13 @@ dtModel() {
       COUNT=$((COUNT + 1))
       REG_COUNT=$((REG_COUNT + 1))
       if [ -n "${NVME_AS_DATA}" ]; then
-        # PAS7700: NVMe 데이터 볼륨 (정품 스키마 — reg/port_type 없음)
+        # PAS7700: NVMe 데이터 볼륨. reg 없이는 syno_location_get()/scemd 가
+        # "Fail to get location" 반복 -> ns_installable_ns_list 열거 연쇄
+        # 실패로 포맷 0% 실패. SATA internal_slot@N 과 동일하게 reg 부여
+        # (실기 검증 중).
         {
           echo "    internal_slot@${COUNT} {"
+          echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"
           echo "        nvme {"
           echo "            pcie_root = \"${PCIEPATH}\";"
           echo "        };"

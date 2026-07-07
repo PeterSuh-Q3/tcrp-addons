@@ -450,12 +450,18 @@ dtModel() {
       COUNT=$((COUNT + 1))
       REG_COUNT=$((REG_COUNT + 1))
       if [ -n "${NVME_AS_DATA}" ]; then
-        # PAS7700: NVMe 데이터 볼륨 (정품 스키마 — reg/port_type 없음)
+        # PAS7700: NVMe 데이터 볼륨.
         # pcie_root 은 syno_block_info(pciepath) 값과 정확히 일치해야 슬롯
         # 바인딩된다. 그 값은 full 형식(예: "0000:00:16.0,00.0")이므로
         # PCIEPATH 를 그대로 사용한다(아래 "fix pcie_root prefix" 로 접두 정규화).
+        # reg: 최초 실측 스키마(참조 커밋)에는 없었으나, reg 없이는
+        # syno_location_get()/scemd 가 "Fail to get location" 을 반복하며
+        # ns_installable_ns_list -> raidtool 열거까지 연쇄 실패해 포맷이
+        # 0%에서 막히는 것을 확인. SATA internal_slot@N 과 동일하게 reg 를
+        # 부여해 위치 해석이 되는지 실기 검증 중.
         {
           echo "    internal_slot@${COUNT} {"
+          echo "        reg = <0x$(printf '%02X' ${REG_COUNT}) 0x00>;"
           echo "        nvme {"
           echo "            pcie_root = \"${PCIEPATH}\";"
           echo "        };"
