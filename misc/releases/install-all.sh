@@ -162,10 +162,6 @@ fixsdcard() {
 fixamdgpu() {
   # AMDGPU 모듈 강제 로더 systemd unit 생성.
   # /exts/custom-modules 디렉토리가 존재할 때만 활성.
-  # (amd-modules 는 DSM udev coldplug 가 PCI 매칭으로 amdgpu 를 자동 적재하므로 불필요.
-  #  검증된 SA6400+Radeon Pro WX 3100 환경에서 부팅 39초에 amdgpu 가 이미 적재됨이
-  #  확인됨 — 이 service 가 같이 동작하면 'module already loaded' 로 exit 1 표시되어
-  #  systemd 가 failed 로 마킹하므로 amd-modules 에서는 service 자체를 만들지 않음.)
   # custom-modules 는 일반 모듈 팩 형식이라 coldplug 트리거가 보장되지 않을 수 있어
   # 명시적 modprobe 가 필요.
   # 오류 발생 시에도 부팅 전체를 망치지 않도록 모든 단계에 || true 를 둔다.
@@ -189,30 +185,9 @@ fixamdgpu() {
     mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants 2>/dev/null || true
     ln -sf /usr/lib/systemd/system/mshell-amdgpu.service \
            /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/mshell-amdgpu.service 2>/dev/null || true
-    echo "mshell-amdgpu.service installed (amd-modules/custom-modules detected)"
-  
-  elif [ -d /exts/amd-modules ]; then
-    CONF="/tmpRoot/usr/lib/modules-load.d/70-video-kernel.conf"
-    # 기존 파일 백업
-    cp "${CONF}" "${CONF}.bak.$(date +%Y%m%d%H%M%S)" 2>/dev/null
-    # conf 파일 새로 작성 (의존성 토폴로지 순서)
-    cat > "${CONF}" << 'EOF'
-# amdgpu DRM stack - generated for geminilakenk (intel igpu)
-# load order: leaf deps → amdgpu
-dmabuf
-drm
-gpu-sched
-ttm
-drm-ttm-helper
-drm_kms_helper
-i2c-algo-bit
-backlight
-hdmi_video
-amdgpu
-EOF
-    echo "[OK] ${CONF} 작성 완료"
-  fi  
-  
+    echo "mshell-amdgpu.service installed (custom-modules detected)"
+  fi
+
   return 0
 }
 
