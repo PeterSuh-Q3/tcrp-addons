@@ -324,7 +324,12 @@ else
       _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s",%s,"temperature_c":%s,"tempwarn":false}' \
         "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}" "${_GSLOT}" "${GTEMP}")"
     else
-      _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s",%s}' \
+      # No DRM hwmon temp read here. DSM 7.4's formatGpuInfo only renders the
+      # thermal row when BOTH temperature_c AND tempwarn are defined, so emit
+      # tempwarn:false. temperature_c is supplied by the proxy (package temp for
+      # integrated GPUs / per-card hwmon for discrete); with both present the row
+      # renders and shows the temperature.
+      _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s",%s,"tempwarn":false}' \
         "$(_json_escape "${GNAME}")" "${GCLOCK}" "${GMEM}" "${_GSLOT}")"
     fi
   done
@@ -382,12 +387,11 @@ else
     # instead of just "보통". The ternary (u?over:normal) is wrapped and the
     # actual temp string from renderTempFromC(h) is appended conditionally.
     if grep -q 'u?_T("system","over_temperature"):_T("helpbrowser","font_normal"),"</div>","</div>"].join' "${FILE_JS}"; then
-      # Integrated GPU (built_in_gpu_slot_num:c truthy) has no real GPU thermal
-      # sensor — its die temperature is the CPU package temp. Rather than show a
-      # duplicate/misleading number, point the user to the CPU temperature row.
-      # Discrete GPUs (c falsy) still show their real hwmon temperature (h).
-      sed -i 's#u?_T("system","over_temperature"):_T("helpbrowser","font_normal"),"</div>","</div>"].join#(u?_T("system","over_temperature"):_T("helpbrowser","font_normal"))+(c?" | CPU 온도 참조":(h?" | "+this.renderTempFromC(h):"")),"</div>","</div>"].join#g' "${FILE_JS}"
-      echo "gpu_thermal_status patch applied (DSM 7.4: iGPU→'CPU 온도 참조', discrete→temp)"
+      # Append the temperature to the thermal status: "보통 | 54 °C / 129 °F".
+      # For an integrated iGPU (no own sensor) temperature_c is the CPU package
+      # temp injected by the proxy; discrete GPUs use their real hwmon temp.
+      sed -i 's#u?_T("system","over_temperature"):_T("helpbrowser","font_normal"),"</div>","</div>"].join#(u?_T("system","over_temperature"):_T("helpbrowser","font_normal"))+(h?" | "+this.renderTempFromC(h):""),"</div>","</div>"].join#g' "${FILE_JS}"
+      echo "gpu_thermal_status temp patch applied (DSM 7.4 formatGpuInfo)"
     else
       echo "WARN: gpu_thermal_status — formatGpuInfo pattern not found; patch skipped"
     fi
