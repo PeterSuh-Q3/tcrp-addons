@@ -265,12 +265,15 @@ if [ "${1}" = "early" ]; then
     patch_installer_sh
     patch_assemble_system_raid_sh
 
-    # FSDN(이중 컨트롤러) 전제 로직 우회: i2c 하트비트 체커 무력화,
-    # NTB 피어 연결 체크를 loopback 으로 대체해 "다른 컨트롤러에 연결할 수 없음" 오류 방지.
-    # (부팅 hang 자체는 redpill-load 의 ramdisk-004-disable-fsdn-feature.patch 로 이미 해결됨.
-    #  이 두 패치는 웹 설치 UI/클러스터 체크 경로의 별도 오류를 잡기 위한 보완 조치)
+    # i2c 하트비트 체커 무력화: 일반 박스 2대에는 실제 i2c-4 microP 하드웨어가 없어
+    # i2c_hb_checker.sh 가 "/dev/i2c-4 열기 실패" 오류를 도배하므로 진입점만 막는다.
+    # (ntbfsdn 이 /proc/ntb_heartbeat 를 가짜로 세워 하트비트는 별도로 충족)
     sed -i 's/^main "\$@"$/# main "\$@"/' "/usr/syno/sbin/i2c_hb_checker.sh" 2>/dev/null || true
-    sed -i -E 's/169\.254\.4\.(1|2)/127.0.0.1/g; s/ --interface ntb_eth[0-9]{1,2}//g; s/check_ntb_connection$/exit 0 # check_ntb_connection/' /usr/syno/share/clusterInstall.sh 2>/dev/null || true
+
+    # [dual-native] clusterInstall.sh loopback 패치는 제거했다.
+    # 듀얼-native 로 전환하면서 두 컨트롤러가 실제 피어(169.254.4.1<->.2, ntbfsdn 이 구성)를
+    # 통해 native synoaa/HA 조율을 수행해야 하므로, 127.0.0.1 루프백/check_ntb_connection 우회는
+    # 오히려 조율을 깨뜨린다. IsFSDN=yes(ramdisk-004 제거)와 짝을 이룬다.
   fi
 
 elif [ "${1}" = "modules" ]; then
@@ -283,12 +286,8 @@ elif [ "${1}" = "modules" ]; then
 elif [ "${1}" = "rcExit" ]; then
   echo "Installing addon misc - ${1}"
 
-  # PAS7700(epyc7003ntb) 전용: early 단계의 clusterInstall.sh 패치가 웹 설치 UI 재시작 등으로
-  # 되돌아갈 경우를 대비한 안전망으로, NTB 연결 체크를 한 번 더 무력화한다.
-  UNIQUE="$(/bin/get_key_value /etc.defaults/synoinfo.conf unique 2>/dev/null)"
-  if [ "${UNIQUE:-}" = "synology_epyc7003ntb_pas7700" ]; then
-    sed -i 's/check_ntb_connection$/exit 0 # check_ntb_connection/' "/usr/syno/share/clusterInstall.sh" 2>/dev/null || true
-  fi
+  # [dual-native] rcExit 단계의 clusterInstall.sh loopback 안전망도 제거했다.
+  # early 훅과 동일한 이유 — 실제 피어 조율을 깨지 않기 위함.
 
   # invalid_disks
   # method 1 # (block dsm system migrate)
