@@ -284,6 +284,11 @@ if [ "${1}" = "early" ]; then
     # 단일 노드는 실제 조율 대상이 없으므로 원본 위임(delegate)이 불필요 → 백업/smc_real 없이
     # 항상 가짜 응답하는 단순·견고한 래퍼로 둔다.
     SMC=/usr/syno/bin/synomulticontroller
+    # 주의: synomulticontroller 는 scemd(멀티콜 바이너리)로의 심링크다.
+    # 'cat > "${SMC}"' 로 바로 쓰면 심링크를 따라가 실제 scemd 데몬 바이너리를
+    # 덮어써 scemd 가 죽고 웹 설치 스택(nginx/synoscgi)이 안 떠 "다시 연결"이 반복된다.
+    # 반드시 먼저 심링크를 rm 으로 끊고 독립 파일로 새로 만든다(원본 scemd 보존).
+    rm -f "${SMC}"
     cat > "${SMC}" <<'WEOF'
 #!/bin/sh
 # MSHELL single-node synomulticontroller shim (epyc7003ntb, no peer).
@@ -296,8 +301,9 @@ for a in "$@"; do
     --check_chassis_match) echo "Chassis match"; exit 0 ;;
   esac
 done
-# Everything else (up/apply lock, etc.): no real peer to coordinate with on a
-# single node, so treat as success (empty stdout, exit 0) instead of failing.
+# Everything else (up/apply lock, i2c hb write, etc.): no real peer to coordinate
+# with on a single node, so treat as success (empty stdout, exit 0). scemd daemon
+# itself still runs from the real /usr/syno/bin/scemd (untouched by the rm above).
 exit 0
 WEOF
     chmod +x "${SMC}"
