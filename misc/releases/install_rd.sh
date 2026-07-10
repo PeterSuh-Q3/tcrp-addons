@@ -269,6 +269,20 @@ if [ "${1}" = "early" ]; then
     # i2c_hb_checker.sh 가 "/dev/i2c-4 열기 실패" 오류를 도배하므로 진입점만 막는다.
     sed -i 's/^main "\$@"$/# main "\$@"/' "/usr/syno/sbin/i2c_hb_checker.sh" 2>/dev/null || true
 
+    # [single] JuniorExpansionPack(JEP) 다운로드 의존성 중화.
+    # DSM 설치 마법사는 버전 선택 직후 Synology 서버(dataupdate7.synology.com)에서
+    # JEP(온라인 설치 컴포넌트 업데이트)를 받아야 포맷 단계로 넘어간다. 이 엔드포인트가
+    # 스푸핑된 플랫폼(epyc7003ntb/101188)에 대해 불안정(간헐 4xx/302)해서, 실패 시
+    # 지수 백오프로 재시도하며 마법사가 "다음/설치" 버튼에서 멈춘다(포맷 미진입).
+    # JEP 는 오프라인이면 어차피 스킵되는 선택적 온라인 업데이트이므로, 스크립트를
+    # 즉시 성공 종료(no-op)로 치환해 설치가 이 flaky 외부 의존성에 막히지 않게 한다.
+    JEP="/usr/syno/sbin/junior_expansion_pack.sh"
+    if [ -f "${JEP}" ]; then
+      [ ! -f "${JEP}.bak" ] && cp -pf "${JEP}" "${JEP}.bak"
+      printf '#!/bin/sh\nexit 0\n' > "${JEP}"
+      chmod +x "${JEP}"
+    fi
+
     # [single] clusterInstall.sh 를 loopback 으로 우회한다.
     # 단일 노드에는 피어가 없으므로, NTB 피어 IP 를 127.0.0.1(자기 자신)로 돌리고
     # ntb_eth0 인터페이스 인자를 제거하고 check_ntb_connection 을 무력화해
