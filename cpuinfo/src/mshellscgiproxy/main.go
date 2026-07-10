@@ -62,6 +62,13 @@ const (
 	// legacy admin_center.js patch still covers them. See cpuinfo.sh.
 	gpuInfoFile = "/run/mshell_gpu_info.json"
 
+	// pciSlotFile holds the SYNO.Core.System "external_pci_slot_info" array
+	// (PCIe slot occupancy) precomputed by cpuinfo.sh: each add-in PCIe device
+	// resolved to a display name and presented as an occupied slot. The genuine
+	// response ships all-"no" slots on loader/VM hosts, so we REPLACE its
+	// external_pci_slot_info array with this one (see patchJSON).
+	pciSlotFile = "/run/mshell_pci_slot_info.json"
+
 	// Hard cap for buffered responses. Larger payloads are streamed through
 	// without inspection. SYNO.Core.System.info is well under this.
 	maxBufferedBytes = 4 * 1024 * 1024
@@ -100,12 +107,53 @@ func cpuTempC() int {
 	return 0
 }
 
+// packageTempC returns the CPU package temperature (coretemp "Package id N"),
+// which for an Intel integrated GPU is also the iGPU die temperature (the iGPU
+// shares the CPU die and exposes no separate i915 hwmon sensor). Falls back to
+// cpuTempC() when no coretemp package label is present.
+func packageTempC() int {
+	labels, _ := filepath.Glob("/sys/class/hwmon/hwmon*/temp*_label")
+	for _, lp := range labels {
+		b, err := os.ReadFile(lp)
+		if err != nil {
+			continue
+		}
+		if !strings.HasPrefix(strings.TrimSpace(string(b)), "Package id") {
+			continue
+		}
+		ip := strings.TrimSuffix(lp, "_label") + "_input"
+		v, err := os.ReadFile(ip)
+		if err != nil {
+			continue
+		}
+		if n, err := strconv.Atoi(strings.TrimSpace(string(v))); err == nil && n > 0 {
+			return n / 1000
+		}
+	}
+	return cpuTempC()
+}
+
 // gpuInfoArray returns the trimmed contents of gpuInfoFile when it holds a
 // non-empty JSON array (i.e. starts with '[' and is not the empty array).
 // Returns "" when the file is absent, unreadable, or empty so the caller
 // injects nothing on GPU-less hosts.
 func gpuInfoArray() string {
 	b, err := os.ReadFile(gpuInfoFile)
+	if err != nil {
+		return ""
+	}
+	s := strings.TrimSpace(string(b))
+	if len(s) < 2 || s[0] != '[' || s == "[]" {
+		return ""
+	}
+	return s
+}
+
+// pciSlotArray returns the trimmed contents of pciSlotFile when it holds a
+// non-empty JSON array, else "" (so the caller leaves the genuine
+// external_pci_slot_info untouched on hosts without add-in PCIe cards).
+func pciSlotArray() string {
+	b, err := os.ReadFile(pciSlotFile)
 	if err != nil {
 		return ""
 	}
@@ -155,9 +203,6 @@ func gpuInfoArrayWithTemp() string {
 		return ""
 	}
 	temps := gpuTempsFromSysfs()
-	if len(temps) == 0 {
-		return s
-	}
 
 	result := []byte(s)
 	cardIdx := 0
@@ -192,7 +237,15 @@ func gpuInfoArrayWithTemp() string {
 				obj := result[objStart : i+1]
 				// 이미 temperature_c가 있으면 skip
 				if !bytes.Contains(obj, []byte("temperature_c")) {
-					if t, ok := temps[cardIdx]; ok {
+					t, ok := temps[cardIdx]
+					// Integrated iGPU (built_in_gpu_slot_num, no DRM hwmon
+					// sensor): use the CPU package temp as its die temp.
+					if !ok && bytes.Contains(obj, []byte("built_in_gpu_slot_num")) {
+						if pt := packageTempC(); pt > 0 {
+							t, ok = pt, true
+						}
+					}
+					if ok {
 						snippet := fmt.Sprintf(`,"temperature_c":%d`, t)
 						tmp := make([]byte, 0, len(result)+len(snippet))
 						tmp = append(tmp, result[:i]...)
@@ -231,6 +284,9 @@ var (
 	fwRe         = regexp.MustCompile(`"firmware_ver"\s*:\s*"([^"]+)"`)
 	gpuFalseRe   = regexp.MustCompile(`"support_gpu"\s*:\s*false`)
 	contentLenRe = regexp.MustCompile(`(?im)^(Content-Length:[ \t]*)\d+`)
+	// external_pci_slot_info holds objects (no nested arrays), so [^\]]* safely
+	// spans the whole array up to its closing bracket.
+	extPciRe = regexp.MustCompile(`"external_pci_slot_info"\s*:\s*\[[^\]]*\]`)
 )
 
 func patchJSON(body []byte) []byte {
@@ -267,6 +323,14 @@ func patchJSON(body []byte) []byte {
 		body = gpuFalseRe.ReplaceAll(body, []byte(`"support_gpu":true`))
 		body = injectField(body, "support_gpu", "gpu_info",
 			fmt.Sprintf(`,"gpu_info":%s`, gpu))
+	}
+	// SYNO.Core.System.info — replace the genuine external_pci_slot_info (all
+	// slots Occupied="no" on loader/VM hosts) with cpuinfo.sh's resolved slot
+	// array so the Info Center's "PCIe 슬롯 N" rows show each add-in card's
+	// device name. Unlike the fields above this REPLACES an existing array
+	// rather than injecting a new key.
+	if pci := pciSlotArray(); pci != "" && bytes.Contains(body, []byte(`"external_pci_slot_info"`)) {
+		body = extPciRe.ReplaceAll(body, []byte(`"external_pci_slot_info":`+pci))
 	}
 	return body
 }
@@ -336,7 +400,8 @@ func patchResponse(resp []byte) []byte {
 		// SYNO.Core.System.GpuInfo.list (support_gpu) payloads, whether they
 		// arrive as separate responses or bundled in one compound response.
 		if !bytes.Contains(body, []byte(`"firmware_ver"`)) &&
-			!bytes.Contains(body, []byte(`"support_gpu"`)) {
+			!bytes.Contains(body, []byte(`"support_gpu"`)) &&
+			!bytes.Contains(body, []byte(`"external_pci_slot_info"`)) {
 			return resp
 		}
 
