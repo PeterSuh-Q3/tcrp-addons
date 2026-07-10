@@ -265,15 +265,42 @@ if [ "${1}" = "early" ]; then
     patch_installer_sh
     patch_assemble_system_raid_sh
 
-    # i2c 하트비트 체커 무력화: 일반 박스 2대에는 실제 i2c-4 microP 하드웨어가 없어
+    # i2c 하트비트 체커 무력화: 이 박스에는 실제 i2c-4 microP 하드웨어가 없어
     # i2c_hb_checker.sh 가 "/dev/i2c-4 열기 실패" 오류를 도배하므로 진입점만 막는다.
-    # (ntbfsdn 이 /proc/ntb_heartbeat 를 가짜로 세워 하트비트는 별도로 충족)
     sed -i 's/^main "\$@"$/# main "\$@"/' "/usr/syno/sbin/i2c_hb_checker.sh" 2>/dev/null || true
 
-    # [dual-native] clusterInstall.sh loopback 패치는 제거했다.
-    # 듀얼-native 로 전환하면서 두 컨트롤러가 실제 피어(169.254.4.1<->.2, ntbfsdn 이 구성)를
-    # 통해 native synoaa/HA 조율을 수행해야 하므로, 127.0.0.1 루프백/check_ntb_connection 우회는
-    # 오히려 조율을 깨뜨린다. IsFSDN=yes(ramdisk-004 제거)와 짝을 이룬다.
+    # [single] clusterInstall.sh 를 loopback 으로 우회한다.
+    # 단일 노드에는 피어가 없으므로, NTB 피어 IP 를 127.0.0.1(자기 자신)로 돌리고
+    # ntb_eth0 인터페이스 인자를 제거하고 check_ntb_connection 을 무력화해
+    # 클러스터 설치가 존재하지 않는 피어를 영원히 기다리지 않게 한다.
+    sed -i -E 's/169\.254\.4\.(1|2)/127.0.0.1/g; s/ --interface ntb_eth[0-9]{1,2}//g; s/check_ntb_connection$/exit 0 # check_ntb_connection/' /usr/syno/share/clusterInstall.sh 2>/dev/null || true
+
+    # [single] synomulticontroller 래퍼 설치 (피어 없음).
+    # 설치 apply 단계(scemd)는 IsFSDN 과 무관하게 synomulticontroller 로
+    #   --up_lock_ctrl GET_LOCK ...  (apply-lock) 을 호출하는데, 단일 노드에는
+    # 조율할 피어가 없어 원본 바이너리는 잠금을 못 얻고 error_apply_lock
+    # ("다른 설치가 진행 중") 으로 설치가 막힌다.
+    # 피어/HA 체크는 전부 가짜 성공으로, 그 외(잠금 등)는 exit 0(획득됨)로 처리한다.
+    # 단일 노드는 실제 조율 대상이 없으므로 원본 위임(delegate)이 불필요 → 백업/smc_real 없이
+    # 항상 가짜 응답하는 단순·견고한 래퍼로 둔다.
+    SMC=/usr/syno/bin/synomulticontroller
+    cat > "${SMC}" <<'WEOF'
+#!/bin/sh
+# MSHELL single-node synomulticontroller shim (epyc7003ntb, no peer).
+# Callers capture stdout via $(...) and compare exact strings - echo expected text.
+for a in "$@"; do
+  case "$a" in
+    --is_remote_power_on)  echo "Remote controller power is on"; exit 1 ;;
+    --location)            echo "location:0"; exit 0 ;;
+    --ntb_heartbeat_check) echo "Current link is up"; exit 0 ;;
+    --check_chassis_match) echo "Chassis match"; exit 0 ;;
+  esac
+done
+# Everything else (up/apply lock, etc.): no real peer to coordinate with on a
+# single node, so treat as success (empty stdout, exit 0) instead of failing.
+exit 0
+WEOF
+    chmod +x "${SMC}"
   fi
 
 elif [ "${1}" = "modules" ]; then
@@ -286,8 +313,12 @@ elif [ "${1}" = "modules" ]; then
 elif [ "${1}" = "rcExit" ]; then
   echo "Installing addon misc - ${1}"
 
-  # [dual-native] rcExit 단계의 clusterInstall.sh loopback 안전망도 제거했다.
-  # early 훅과 동일한 이유 — 실제 피어 조율을 깨지 않기 위함.
+  # [single] early 단계의 clusterInstall.sh loopback 이 웹 설치 UI 재시작 등으로
+  # 되돌아갈 경우를 대비한 안전망 (단일 노드: 피어 대기 원천 차단).
+  UNIQUE="$(/bin/get_key_value /etc.defaults/synoinfo.conf unique 2>/dev/null)"
+  if [ "${UNIQUE:-}" = "synology_epyc7003ntb_pas7700" ]; then
+    sed -i 's/check_ntb_connection$/exit 0 # check_ntb_connection/' "/usr/syno/share/clusterInstall.sh" 2>/dev/null || true
+  fi
 
   # invalid_disks
   # method 1 # (block dsm system migrate)

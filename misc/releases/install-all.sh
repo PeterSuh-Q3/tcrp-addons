@@ -235,6 +235,22 @@ elif [ "${1}" = "late" ]; then
     #cp -vf /exts/misc/sed /tmpRoot/usr/bin/sed
     #chmod +x /tmpRoot/usr/bin/sed
 
+    # [single] epyc7003ntb(PAS7700): 설치된 시스템(/tmpRoot)을 standalone 으로 만든다.
+    # PAS7700 은 FSDN 이중 컨트롤러 모델이라, 설치된 DSM 이 IsFSDN=yes 로 부팅하면
+    # synoconfstored(핵심 설정 데몬)/AA 클러스터/ntb_brd 등 HA 서비스가 실제 NTB/공유
+    # 스토리지를 요구하다 실패 루프에 빠져 웹 UI 가 안 뜬다(가짜 하드웨어라 HA 불가).
+    # IsFSDN 을 결정하는 권위 게이트는 syno_feature_check.sh 의 SYNO_PRODUCT_FSDN
+    # (하드코딩, synoinfo.conf 무시)이므로, 설치 결과물에서 이 줄을 제거해 IsFSDN=no
+    # (standalone) 로 부팅하게 한다. junior ramdisk 쪽은 ramdisk-004 패치가 담당.
+    if [ "${PLATFORM}" = "epyc7003ntb" ]; then
+        FCHK="/tmpRoot/usr/syno/sbin/syno_feature_check.sh"
+        if [ -f "${FCHK}" ] && grep -q "^SYNO_PRODUCT_FSDN$" "${FCHK}"; then
+            cp -pf "${FCHK}" "${FCHK}.bak" 2>/dev/null
+            sed -i '/^SYNO_PRODUCT_FSDN$/d' "${FCHK}"
+            echo "[single] disabled SYNO_PRODUCT_FSDN in installed system -> IsFSDN=no (standalone)"
+        fi
+    fi
+
     fixacpibutton
 
     if [ -d /exts/all-modules ]; then    
