@@ -24,6 +24,14 @@ PROXY_SOCK_NAME="synoscgi_ms"
 # which ignores the unknown response fields.
 GPU_INFO_FILE="/run/mshell_gpu_info.json"
 
+# PCI_SLOT_FILE holds the SYNO.Core.System "external_pci_slot_info" array
+# (PCIe slot occupancy) precomputed here: each add-in PCIe device (an endpoint
+# behind a root-port bridge, i.e. not on bus 00) is resolved to a device name
+# and presented as an occupied slot. mshellscgiproxy replaces the genuine
+# (all-"no") external_pci_slot_info in the SYNO.Core.System.info response with
+# this array so the Info Center's "PCIe 슬롯 N" rows show the device name.
+PCI_SLOT_FILE="/run/mshell_pci_slot_info.json"
+
 # repoint_nginx redirects nginx's primary synoscgi SCGI upstream to the
 # intercepting proxy socket. It is idempotent and migration-safe: any prior
 # proxy socket name — RR's legacy synoscgi_rr.sock or our own synoscgi_ms.sock
@@ -95,13 +103,81 @@ _gpu_name_fallback() {
   fi
 }
 
+# _pci_name resolves a PCI device display name from vendor:device IDs, mirroring
+# _gpu_name_fallback. lspci is tried first; when pci.ids is missing/outdated it
+# only yields "Device <ids>" (or nothing), so a curated table + vendor label is
+# used, always suffixed with "[vid:did]". Args: $1=vid $2=did (4 hex, no 0x)
+_pci_name() {
+  local vid="$1" did="$2" dev="" vendor="" name=""
+  # Try lspci first (present + pci.ids populated → real marketing name).
+  name="$(lspci -d "${vid}:${did}" 2>/dev/null | head -1 | sed 's/^[0-9a-f:.]* [^:]*: //; s/ *(rev [0-9a-fA-F]*)//')"
+  if [ -n "${name}" ] && ! printf '%s' "${name}" | grep -qiE '^Device '; then
+    printf '%s [%s:%s]' "${name}" "${vid}" "${did}"; return
+  fi
+  case "${vid}:${did}" in
+    10ec:8168|10ec:8161|10ec:8169) dev="RTL8111/8168/8411 Gigabit Ethernet" ;;
+    10ec:8125) dev="RTL8125 2.5GbE" ;;
+    10ec:8126) dev="RTL8126 5GbE" ;;
+    8086:1533) dev="I210 Gigabit Network" ;;
+    8086:1539) dev="I211 Gigabit Network" ;;
+    8086:1521) dev="I350 Gigabit Network" ;;
+    8086:10d3) dev="82574L Gigabit Network" ;;
+    8086:1572|8086:1583|8086:1584|8086:1585) dev="X710/XL710 10/40GbE" ;;
+    8086:1563|8086:15d1) dev="X550 10GbE" ;;
+    15b3:1015|15b3:1017) dev="ConnectX-4/5 25/100GbE" ;;
+  esac
+  case "${vid}" in
+    8086) vendor="Intel" ;;
+    10ec) vendor="Realtek" ;;
+    10de) vendor="NVIDIA" ;;
+    1002) vendor="AMD/ATI" ;;
+    1b21|1b4b) vendor="ASMedia/Marvell" ;;
+    1000) vendor="Broadcom/LSI" ;;
+    9005) vendor="Adaptec" ;;
+    15b3) vendor="Mellanox" ;;
+    1c5c|144d|1cc1|1e0f|c0a9) vendor="NVMe SSD" ;;
+  esac
+  if [ -n "${dev}" ]; then
+    printf '%s %s [%s:%s]' "${vendor:-Vendor ${vid}}" "${dev}" "${vid}" "${did}"
+  elif [ -n "${vendor}" ]; then
+    printf '%s Device [%s:%s]' "${vendor}" "${vid}" "${did}"
+  else
+    printf 'Device [%s:%s]' "${vid}" "${did}"
+  fi
+}
+
+# _pci_slot_info prints the external_pci_slot_info JSON array. An "add-in PCIe
+# card" is any endpoint function 0 that sits behind a root-port bridge (bus !=
+# 00) and is not itself a bridge. Slots are numbered 1..N in PCI address order.
+# Prints "[]" when none are found.
+_pci_slot_info() {
+  local D bdf bus cls vid did nm elems="" slot=0 e
+  for D in $(ls -d /sys/bus/pci/devices/0000:* 2>/dev/null | sort); do
+    bdf="$(basename "${D}")"
+    bus="$(echo "${bdf}" | cut -d: -f2)"
+    [ "${bus}" = "00" ] && continue                 # onboard/root complex → skip
+    cls="$(cat "${D}/class" 2>/dev/null)"
+    case "${cls}" in 0x0604*|0x0600*|0x0601*) continue ;; esac  # bridges → skip
+    [ "${bdf##*.}" = "0" ] || continue              # multifunction: function 0 only
+    vid="$(sed 's/^0x//' "${D}/vendor" 2>/dev/null)"
+    did="$(sed 's/^0x//' "${D}/device" 2>/dev/null)"
+    [ -n "${vid}" ] && [ -n "${did}" ] || continue
+    nm="$(_pci_name "${vid}" "${did}")"
+    slot=$((slot + 1))
+    e="$(printf '{"slot":"%s","Occupied":"yes","Recognized":"yes","cardName":"%s"}' \
+      "${slot}" "$(_json_escape "${nm}")")"
+    [ -z "${elems}" ] && elems="${e}" || elems="${elems},${e}"
+  done
+  printf '[%s]' "${elems}"
+}
+
 if [ ! -f "${FILE_JS}" ] && [ ! -f "${FILE_GZ}" ]; then
   echo "File ${FILE_JS} does not exist"
   exit 0
 fi
 
 if [ "${1}" = "-r" ]; then
-  rm -f "${GPU_INFO_FILE}"
+  rm -f "${GPU_INFO_FILE}" "${PCI_SLOT_FILE}"
   if [ -f "${FILE_GZ}.bak" ]; then
     rm -f "${FILE_JS}" "${FILE_GZ}"
     mv -f "${FILE_GZ}.bak" "${FILE_GZ}"
@@ -167,8 +243,8 @@ else
   echo "CPU Info set to: \"${VENDOR}\" \"${FAMILY}\" \"${SERIES}\" \"${CORES}\" @ ${SPEED} MHz"
 
   # Start from a clean slate so a GPU-less host (or a removed card) never
-  # leaves stale gpu_info for the proxy to inject.
-  rm -f "${GPU_INFO_FILE}"
+  # leaves stale gpu_info / pci_slot_info for the proxy to inject.
+  rm -f "${GPU_INFO_FILE}" "${PCI_SLOT_FILE}"
 
   # Accumulate one JSON object per GPU into GPU_ELEMS (comma-joined). FIRST_*
   # captures the first GPU for the legacy DSM <= 7.3 single-object t.gpu path.
@@ -233,14 +309,16 @@ else
       [ -n "${_TV}" ] && [ "${_TV}" -gt 0 ] 2>/dev/null && { GTEMP="$((_TV / 1000))"; break; }
     done
     echo "GPU Info (drm) set to: \"${GNAME}\" \"${GCLOCK}\" \"${GMEM}\"${GTEMP:+ ${GTEMP}C}${PCIDN:+ [${PCIDN}]}"
-    # i915 (Intel iGPU) is physically integrated → built_in_gpu_slot_num.
-    # All other DRM drivers (amdgpu, etc.) are discrete PCIe cards → pci_slot_num.
-    if [ "${DRV}" = "i915" ]; then
-      _GSLOT='"built_in_gpu_slot_num":0'
-    elif [ -n "${PCIDN}" ]; then
-      _GSLOT='"pci_slot_num":"'"${PCIDN}"'"'
+    # The slot VALUE carries the PCIe device name (GNAME) so the Info Center's
+    # GPU-slot row shows a name instead of "0"/an address — consistent with the
+    # PCIe 슬롯 rows. i915 (integrated) keeps built_in_gpu_slot_num so the label
+    # stays "GPU 슬롯 (기본 제공)"; discrete cards use pci_slot_num ("PCIe 슬롯").
+    # The proxy also keys its iGPU temperature fallback off built_in_gpu_slot_num.
+    _GNAME_J="$(_json_escape "${GNAME}")"
+    if [ "${DRV}" = "i915" ] || [ -z "${PCIDN}" ]; then
+      _GSLOT='"built_in_gpu_slot_num":"'"${_GNAME_J}"'"'
     else
-      _GSLOT='"built_in_gpu_slot_num":0'
+      _GSLOT='"pci_slot_num":"'"${_GNAME_J}"'"'
     fi
     if [ -n "${GTEMP}" ]; then
       _append_gpu "$(printf '{"name":"%s","status":"compatible","clock":"%s","memory":"%s",%s,"temperature_c":%s,"tempwarn":false}' \
@@ -284,6 +362,16 @@ else
     printf '[%s]\n' "${GPU_ELEMS}" >"${GPU_INFO_FILE}"
   fi
 
+  # PCIe slot occupancy → external_pci_slot_info for the proxy. Written only
+  # when at least one add-in PCIe card is present; a "[]" result leaves the file
+  # absent so the proxy keeps the genuine (empty) slot info. (Defined here,
+  # after _json_escape, which _pci_slot_info depends on.)
+  _PCISLOTS="$(_pci_slot_info)"
+  if [ -n "${_PCISLOTS}" ] && [ "${_PCISLOTS}" != "[]" ]; then
+    printf '%s\n' "${_PCISLOTS}" >"${PCI_SLOT_FILE}"
+    echo "PCIe slot info set to: ${_PCISLOTS}"
+  fi
+
   # ── GPU section gate + GPU temp ─────────────────────────────────────────────
   if grep -q 'support_nvidia_gpu' "${FILE_JS}"; then
     # DSM <= 7.3: force GPU section visible; append temp to single t.gpu object.
@@ -294,11 +382,26 @@ else
     # instead of just "보통". The ternary (u?over:normal) is wrapped and the
     # actual temp string from renderTempFromC(h) is appended conditionally.
     if grep -q 'u?_T("system","over_temperature"):_T("helpbrowser","font_normal"),"</div>","</div>"].join' "${FILE_JS}"; then
-      sed -i 's#u?_T("system","over_temperature"):_T("helpbrowser","font_normal"),"</div>","</div>"].join#(u?_T("system","over_temperature"):_T("helpbrowser","font_normal"))+(h?" | "+this.renderTempFromC(h):""),"</div>","</div>"].join#g' "${FILE_JS}"
-      echo "gpu_thermal_status temp patch applied (DSM 7.4 formatGpuInfo)"
+      # Integrated GPU (built_in_gpu_slot_num:c truthy) has no real GPU thermal
+      # sensor — its die temperature is the CPU package temp. Rather than show a
+      # duplicate/misleading number, point the user to the CPU temperature row.
+      # Discrete GPUs (c falsy) still show their real hwmon temperature (h).
+      sed -i 's#u?_T("system","over_temperature"):_T("helpbrowser","font_normal"),"</div>","</div>"].join#(u?_T("system","over_temperature"):_T("helpbrowser","font_normal"))+(c?" | CPU 온도 참조":(h?" | "+this.renderTempFromC(h):"")),"</div>","</div>"].join#g' "${FILE_JS}"
+      echo "gpu_thermal_status patch applied (DSM 7.4: iGPU→'CPU 온도 참조', discrete→temp)"
     else
       echo "WARN: gpu_thermal_status — formatGpuInfo pattern not found; patch skipped"
     fi
+  fi
+
+  # ── PCIe slot device name ───────────────────────────────────────────────────
+  # formatExternalDeviceInfo() renders an occupied+recognized PCIe slot as
+  # "Synology <cardName>". We inject the real device name into cardName, so drop
+  # the hardcoded "Synology " prefix to show the bare device name (format A).
+  if grep -qF '`Synology ${r.cardName}`' "${FILE_JS}"; then
+    sed -i 's#`Synology ${r.cardName}`#`${r.cardName}`#g' "${FILE_JS}"
+    echo "pcie_slot cardName prefix patch applied (drop 'Synology ')"
+  else
+    echo "WARN: pcie_slot — 'Synology \${r.cardName}' pattern not found; patch skipped"
   fi
 
   # ── CPU temperature ─────────────────────────────────────────────────────────
