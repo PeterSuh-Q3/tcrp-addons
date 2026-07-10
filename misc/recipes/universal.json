@@ -9,7 +9,7 @@
     {
       "name": "install_rd.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install_rd.sh",
-      "sha256": "3ecf3a81908dabc7a7c77778060896f190aa297731e6d34f1a7cf196f97536e3",
+      "sha256": "692d4e6a6f0d08240fd009d2d8a0d7546ddc2c2d05e31049f8bc49c547dc679a",
       "packed": false
     },
     {
@@ -44,6 +44,7 @@
     }
   ],
   "scripts": {
+    "on_early": "install_rd.sh",
     "on_boot": "install_rd.sh",
     "on_patches": "install-all.sh",
     "on_rcExit": "install_rd.sh",
