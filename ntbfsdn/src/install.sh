@@ -104,7 +104,13 @@ ip link set ntb_eth0 up
 # --- 3) wrap synomulticontroller so peer/location checks pass ----------------
 SMC=/usr/syno/bin/synomulticontroller
 REALDIR=/tmp/smc_real
-if [ ! -e "$REALDIR/synomulticontroller" ]; then
+WRAP_MARK="NTBFSDN_WRAP_V2"
+
+# Back up the genuine binary ONLY when $SMC is not already our wrapper.
+# Guard: on a re-run (second junior boot / retry) $SMC may already BE the
+# wrapper; backing that up as "real" would lose the binary and create an exec
+# loop. Skip backup if the marker is present.
+if ! grep -q "$WRAP_MARK" "$SMC" 2>/dev/null; then
   mkdir -p "$REALDIR"
   # scemd dispatches on argv[0] basename, so keep the name "synomulticontroller".
   if [ -L "$SMC" ]; then
@@ -115,6 +121,7 @@ if [ ! -e "$REALDIR/synomulticontroller" ]; then
 fi
 cat > /tmp/ntbfsdn_wrap.sh <<WEOF
 #!/bin/sh
+# $WRAP_MARK
 # NOTE: callers (cluster_sed_operation.sh, clusterInstall.sh) capture stdout
 # via \$(...) and compare against exact strings - NOT exit codes. Each faked
 # branch below must therefore echo the expected text, not just exit.
@@ -126,7 +133,18 @@ for a in "\$@"; do
     --check_chassis_match) echo "Chassis match"; exit 0 ;;
   esac
 done
-exec $REALDIR/synomulticontroller "\$@"
+# Delegate genuine queries to the real binary when it is available.
+if [ -x "$REALDIR/synomulticontroller" ]; then
+  exec "$REALDIR/synomulticontroller" "\$@"
+fi
+# Real binary unavailable (e.g. /tmp/smc_real cleared mid-install): fail SAFE,
+# NOT with exit 127. The DSM installer's "apply settings" step acquires an
+# up/apply lock through this tool; a hard failure here is reported as
+# error_apply_lock ("another installation is in progress") and permanently
+# blocks the install. On a single logical node there is no real peer to
+# coordinate with, so treating the lock as acquired (empty stdout, exit 0) is
+# correct - same rationale as forcing microPLock=1 in linuxrc.syno.impl.
+exit 0
 WEOF
 chmod +x /tmp/ntbfsdn_wrap.sh
 rm -f "$SMC"
