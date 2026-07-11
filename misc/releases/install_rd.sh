@@ -289,6 +289,16 @@ if [ "${1}" = "early" ]; then
     # 클러스터 설치가 존재하지 않는 피어를 영원히 기다리지 않게 한다.
     sed -i -E 's/169\.254\.4\.(1|2)/127.0.0.1/g; s/ --interface ntb_eth[0-9]{1,2}//g; s/check_ntb_connection$/exit 0 # check_ntb_connection/' /usr/syno/share/clusterInstall.sh 2>/dev/null || true
 
+    # [single] cluster 설치 락 self-deadlock 회피.
+    # get_cluster_installation_lock() 은 fsdn_lock.cgi 를 두 컨트롤러 IP 각각에 호출해
+    # 둘 다 "Success" 를 기대하는데, 위 loopback 패치로 두 IP 가 모두 127.0.0.1 이 되어
+    # 같은 노드에 락을 두 번 건다 → 첫 번째(left)=Success, 두 번째(right)=Failed(이미 잠김)
+    # → "Failed to lock right note" → install.cgi "Fail to get installation lock"
+    # → error_apply_lock("다른 설치가 진행 중"). (실기 45.26 에서 fsdn_lock.cgi 2회 호출로 확증)
+    # 단일 노드에는 조율할 피어가 없으므로, 두 번째(peer/right) 락 블록을 제거해
+    # left 노드만 한 번 락하게 한다. (check_cluster/release 는 두 IP 가 모두 self 라 정상 통과)
+    sed -i '/NTB_CONTROLLER_1_IP.*fsdn_lock\.cgi/,/^\tfi$/d' /usr/syno/share/clusterInstall.sh 2>/dev/null || true
+
     # [single] synomulticontroller 래퍼 설치 (피어 없음).
     # 설치 apply 단계(scemd)는 IsFSDN 과 무관하게 synomulticontroller 로
     #   --up_lock_ctrl GET_LOCK ...  (apply-lock) 을 호출하는데, 단일 노드에는
