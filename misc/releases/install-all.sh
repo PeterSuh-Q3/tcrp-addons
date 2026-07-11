@@ -292,6 +292,76 @@ NEOF
         mkdir -p /tmpRoot/usr/lib/systemd/system/sysinit.target.wants
         ln -sf ../mshell-ntb-eth0.service /tmpRoot/usr/lib/systemd/system/sysinit.target.wants/mshell-ntb-eth0.service
         echo "[single] installed mshell-ntb-eth0 service (ntb_eth0 local IP for synoconfstored)"
+
+        # [single] synomulticontroller shim (설치본 런타임).
+        # synomulticontroller 는 scemd(멀티콜)로의 심링크다. 실 하드웨어가 없어 real 바이너리는
+        # --location 을 -1(unknown) 으로 반환한다. hardware_info(is_controller0=false=컨트롤러 1)에
+        # 맞춰 location:1 을 반환하게 해 컨트롤러 정체성을 확정하고, 피어 부재(degraded)로 응답한다.
+        # (효과: insertNTB.sh 가 location=1 + link down 을 보고 ntb_brd modprobe 를 건너뛰어
+        #  'ntb_brd: No such device' 실패를 회피. 단, syno_location_get(내부 컴파일 함수)까지는
+        #  못 고치므로 synonet 의 network %-format 컨트롤러 인식은 아래 LAN fallback 으로 보완.)
+        # 주의: 반드시 심링크를 먼저 rm 해 scemd 데몬 바이너리를 덮어쓰지 않게 한다.
+        SMC="/tmpRoot/usr/syno/bin/synomulticontroller"
+        if [ -e "${SMC}" ]; then
+            rm -f "${SMC}"
+            cat > "${SMC}" <<'SMCEOF'
+#!/bin/sh
+# MSHELL installed-DSM single-node(degraded, controller 1) synomulticontroller shim.
+case "$1" in
+  --location)            echo "This controller is on location:1"; exit 0 ;;
+  --check_chassis_match) echo "Chassis match"; exit 0 ;;
+  --is_remote_power_on)  exit 0 ;;
+  --ntb_heartbeat_check) echo "Current link is down"; exit 1 ;;
+  --link_status)         echo "link down"; exit 1 ;;
+  --up_lock_ctrl)        exit 0 ;;
+esac
+exit 0
+SMCEOF
+            chmod +x "${SMC}"
+            echo "[single] installed synomulticontroller shim (location:1, degraded)"
+        fi
+
+        # [single] LAN fallback (eth0 직접 IP).
+        # syno_location_get(하드웨어 컨트롤러 location)이 -1 이라 synonet 이 controller 인식 실패
+        # → eth0 의 %-format 설정을 실제 eth0 에 적용 못 함 → eth0 무 IP → LAN 불통.
+        # dhcp-client 는 eth0%N 으로 리스를 받아 /etc/dhclient/ipv4/dhcpcd-eth0%N.info 에 기록하므로,
+        # 그 리스(IPADDR/NETMASK/GATEWAY)를 읽어 실제 eth0 에 부여한다. (실기 45.26 에서 LAN 도달 검증)
+        LANSCR="/tmpRoot/usr/syno/lib/systemd/scripts/mshell-lan.sh"
+        cat > "${LANSCR}" <<'LEOF'
+#!/bin/sh
+# MSHELL LAN fallback: synonetd(AA)가 controller 인식 실패로 eth0 에 IP 를 못 올린다.
+# dhcp-client 가 eth0%N 으로 받은 리스를 읽어 실제 eth0 에 적용한다.
+sleep 100
+/sbin/ip addr show eth0 2>/dev/null | grep -q "inet " && exit 0
+LEASE=""
+for f in "/etc/dhclient/ipv4/dhcpcd-eth0%0.info" "/etc/dhclient/ipv4/dhcpcd-eth0%1.info"; do
+  [ -f "$f" ] && grep -q "^IPADDR=" "$f" && LEASE="$f" && break
+done
+[ -z "$LEASE" ] && exit 0
+IPADDR=$(grep "^IPADDR=" "$LEASE" | cut -d= -f2)
+NETMASK=$(grep "^NETMASK=" "$LEASE" | cut -d= -f2)
+GATEWAY=$(grep "^GATEWAY=" "$LEASE" | cut -d= -f2)
+[ -z "$IPADDR" ] && exit 0
+/sbin/ip link set eth0 up
+/sbin/ifconfig eth0 "$IPADDR" netmask "${NETMASK:-255.255.255.0}" up
+[ -n "$GATEWAY" ] && /sbin/ip route add default via "$GATEWAY" dev eth0 2>/dev/null
+exit 0
+LEOF
+        chmod +x "${LANSCR}"
+        cat > "/tmpRoot/usr/lib/systemd/system/mshell-lan.service" <<'LEOF'
+[Unit]
+Description=MSHELL LAN fallback (eth0 direct IP)
+DefaultDependencies=no
+After=syno-rootfs-ready.target
+[Service]
+Type=simple
+ExecStart=/usr/syno/lib/systemd/scripts/mshell-lan.sh
+[Install]
+WantedBy=sysinit.target
+LEOF
+        mkdir -p /tmpRoot/usr/lib/systemd/system/sysinit.target.wants
+        ln -sf ../mshell-lan.service /tmpRoot/usr/lib/systemd/system/sysinit.target.wants/mshell-lan.service
+        echo "[single] installed mshell-lan fallback service (eth0 direct IP)"
     fi
 
     fixacpibutton
