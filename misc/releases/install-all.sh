@@ -251,6 +251,49 @@ elif [ "${1}" = "late" ]; then
         fi
     fi
 
+    # [single] epyc7003ntb: synoconfstored/AA 서버가 바인딩할 ntb_eth0 로컬 IP 를 부팅 초기에 제공.
+    # PAS7700 의 synoconfstored/api_runner/distributed_lock 은 컨트롤러 IP(169.254.4.1 또는 .2,
+    # hb_interface_name=ntb_eth0)에 소켓을 바인딩하는데, 실 NTB 하드웨어가 없어 ntb_eth0(ntb_netdev)
+    # 가 안 생기면 "Invalid local IP []" 로 크래시 루프 → DSM 전체 사용 불가.
+    # eth0 위 VLAN 으로 ntb_eth0 를 만들고 hardware_info 의 is_controller0 에 맞는 IP 를 할당하는
+    # 부팅 서비스를 설치해, synoconfstored 시작 전에 바인딩 대상을 확보한다.
+    # (실기 45.26 VM 에서 synoconfstored 정상 기동 검증됨. AA 는 피어 부재 degraded 로 동작)
+    if [ "${PLATFORM}" = "epyc7003ntb" ]; then
+        NTBSCR="/tmpRoot/usr/syno/lib/systemd/scripts/mshell-ntb-eth0.sh"
+        cat > "${NTBSCR}" <<'NEOF'
+#!/bin/sh
+# MSHELL single-node AA(degraded): provide ntb_eth0 local IP so synoconfstored/AA
+# servers can bind. Real ntb_netdev has no hardware here; use a VLAN on eth0.
+HWINFO=/usr/syno/etc/synoaa/conf/hardware_info
+IP=169.254.4.2
+grep -q '"is_controller0":true' "$HWINFO" 2>/dev/null && IP=169.254.4.1
+if ! /sbin/ip link show ntb_eth0 >/dev/null 2>&1; then
+  /sbin/modprobe 8021q 2>/dev/null
+  /sbin/ip link add link eth0 name ntb_eth0 type vlan id 100 2>/dev/null
+fi
+/sbin/ip addr show ntb_eth0 2>/dev/null | grep -q "$IP" || /sbin/ip addr add ${IP}/24 dev ntb_eth0
+/sbin/ip link set ntb_eth0 up
+exit 0
+NEOF
+        chmod +x "${NTBSCR}"
+        cat > "/tmpRoot/usr/lib/systemd/system/mshell-ntb-eth0.service" <<'NEOF'
+[Unit]
+Description=MSHELL fake ntb_eth0 for single-node AA (degraded)
+DefaultDependencies=no
+After=syno-kernel-modules-load.service
+Before=synoconfstoreeventd.service synoconfstored.service sysinit.target
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/syno/lib/systemd/scripts/mshell-ntb-eth0.sh
+[Install]
+WantedBy=sysinit.target
+NEOF
+        mkdir -p /tmpRoot/usr/lib/systemd/system/sysinit.target.wants
+        ln -sf ../mshell-ntb-eth0.service /tmpRoot/usr/lib/systemd/system/sysinit.target.wants/mshell-ntb-eth0.service
+        echo "[single] installed mshell-ntb-eth0 service (ntb_eth0 local IP for synoconfstored)"
+    fi
+
     fixacpibutton
 
     if [ -d /exts/all-modules ]; then    
