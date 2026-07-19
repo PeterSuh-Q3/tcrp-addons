@@ -1,6 +1,6 @@
 #!/bin/bash
 
-baseurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master"  # Base URL
+baseurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main"  # Base URL
 
 ls -d */ | grep -v -e "9p" -e "inject-loader" -e "covermissingbtrfs" | while IFS= read -r dir; do
   for baseplatform in `cat addplatforms`

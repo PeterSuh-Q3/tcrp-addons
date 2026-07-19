@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install2.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acovermissingbin/src/install2.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/acovermissingbin/src/install2.sh",
       "sha256": "3ab647a7cd1649e647795e92f2e5f9861714480be483bfcc5bcca5d29314b793",
       "packed": false
     },
     {
       "name": "usr6.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/acovermissingbin/auxfiles/usr6.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/acovermissingbin/auxfiles/usr6.tgz",
       "sha256": "572bfe8e8c27eec3f1193f8b9c42bf049c94887a2db2ebdcc16e16e80d4c5b32",
       "packed": false
     }

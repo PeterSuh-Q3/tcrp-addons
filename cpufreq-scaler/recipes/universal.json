@@ -2,25 +2,25 @@
   "files": [
     {
       "name": "scaler.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/scaler.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/cpufreq-scaler/src/scaler.sh",
       "sha256": "31c5ab99b5dbf6f7f9de6b34e194c21eafcfd53e63b786d850308ae50c1ca83c",
       "packed": false
     },
     {
       "name": "unscaler.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/unscaler.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/cpufreq-scaler/src/unscaler.sh",
       "sha256": "eacaa9e62291bad62903737e1fdb5d63dd018add9f6bb412cc52bd1708f45794",
       "packed": false
     },
     {
       "name": "rescaler.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/rescaler.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/cpufreq-scaler/src/rescaler.sh",
       "sha256": "495c8c9398466a3b947cad1491f821aa4b931da019b9d87399c9edc8019ec7a1",
       "packed": false
     },
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/cpufreq-scaler/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/cpufreq-scaler/src/install.sh",
       "sha256": "bab192f36aa6031eb5ce02c69929cf10c2bab2c7a4169a1934c60ea351a15356",
       "packed": false
     }

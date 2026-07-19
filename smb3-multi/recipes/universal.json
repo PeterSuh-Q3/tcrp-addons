@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "smb3-multi.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/src/smb3-multi.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/smb3-multi/src/smb3-multi.sh",
       "sha256": "4202882d576112dab6acb66354d7a55ac5f84ea95985601dc42b00e4be036f32",
       "packed": false
     },
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/smb3-multi/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/smb3-multi/src/install.sh",
       "sha256": "4d5dfeef6025f3ac976de6b8b8a3b633ec48a771a1a47fc68c5d83bedfc75736",
       "packed": false
     }

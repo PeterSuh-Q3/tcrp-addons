@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/localrss/src/install.sh",
       "sha256": "0cc9d814e84c17808a18ec199890f7d3864af1652918cffbd11a878adf390c3d",
       "packed": false
     },
     {
       "name": "pats.json",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/localrss/src/pats.json",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/localrss/src/pats.json",
       "sha256": "6ceec67f0736de1e868146cd6e458bafbc77619771ecb47ec69f9aced559480e",
       "packed": false
     }

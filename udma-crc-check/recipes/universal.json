@@ -2,31 +2,31 @@
   "files": [
     {
       "name": "udma-check.env",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/auxfiles/udma-check.env",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/udma-crc-check/auxfiles/udma-check.env",
       "sha256": "e500df15483f0702c5e470f4a21b5fe57db875350a37e24d33f0b0c500302e56",
       "packed": false
     },
     {
       "name": "udma-crc-check.service",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/auxfiles/udma-crc-check.service",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/udma-crc-check/auxfiles/udma-crc-check.service",
       "sha256": "2d211d943c53f171fd4d038d580a4053b4d07d9a3cf8377abb3dfe41d4cafed2",
       "packed": false
     },
     {
       "name": "udma-crc-check.timer",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/auxfiles/udma-crc-check.timer",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/udma-crc-check/auxfiles/udma-crc-check.timer",
       "sha256": "9bb472572f65ea6c67473b20a1153fd1b6c76ad3a23944ed4fde18fdc9a97c3b",
       "packed": false
     },
     {
       "name": "check_udma_crc.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/src/check_udma_crc.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/udma-crc-check/src/check_udma_crc.sh",
       "sha256": "979f2d7ff82e4e0ba708b74a067dd41d31ba60768d41a0169a9902cb374dae38",
       "packed": false
     },
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/udma-crc-check/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/udma-crc-check/src/install.sh",
       "sha256": "0480203517e801560715dd03e2c84cbff4d542d04a8b2138dde1dd1a01893345",
       "packed": false
     }

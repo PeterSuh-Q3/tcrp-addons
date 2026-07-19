@@ -2,43 +2,43 @@
   "files": [
     {
       "name": "install-all.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install-all.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/misc/releases/install-all.sh",
       "sha256": "1c0ca0bee81be2c87ff9c01dfbb4370259f71bcfb27e3dc210039c223f76c1a0",
       "packed": false
     },
     {
       "name": "install_rd.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/install_rd.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/misc/releases/install_rd.sh",
       "sha256": "25ad2b5662e68d9d5e34b84fa7e06b7330bdb9957356e667a7ca8a032ab200a7",
       "packed": false
     },
     {
       "name": "lrzsz.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/lrzsz.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/misc/releases/lrzsz.tgz",
       "sha256": "2d2fd90cc2924993a97c27665b4de9e51380d9e3460cd5cafb0efb078659b1fa",
       "packed": false
     },
     {
       "name": "ttyd.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/ttyd.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/misc/releases/ttyd.tgz",
       "sha256": "7f69147b0ca133be2764a3c5c679cfb2cde346a7de4d4d5d5ad0426c11dc0f1e",
       "packed": false
     },
     {
       "name": "stty.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/stty.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/misc/releases/stty.tgz",
       "sha256": "7e2acf5170929b95b061356fd368495c9608517f551d030ff5bb4190842fd734",
       "packed": false
     },
     {
       "name": "i915ids",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/i915ids",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/misc/releases/i915ids",
       "sha256": "5ddce01ad443313adfab940dfa9c7f524530bfb1bf9f7b8c93352ec2aff704ca",
       "packed": false
     },
     {
       "name": "web_index.html",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/misc/releases/web_index.html",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/misc/releases/web_index.html",
       "sha256": "b0098c1597ebb2407a37470402051f048dbdd922ee49e83a25f4f27ed079ab51",
       "packed": false
     }

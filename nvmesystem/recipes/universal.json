@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvmesystem/src/install.sh",
       "sha256": "20099b19ee50238df5ed6ad46ca04ed2beb9683f4b33af5790a7382d2974501f",
       "packed": false
     },
     {
       "name": "nvmesystem.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/nvmesystem/src/nvmesystem.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvmesystem/src/nvmesystem.sh",
       "sha256": "0df02a5853e6d286d70480fc82580f6a5ae85f159811ecf6958f80ce2324a1be",
       "packed": false
     }

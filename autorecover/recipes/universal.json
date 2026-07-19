@@ -2,7 +2,7 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/autorecover/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/autorecover/src/install.sh",
       "sha256": "b1aa9299598e56d6807d710483a5bf07d9438059609c4fb6fb75e445af662710",
       "packed": false
     }

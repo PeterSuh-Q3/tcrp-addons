@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/synoconfbkp/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/synoconfbkp/src/install.sh",
       "sha256": "ae8fd279c522fc9a5b4a76a0cf967c5dc53f87f28a8c315b0bcb6b1710cc9d1f",
       "packed": false
     },
     {
       "name": "synoconfbkp.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/synoconfbkp/src/synoconfbkp.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/synoconfbkp/src/synoconfbkp.sh",
       "sha256": "bec0fd797a5a03544834a4180f73bafc94f40563dca1db4d57d45874a0e64617",
       "packed": false
     }

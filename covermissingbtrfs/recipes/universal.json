@@ -2,7 +2,7 @@
   "files": [
     {
       "name": "nothing.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/covermissingbtrfs/src/nothing.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/covermissingbtrfs/src/nothing.sh",
       "sha256": "954cac1aa42fea0fecf4ea36b5d6bc392333a2ebb5f95f2516c4739e35b8377f",
       "packed": false
     }

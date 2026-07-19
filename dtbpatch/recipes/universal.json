@@ -2,19 +2,19 @@
 "files": [
     {
       "name": "dtc",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/releases/dtc",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/dtbpatch/releases/dtc",
       "sha256": "14f7f87a5822050eab7c30a064912a6efe99f49bf6b896bbb38c2ba003803e78",
       "packed": false
     },
     {
       "name": "readlink",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/releases/readlink",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/dtbpatch/releases/readlink",
       "sha256": "5498cc736ad654b3c4828002a7067a8ad4e375409350666ca59f6c0547fc2afa",
       "packed": false
     },    
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/dtbpatch/releases/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/dtbpatch/releases/install.sh",
       "sha256": "085b19eedc7588c100301bd06df40392a75fab3509029b79235e03151f992dd1",
       "packed": false
     }

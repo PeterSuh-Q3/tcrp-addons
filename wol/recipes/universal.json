@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/wol/src/install.sh",
       "sha256": "58ee5103a916cdfefe41a33881f3830fd6120efbcfef2447e551ba5bef21594b",
       "packed": false
     },
     {
       "name": "wol.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/wol/src/wol.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/wol/src/wol.sh",
       "sha256": "7ce549456fa3e2ed2ebb1788ee481305c1ea49f1289473688a6d2d5915942896",
       "packed": false
     }

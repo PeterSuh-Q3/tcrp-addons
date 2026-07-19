@@ -2,19 +2,19 @@
   "files": [
     {
       "name": "tcrp-reboot.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/reboottotcrp/src/tcrp-reboot.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/reboottotcrp/src/tcrp-reboot.sh",
       "sha256": "1ffdef55b64509b34b8a1464df29f50d8788ed839d78772c5dc0219e096cc2f0",
       "packed": false
     },
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/reboottotcrp/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/reboottotcrp/src/install.sh",
       "sha256": "d18e701547d9bc3475988e706867c979cb1d228e41cf908a449e93df79262296",
       "packed": false
     },
     {
       "name": "esynoscheduler.db",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/reboottotcrp/src/esynoscheduler.db",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/reboottotcrp/src/esynoscheduler.db",
       "sha256": "edfa17bf2b21e3126b9315a40cff4285c84722c32dddc12fc904b62d59cf077e",
       "packed": false
     }

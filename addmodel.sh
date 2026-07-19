@@ -6,7 +6,7 @@ if [ -z "$1" ]; then
 fi
 
 model="$1"
-baseurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master"  # Base URL
+baseurl="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main"  # Base URL
 
 ls -d */ | grep -v -e "9p" | while IFS= read -r dir; do
   echo "Adding model $model for ${dir}rpext-index.json"

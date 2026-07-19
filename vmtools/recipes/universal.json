@@ -2,13 +2,13 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/vmtools/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/vmtools/src/install.sh",
       "sha256": "bec07694f0f54bf6904b687b785fb866d84dee0024e10f260045e95a7de8a79e",
       "packed": false
     },
     {
       "name": "vmtools-7.1.tgz",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/vmtools/auxfiles/vmtools-7.1.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/vmtools/auxfiles/vmtools-7.1.tgz",
       "sha256": "885119132ad281aacedf790c5f0bfc95eb93994e1050bb9732d3b9cb334b9b34",
       "packed": false
     }

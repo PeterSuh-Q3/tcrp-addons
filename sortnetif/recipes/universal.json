@@ -2,7 +2,7 @@
   "files": [
     {
       "name": "install.sh",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/master/sortnetif/src/install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/sortnetif/src/install.sh",
       "sha256": "bc41a9091f56731ea3af60c8c7300858d19e83555a0ef1c244d0dc7df3c2a0bf",
       "packed": false
     }
