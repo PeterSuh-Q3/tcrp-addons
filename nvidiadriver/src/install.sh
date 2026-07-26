@@ -21,6 +21,13 @@ set -o pipefail 2>/dev/null || true
 PHASE="${1:-}"
 [ "$PHASE" = "patches" ] || [ "$PHASE" = "os_load" ] || exit 0
 
+# Everything below writes into the DSM rootfs mounted at /tmpRoot, which only
+# exists from the os_load phase onward. At on_patches /tmpRoot is not there yet
+# (normal) - do NOTHING then, and never create a bogus /tmpRoot or download into
+# it. Injection (and the big download) happen at os_load.
+_TR="${TMPROOT:-/tmpRoot}"
+[ -d "${_TR}/usr" ] || { echo "nvidiadriver: ${_TR} not mounted yet (phase ${PHASE}) - deferring to os_load" >&2; exit 0; }
+
 # redpill runtime lays out ext files at /exts/<id>/ (same convention as every
 # other addon: /exts/misc/*, /exts/tcrp-9p/*, ...). $0's dirname is NOT reliably
 # that path in the on_patches runner, so use the absolute ext dir with a dirname
