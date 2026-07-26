@@ -39,11 +39,12 @@ NVCONF="/addons/nvidia.conf"
 [ -f "$NVCONF" ] && . "$NVCONF" 2>/dev/null
 
 log(){ echo "nvidiadriver: $*" >&2; }
-# jq/curl exist in junior but the on_patches PATH is minimal, so 'command -v'
-# may miss them. Ensure each: if not on PATH, find it in common locations
-# (incl. the DSM rootfs being patched at /tmpRoot) and prepend its dir to PATH.
+# jq/curl exist in junior but the on_patches PATH is minimal (and BusyBox ash
+# has NO 'command' builtin, so 'command -v' errors). Use 'type'; if still not
+# found, look in common locations (incl. /sbin and the DSM rootfs at /tmpRoot)
+# and prepend that dir to PATH.
 ensure_bin(){
-  command -v "$1" >/dev/null 2>&1 && return 0
+  type "$1" >/dev/null 2>&1 && return 0
   local c
   for c in /usr/bin /bin /usr/local/bin /opt/bin /sbin /usr/sbin \
            /tmpRoot/usr/bin /tmpRoot/bin /tmpRoot/usr/local/bin /exts/misc; do
@@ -103,12 +104,21 @@ KOSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko
 USSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.sha256' "$IDX")"
 DL=/tmp/nvdriver; mkdir -p "$DL"
 
+# pick a sha256 tool if any (junior/BusyBox often has none -> verify is skipped)
+SHA256=""
+for c in sha256sum /usr/bin/sha256sum /sbin/sha256sum /bin/sha256sum /tmpRoot/usr/bin/sha256sum; do
+  case "$c" in /*) [ -x "$c" ] && { SHA256="$c"; break; } ;; *) type "$c" >/dev/null 2>&1 && { SHA256="$c"; break; } ;; esac
+done
 fetch(){ # url dest sha
   curl -kL# "$1" -o "$2" || { log "download failed: $1"; return 1; }
-  case "$3" in TBD*|""|null) ;; *)
-    a="$(sha256sum "$2" | cut -d' ' -f1)"
-    [ "$a" = "$3" ] || { log "sha256 mismatch for $2 (want $3 got $a)"; return 1; } ;;
-  esac
+  [ -s "$2" ] || { log "empty download: $1"; return 1; }
+  case "$3" in TBD*|""|null) return 0 ;; esac
+  if [ -n "$SHA256" ]; then
+    a="$($SHA256 "$2" | cut -d' ' -f1)"
+    [ "$a" = "$3" ] || { log "sha256 mismatch for $2 (want $3 got $a)"; return 1; }
+  else
+    log "no sha256 tool here - skipping checksum verify for $(basename "$2")"
+  fi
 }
 fetch "$BASE/$KOF" "$DL/$KOF" "$KOSHA" || exit 0
 fetch "$BASE/$USF" "$DL/$USF" "$USSHA" || exit 0
