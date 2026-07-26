@@ -39,10 +39,21 @@ NVCONF="/addons/nvidia.conf"
 [ -f "$NVCONF" ] && . "$NVCONF" 2>/dev/null
 
 log(){ echo "nvidiadriver: $*" >&2; }
-have(){ command -v "$1" >/dev/null 2>&1; }
+# jq/curl exist in junior but the on_patches PATH is minimal, so 'command -v'
+# may miss them. Ensure each: if not on PATH, find it in common locations
+# (incl. the DSM rootfs being patched at /tmpRoot) and prepend its dir to PATH.
+ensure_bin(){
+  command -v "$1" >/dev/null 2>&1 && return 0
+  local c
+  for c in /usr/bin /bin /usr/local/bin /opt/bin /sbin /usr/sbin \
+           /tmpRoot/usr/bin /tmpRoot/bin /tmpRoot/usr/local/bin /exts/misc; do
+    [ -x "$c/$1" ] && { export PATH="$c:$PATH"; return 0; }
+  done
+  return 1
+}
 [ -f "$IDX" ] || { log "no nvidia-index.json, skipping"; exit 0; }
-have jq   || { log "jq missing, skipping"; exit 0; }
-have curl || { log "curl missing, skipping"; exit 0; }
+ensure_bin jq   || { log "jq not found on PATH or common dirs, skipping"; exit 0; }
+ensure_bin curl || { log "curl not found on PATH or common dirs, skipping"; exit 0; }
 
 PLATFORM="$(uname -a | awk '{print $NF}' | cut -d'_' -f2)"
 [ -n "$PLATFORM" ] || PLATFORM="$(jq -r '.platforms | keys[0]' "$IDX")"
