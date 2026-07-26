@@ -9,6 +9,11 @@
           "ko":        { "file": "nv-ko-535.230.02-epyc7002-51055.tgz", "sha256": "c25d96ba5e4ca19f266eba03c48ccf941f5e6d40598af6042e37b9853f8dc709" },
           "userspace": { "file": "nv-userspace-535.230.02.tgz",         "sha256": "163baa10e115298541abc7a38d84cfa6ef3fe8e5150a1c3567674e2b2453cc13", "version": "535.230.02" },
           "ffmpeg":    { "file": "nv-ffmpeg-535.230.02.tgz",            "sha256": "093f3db531e3880c544b0bb79853fe2d45fe01e17569bf9938b6cec672d54530", "source": "jellyfin-ffmpeg 6.0.1-8 (NVENC 12.0)", "optional": true }
+        },
+        "550.163.01": {
+          "ko":        { "file": "nv-ko-550.163.01-epyc7002-51055.tgz", "sha256": "e7accb38c71f95f5987137e04e3080a5266c339337f0ac820874ec2520abef15" },
+          "userspace": { "file": "nv-userspace-550.163.01.tgz",         "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8", "version": "550.163.01" },
+          "ffmpeg":    { "file": "nv-ffmpeg-550.163.01.tgz",            "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165", "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)", "optional": true }
         }
       }
     }
