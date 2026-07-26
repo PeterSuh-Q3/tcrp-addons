@@ -102,6 +102,15 @@ tar -xzf "$DL/$USF" -C "$USDIR"
     [ -f "$f" ] || continue
     base="${f%.so.$DRV}.so"; ln -sf "$f" "$base.1"; ln -sf "$base.1" "$base"
   done ) 2>/dev/null || true
+# Expose the sonames on the default loader path. DSM has no /etc/ld.so.conf.d and
+# ldconfig does NOT reliably honor /etc/ld.so.conf, so symlink the libs straight
+# into /usr/lib - verified on-box that Plex/jellyfin-ffmpeg then resolve
+# libnvidia-encode/libnvcuvid/libcuda WITHOUT LD_LIBRARY_PATH. (Also redone at
+# boot in rc.d/nvidia.sh, since /usr/lib is rebuilt from the pat each boot.)
+mkdir -p "$TMPROOT/usr/lib"
+( cd "$USDIR/lib" 2>/dev/null && for so in *.so*; do
+    [ -e "$so" ] && ln -sf "/usr/local/nvidia/lib/$so" "$TMPROOT/usr/lib/$so"
+  done ) 2>/dev/null || true
 
 # --- boot script: load order + device nodes ----------------------------------
 RCD="$TMPROOT/usr/local/etc/rc.d"; mkdir -p "$RCD"
@@ -124,7 +133,12 @@ case "$1" in start|"")
   }
   umajor=$(awk '$2=="nvidia-uvm"{print $1}' /proc/devices | head -1)
   [ -n "$umajor" ] && { [ -e /dev/nvidia-uvm ] || mknod -m 666 /dev/nvidia-uvm c "$umajor" 0; }
-  # make the userspace libs resolvable without LD_LIBRARY_PATH
+  # expose libs on the default loader path so Plex/Jellyfin/ffmpeg resolve
+  # libnvidia-encode/libnvcuvid/libcuda without LD_LIBRARY_PATH. DSM lacks
+  # /etc/ld.so.conf.d and rebuilds /usr/lib each boot, so (re)symlink here.
+  for so in /usr/local/nvidia/lib/*.so*; do
+    [ -e "$so" ] && ln -sf "$so" "/usr/lib/$(basename "$so")"
+  done
   [ -x /sbin/ldconfig ] && /sbin/ldconfig 2>/dev/null
   export PATH="/usr/local/nvidia/bin:$PATH"
   ;;
