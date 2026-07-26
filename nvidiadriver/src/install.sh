@@ -21,7 +21,12 @@ set -o pipefail 2>/dev/null || true
 PHASE="${1:-}"
 [ "$PHASE" = "patches" ] || [ "$PHASE" = "os_load" ] || exit 0
 
-EXTDIR="$(dirname "$0")"
+# redpill runtime lays out ext files at /exts/<id>/ (same convention as every
+# other addon: /exts/misc/*, /exts/tcrp-9p/*, ...). $0's dirname is NOT reliably
+# that path in the on_patches runner, so use the absolute ext dir with a dirname
+# fallback.
+EXTDIR="/exts/nvidiadriver"
+[ -f "$EXTDIR/nvidia-index.json" ] || EXTDIR="$(dirname "$0")"
 IDX="$EXTDIR/nvidia-index.json"
 SUP="$EXTDIR/nvidia-gpu-support.json"
 TMPROOT="${TMPROOT:-/tmpRoot}"
