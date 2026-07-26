@@ -35,10 +35,12 @@ ensure_bin(){
   return 1
 }
 
-# a sha256 tool if any (junior/BusyBox often has none -> verify is skipped)
+# a sha256 tool if any. Only JUNIOR-native binaries - NOT the DSM ones under
+# /tmpRoot, which need DSM libs (libcrypto.so.3) absent from junior's loader path
+# and therefore fail at runtime. Junior/BusyBox usually has none -> verify skipped.
 SHA256=""
 find_sha(){
-  for c in sha256sum /usr/bin/sha256sum /sbin/sha256sum /bin/sha256sum /tmpRoot/usr/bin/sha256sum; do
+  for c in sha256sum /usr/bin/sha256sum /sbin/sha256sum /bin/sha256sum; do
     case "$c" in /*) [ -x "$c" ] && { SHA256="$c"; return; } ;;
                  *)  type "$c" >/dev/null 2>&1 && { SHA256="$c"; return; } ;; esac
   done
@@ -49,8 +51,12 @@ fetch(){ # url dest sha
   [ -s "$2" ] || { log "empty download: $1"; return 1; }
   case "$3" in TBD*|""|null) return 0 ;; esac
   if [ -n "$SHA256" ]; then
-    a="$($SHA256 "$2" | cut -d' ' -f1)"
-    [ "$a" = "$3" ] || { log "sha256 mismatch for $2 (want $3 got $a)"; return 1; }
+    a="$($SHA256 "$2" 2>/dev/null | cut -d' ' -f1)"
+    if [ -z "$a" ]; then
+      log "sha tool produced no output ($SHA256 unusable) - skipping verify for $(basename "$2")"
+    elif [ "$a" != "$3" ]; then
+      log "sha256 mismatch for $2 (want $3 got $a)"; return 1
+    fi
   else
     log "no sha256 tool here - skipping checksum verify for $(basename "$2")"
   fi
@@ -111,6 +117,7 @@ init_common(){
 ###############################################################################
 do_download(){
   mkdir -p "$CACHE"
+  echo "$DRV" > "$CACHE/selected"    # lock the version so os_load injects the same one
   log "pre-downloading driver $DRV for $PLATFORM -> $CACHE (patches phase)"
   fetch "$BASE/$KOF" "$CACHE/$KOF" "$KOSHA" || return 1
   fetch "$BASE/$USF" "$CACHE/$USF" "$USSHA" || return 1
@@ -128,6 +135,16 @@ do_inject(){
   [ -d "$TR/usr" ] || { echo "nvidiadriver: $TR not mounted (late) - abort" >&2; return 1; }
   LOGF="$TR/var/log/nvidiadriver.log"
   mkdir -p "$TR/var/log" 2>/dev/null; echo "===== nvidiadriver os_load $(date) =====" >> "$LOGF" 2>/dev/null
+
+  # Use the EXACT version the patches phase downloaded (the GPU may not be
+  # enumerable at os_load, so re-resolving here could pick a different one).
+  if [ -f "$CACHE/selected" ]; then
+    DRV="$(cat "$CACHE/selected")"
+    KOF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.file' "$IDX")"
+    USF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.file' "$IDX")"
+    FFF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.file // empty' "$IDX")"
+    log "using pre-downloaded driver $DRV (locked at patches phase)"
+  fi
 
   # normally the patches phase already cached the layers; fall back to a
   # download here only if they are missing (network may or may not be up).
