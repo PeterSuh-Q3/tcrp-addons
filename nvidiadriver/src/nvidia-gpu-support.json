@@ -1,0 +1,18 @@
+{
+  "_comment": "GPU PCI-id -> compatible driver branch(es). Used by install.sh to auto-pick / validate the driver version for the detected GPU, so users never land on an incompatible branch (issue #77 class). 'branches' lists supported major branches, newest-preferred first. Extend as GPUs/branches are validated.",
+  "default_branch": "535",
+  "gpus": {
+    "10de:1cb6": { "name": "Quadro P620",  "arch": "Pascal GP107", "branches": ["550", "535", "525"], "verified": ["535.183.06"] },
+    "10de:1cba": { "name": "Quadro P620 (rev)", "arch": "Pascal GP107", "branches": ["550", "535", "525"] },
+    "10de:1c8c": { "name": "GTX 1050 Ti Mobile", "arch": "Pascal GP107", "branches": ["550", "535", "525"] },
+    "10de:1f82": { "name": "GTX 1650",     "arch": "Turing TU117", "branches": ["550", "535", "525"] },
+    "10de:1eb1": { "name": "Quadro RTX 4000", "arch": "Turing TU104", "branches": ["550", "535", "525"] },
+    "10de:2204": { "name": "RTX 3090",     "arch": "Ampere GA102", "branches": ["550", "535"] },
+    "10de:2684": { "name": "RTX 4090",     "arch": "Ada AD102",    "branches": ["550"] }
+  },
+  "branch_notes": {
+    "525": "Maxwell..Ada. GSP firmware introduced.",
+    "535": "Production Branch. Maxwell..Ada. Recommended default for Pascal/Turing (verified: P620).",
+    "550": "Newer GPUs; Pascal/Maxwell support present but being phased out in later branches - verify per GPU."
+  }
+}
