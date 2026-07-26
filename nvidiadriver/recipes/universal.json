@@ -3,19 +3,19 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/install.sh",
-      "sha256": "8bec6d4f814e5c9b668f3e28acf65a78d0624de6c88e31874e9efe55ebd7134d",
+      "sha256": "dea2f31ec62e4c2822a020b1f45823e5bcf2ae16023d1e33d2db3dca20970d8b",
       "packed": false
     },
     {
       "name": "nvidia-index.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/nvidia-index.json",
-      "sha256": "cdad15357716636895899d543ac07ba091616869337eb41a57018a5f23f44eca",
+      "sha256": "8f5aa75310f902228f45d207006d991cd55230ab9adfdd719aad5d1f37fb0607",
       "packed": false
     },
     {
       "name": "nvidia-gpu-support.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/nvidia-gpu-support.json",
-      "sha256": "017fa14a1fafc6d208000efb2687ad8bb0a10bfac673fe57b0f389329cce1af3",
+      "sha256": "2f8ed8430dfe9df770e6c139b715da23921f70eb04bc5be325680e32d8d0d9ce",
       "packed": false
     }
   ],

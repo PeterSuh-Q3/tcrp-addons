@@ -108,6 +108,10 @@ RCD="$TMPROOT/usr/local/etc/rc.d"; mkdir -p "$RCD"
 cat > "$RCD/nvidia.sh" <<'RC'
 #!/bin/sh
 # nvidiadriver boot hook - load modules in dependency order, create nodes.
+# nvidia + nvidia-uvm are the compute core (nvidia-smi/CUDA). nvidia-modeset and
+# nvidia-drm are display-only and are best-effort: DSM kernels ship no
+# backlight.ko, so modeset may fail with 'Unknown symbol backlight_device_*' -
+# that is expected and does NOT affect compute. Failures are ignored.
 case "$1" in start|"")
   for m in nvidia nvidia-uvm nvidia-modeset nvidia-drm; do
     [ -f "/usr/lib/modules/$m.ko" ] && /sbin/insmod "/usr/lib/modules/$m.ko" 2>/dev/null
@@ -120,6 +124,8 @@ case "$1" in start|"")
   }
   umajor=$(awk '$2=="nvidia-uvm"{print $1}' /proc/devices | head -1)
   [ -n "$umajor" ] && { [ -e /dev/nvidia-uvm ] || mknod -m 666 /dev/nvidia-uvm c "$umajor" 0; }
+  # make the userspace libs resolvable without LD_LIBRARY_PATH
+  [ -x /sbin/ldconfig ] && /sbin/ldconfig 2>/dev/null
   export PATH="/usr/local/nvidia/bin:$PATH"
   ;;
 esac

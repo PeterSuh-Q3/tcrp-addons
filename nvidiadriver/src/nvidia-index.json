@@ -5,9 +5,9 @@
     "epyc7002": {
       "kver": "5.10.55",
       "drivers": {
-        "535.183.06": {
-          "ko":        { "file": "nv-ko-535.183.06-epyc7002-51055.tgz", "sha256": "TBD-after-build" },
-          "userspace": { "file": "nv-userspace-535.183.06.tgz",         "sha256": "TBD-after-build", "version": "535.183.06" }
+        "535.230.02": {
+          "ko":        { "file": "nv-ko-535.230.02-epyc7002-51055.tgz", "sha256": "c25d96ba5e4ca19f266eba03c48ccf941f5e6d40598af6042e37b9853f8dc709" },
+          "userspace": { "file": "nv-userspace-535.230.02.tgz",         "sha256": "163baa10e115298541abc7a38d84cfa6ef3fe8e5150a1c3567674e2b2453cc13", "version": "535.230.02" }
         }
       }
     }
