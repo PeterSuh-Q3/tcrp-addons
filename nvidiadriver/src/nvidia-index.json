@@ -1,0 +1,15 @@
+{
+  "_comment": "2-layer NVIDIA package index. platform -> driver_ver -> {ko, userspace}. ko is platform-specific; userspace is shared across kver5 platforms (dedup by version). sha256 values are emitted by build/build-nvidia.sh; fill them after the build. tgz assets are hosted on the GitHub Release tagged 'nvidia'.",
+  "release_base": "https://github.com/PeterSuh-Q3/tcrp-addons/releases/download/nvidia",
+  "platforms": {
+    "epyc7002": {
+      "kver": "5.10.55",
+      "drivers": {
+        "535.183.06": {
+          "ko":        { "file": "nv-ko-535.183.06-epyc7002-51055.tgz", "sha256": "TBD-after-build" },
+          "userspace": { "file": "nv-userspace-535.183.06.tgz",         "sha256": "TBD-after-build", "version": "535.183.06" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "nvidiadriver",
+  "info": {
+    "description": "No-auth NVIDIA driver (2-layer package) for DSM kver5 platforms",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/nvidiadriver",
+    "name": "NVIDIA driver (no-auth)",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/nvidiadriver"
+  },
+  "releases": {
+    "epyc7002_71_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/recipes/universal.json",
+    "epyc7002_72_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/recipes/universal.json",
+    "epyc7002_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/recipes/universal.json",
+    "epyc7002_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/recipes/universal.json"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/rpext-index.json"
+}
