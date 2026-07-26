@@ -27,6 +27,9 @@ PHASE="${1:-}"
 # it. Injection (and the big download) happen at os_load.
 _TR="${TMPROOT:-/tmpRoot}"
 [ -d "${_TR}/usr" ] || { echo "nvidiadriver: ${_TR} not mounted yet (phase ${PHASE}) - deferring to os_load" >&2; exit 0; }
+# persistent log inside the DSM rootfs -> readable after login as /var/log/nvidiadriver.log
+LOGF="${_TR}/var/log/nvidiadriver.log"
+mkdir -p "${_TR}/var/log" 2>/dev/null; { echo "===== nvidiadriver os_load $(date) ====="; } >> "$LOGF" 2>/dev/null
 
 # redpill runtime lays out ext files at /exts/<id>/ (same convention as every
 # other addon: /exts/misc/*, /exts/tcrp-9p/*, ...). $0's dirname is NOT reliably
@@ -45,7 +48,10 @@ TMPROOT="${TMPROOT:-/tmpRoot}"
 NVCONF="/addons/nvidia.conf"
 [ -f "$NVCONF" ] && . "$NVCONF" 2>/dev/null
 
-log(){ echo "nvidiadriver: $*" >&2; }
+# log to stderr (serial console during os_load) AND, once LOGF is set, to a
+# persistent file under the DSM rootfs so it can be read after login:
+#   /var/log/nvidiadriver.log
+log(){ echo "nvidiadriver: $*" >&2; [ -n "${LOGF:-}" ] && echo "$(date '+%H:%M:%S') nvidiadriver: $*" >> "$LOGF" 2>/dev/null; }
 # jq/curl exist in junior but the on_patches PATH is minimal (and BusyBox ash
 # has NO 'command' builtin, so 'command -v' errors). Use 'type'; if still not
 # found, look in common locations (incl. /sbin and the DSM rootfs at /tmpRoot)
@@ -185,9 +191,14 @@ cat > "$RCD/nvidia.sh" <<'RC'
 # nvidia-drm are display-only and are best-effort: DSM kernels ship no
 # backlight.ko, so modeset may fail with 'Unknown symbol backlight_device_*' -
 # that is expected and does NOT affect compute. Failures are ignored.
+RCLOG=/var/log/nvidiadriver.log
+rclog(){ echo "$(date '+%H:%M:%S') rc.d/nvidia: $*" >> "$RCLOG" 2>/dev/null; }
 case "$1" in start|"")
+  rclog "=== boot hook start ==="
   for m in nvidia nvidia-uvm nvidia-modeset nvidia-drm; do
-    [ -f "/usr/lib/modules/$m.ko" ] && /sbin/insmod "/usr/lib/modules/$m.ko" 2>/dev/null
+    if [ -f "/usr/lib/modules/$m.ko" ]; then
+      if /sbin/insmod "/usr/lib/modules/$m.ko" 2>>"$RCLOG"; then rclog "insmod $m OK"; else rclog "insmod $m FAILED (see above)"; fi
+    fi
   done
   # device nodes (nvidia-modprobe normally does this; do it explicitly)
   major=$(awk '$2=="nvidia-frontend"||$2=="nvidia"{print $1}' /proc/devices | head -1)
@@ -205,6 +216,8 @@ case "$1" in start|"")
   done
   [ -x /sbin/ldconfig ] && /sbin/ldconfig 2>/dev/null
   export PATH="/usr/local/nvidia/bin:$PATH"
+  rclog "loaded: $(lsmod 2>/dev/null | grep -c '^nvidia') nvidia modules; nodes: $(ls /dev/nvidia* 2>/dev/null | tr '\n' ' ')"
+  rclog "=== boot hook done (run 'nvidia-smi' to verify) ==="
   ;;
 esac
 RC
