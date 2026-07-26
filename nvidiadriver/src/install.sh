@@ -2,126 +2,48 @@
 #
 # nvidiadriver - inject a no-auth NVIDIA driver (2-layer package) into DSM.
 #
-# Runs during the loader build (patches phase, on the TC box where network is
-# available). Stages two layers fetched from the GitHub Release into /tmpRoot:
-#   kernel    layer -> /tmpRoot/usr/lib/modules/{nvidia,nvidia-uvm,...}.ko
-#   userspace layer -> /tmpRoot/usr/local/nvidia/{bin,lib}
-# and drops a boot script that modprobes in order + creates device nodes.
+# TWO explicitly-separated redpill phases (see the case dispatcher at the end):
 #
-# Driver VERSION selection (first match wins):
-#   1) /addons/nvidia.conf  nvidia_driver=...  (menu choice, baked by functions.sh
-#      since junior cannot read /home/tc/user_config.json)
-#   2) GPU auto-detect via nvidia-gpu-support.json  (default_branch for the PCI id)
-#   3) first driver listed for this platform in nvidia-index.json
+#   patches : the network IS available here. Download every layer (kernel +
+#             userspace [+ optional ffmpeg]) into a cache (/tmp/nvdriver).
+#             /tmpRoot does not exist yet, so NOTHING is injected in this phase.
 #
-# No vGPU / license daemon - physical / passthrough GPUs only.
+#   os_load : /tmpRoot (the DSM rootfs) is mounted, but the network may be down.
+#             Copy/extract the pre-downloaded layers from the cache into /tmpRoot
+#             and wire up the boot hook. Only if the cache is missing does it
+#             fall back to downloading here.
+#
+# Version selection (both phases, deterministic): /addons/nvidia.conf (baked by
+# functions.sh from the menu choice) -> GPU auto-detect via nvidia-gpu-support
+# -> newest for the platform. No vGPU / license daemon - physical/passthrough only.
 
-set -o pipefail 2>/dev/null || true
+CACHE=/tmp/nvdriver          # survives patches -> os_load (same junior tmpfs)
+LOGF=""                      # persistent log; set at os_load once /tmpRoot exists
 
-PHASE="${1:-}"
-[ "$PHASE" = "patches" ] || [ "$PHASE" = "os_load" ] || exit 0
+# log to stderr (serial console) AND, once LOGF is set, to a file that persists
+# into the booted DSM as /var/log/nvidiadriver.log
+log(){ echo "nvidiadriver: $*" >&2; [ -n "$LOGF" ] && echo "$(date '+%H:%M:%S') nvidiadriver: $*" >> "$LOGF" 2>/dev/null; }
 
-# Everything below writes into the DSM rootfs mounted at /tmpRoot, which only
-# exists from the os_load phase onward. At on_patches /tmpRoot is not there yet
-# (normal) - do NOTHING then, and never create a bogus /tmpRoot or download into
-# it. Injection (and the big download) happen at os_load.
-_TR="${TMPROOT:-/tmpRoot}"
-[ -d "${_TR}/usr" ] || { echo "nvidiadriver: ${_TR} not mounted yet (phase ${PHASE}) - deferring to os_load" >&2; exit 0; }
-# persistent log inside the DSM rootfs -> readable after login as /var/log/nvidiadriver.log
-LOGF="${_TR}/var/log/nvidiadriver.log"
-mkdir -p "${_TR}/var/log" 2>/dev/null; { echo "===== nvidiadriver os_load $(date) ====="; } >> "$LOGF" 2>/dev/null
-
-# redpill runtime lays out ext files at /exts/<id>/ (same convention as every
-# other addon: /exts/misc/*, /exts/tcrp-9p/*, ...). $0's dirname is NOT reliably
-# that path in the on_patches runner, so use the absolute ext dir with a dirname
-# fallback.
-EXTDIR="/exts/nvidiadriver"
-[ -f "$EXTDIR/nvidia-index.json" ] || EXTDIR="$(dirname "$0")"
-IDX="$EXTDIR/nvidia-index.json"
-SUP="$EXTDIR/nvidia-gpu-support.json"
-TMPROOT="${TMPROOT:-/tmpRoot}"
-# Junior cannot read /home/tc/user_config.json. The loader build (functions.sh)
-# bakes the user's menu choice into /addons/nvidia.conf, e.g.:
-#   nvidia_driver=550.163.01
-#   nvidia_ffmpeg=true
-# Absent keys => Auto (GPU-detected default below).
-NVCONF="/addons/nvidia.conf"
-[ -f "$NVCONF" ] && . "$NVCONF" 2>/dev/null
-
-# log to stderr (serial console during os_load) AND, once LOGF is set, to a
-# persistent file under the DSM rootfs so it can be read after login:
-#   /var/log/nvidiadriver.log
-log(){ echo "nvidiadriver: $*" >&2; [ -n "${LOGF:-}" ] && echo "$(date '+%H:%M:%S') nvidiadriver: $*" >> "$LOGF" 2>/dev/null; }
-# jq/curl exist in junior but the on_patches PATH is minimal (and BusyBox ash
-# has NO 'command' builtin, so 'command -v' errors). Use 'type'; if still not
-# found, look in common locations (incl. /sbin and the DSM rootfs at /tmpRoot)
-# and prepend that dir to PATH.
+# jq/curl exist in junior but PATH is minimal and BusyBox ash has no 'command'
+# builtin -> use 'type', then search common dirs and prepend to PATH.
 ensure_bin(){
   type "$1" >/dev/null 2>&1 && return 0
-  local c
   for c in /usr/bin /bin /usr/local/bin /opt/bin /sbin /usr/sbin \
            /tmpRoot/usr/bin /tmpRoot/bin /tmpRoot/usr/local/bin /exts/misc; do
     [ -x "$c/$1" ] && { export PATH="$c:$PATH"; return 0; }
   done
   return 1
 }
-[ -f "$IDX" ] || { log "no nvidia-index.json, skipping"; exit 0; }
-ensure_bin jq   || { log "jq not found on PATH or common dirs, skipping"; exit 0; }
-ensure_bin curl || { log "curl not found on PATH or common dirs, skipping"; exit 0; }
 
-PLATFORM="$(uname -a | awk '{print $NF}' | cut -d'_' -f2)"
-[ -n "$PLATFORM" ] || PLATFORM="$(jq -r '.platforms | keys[0]' "$IDX")"
-
-jq -e ".platforms[\"$PLATFORM\"]" "$IDX" >/dev/null 2>&1 || {
-  log "platform $PLATFORM not in index, skipping"; exit 0; }
-
-# --- detect GPU (physical/passthrough) ---------------------------------------
-GPUID="$(lspci -nn 2>/dev/null | grep -iE '\[03(00|02)\]' | grep -io '10de:[0-9a-f]\{4\}' | head -1 | tr 'A-Z' 'a-z')"
-if [ -z "$GPUID" ]; then          # lspci may be absent in junior -> sysfs fallback
-  for d in /sys/bus/pci/devices/*; do
-    [ "$(cat "$d/vendor" 2>/dev/null)" = "0x10de" ] || continue
-    case "$(cat "$d/class" 2>/dev/null)" in 0x0300*|0x0302*)
-      GPUID="10de:$(sed 's/^0x//' "$d/device" 2>/dev/null)"; break ;;
-    esac
-  done
-fi
-[ -n "$GPUID" ] && log "detected NVIDIA GPU $GPUID" || log "no NVIDIA GPU detected (will still stage driver)"
-
-# --- resolve driver version --------------------------------------------------
-DRV="${nvidia_driver:-}"           # from /addons/nvidia.conf (empty => Auto)
-if [ -z "$DRV" ] && [ -n "$GPUID" ] && [ -f "$SUP" ]; then
-  BRANCH="$(jq -r --arg g "$GPUID" '.gpus[$g].branches[0] // .default_branch' "$SUP" 2>/dev/null)"
-  # newest indexed driver whose major branch == $BRANCH
-  DRV="$(jq -r --arg p "$PLATFORM" --arg b "$BRANCH" \
-      '.platforms[$p].drivers | keys | map(select(startswith($b+"."))) | sort | reverse | .[0] // empty' "$IDX")"
-  [ -n "$DRV" ] && log "auto-selected driver $DRV (branch $BRANCH for $GPUID)"
-fi
-[ -z "$DRV" ] && DRV="$(jq -r --arg p "$PLATFORM" '.platforms[$p].drivers | keys | sort | reverse | .[0]' "$IDX")"
-[ -z "$DRV" ] || [ "$DRV" = "null" ] && { log "no driver resolved, skipping"; exit 0; }
-
-# compatibility guard
-if [ -n "$GPUID" ] && [ -f "$SUP" ]; then
-  OKB="$(echo "$DRV" | cut -d. -f1)"
-  if jq -e --arg g "$GPUID" '.gpus[$g]' "$SUP" >/dev/null 2>&1; then
-    jq -e --arg g "$GPUID" --arg b "$OKB" '.gpus[$g].branches | index($b)' "$SUP" >/dev/null 2>&1 \
-      || log "WARN: branch $OKB not listed compatible with $GPUID - proceeding as requested"
-  fi
-fi
-log "installing NVIDIA driver $DRV for $PLATFORM"
-
-# --- fetch the two layers ----------------------------------------------------
-BASE="$(jq -r '.release_base' "$IDX")"
-KOF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.file' "$IDX")"
-USF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.file' "$IDX")"
-KOSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.sha256' "$IDX")"
-USSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.sha256' "$IDX")"
-DL=/tmp/nvdriver; mkdir -p "$DL"
-
-# pick a sha256 tool if any (junior/BusyBox often has none -> verify is skipped)
+# a sha256 tool if any (junior/BusyBox often has none -> verify is skipped)
 SHA256=""
-for c in sha256sum /usr/bin/sha256sum /sbin/sha256sum /bin/sha256sum /tmpRoot/usr/bin/sha256sum; do
-  case "$c" in /*) [ -x "$c" ] && { SHA256="$c"; break; } ;; *) type "$c" >/dev/null 2>&1 && { SHA256="$c"; break; } ;; esac
-done
+find_sha(){
+  for c in sha256sum /usr/bin/sha256sum /sbin/sha256sum /bin/sha256sum /tmpRoot/usr/bin/sha256sum; do
+    case "$c" in /*) [ -x "$c" ] && { SHA256="$c"; return; } ;;
+                 *)  type "$c" >/dev/null 2>&1 && { SHA256="$c"; return; } ;; esac
+  done
+}
+
 fetch(){ # url dest sha
   curl -kL# "$1" -o "$2" || { log "download failed: $1"; return 1; }
   [ -s "$2" ] || { log "empty download: $1"; return 1; }
@@ -133,64 +55,123 @@ fetch(){ # url dest sha
     log "no sha256 tool here - skipping checksum verify for $(basename "$2")"
   fi
 }
-fetch "$BASE/$KOF" "$DL/$KOF" "$KOSHA" || exit 0
-fetch "$BASE/$USF" "$DL/$USF" "$USSHA" || exit 0
 
-# --- inject kernel layer -----------------------------------------------------
-KMODDIR="$TMPROOT/usr/lib/modules"
-mkdir -p "$KMODDIR"
-tar -xzf "$DL/$KOF" -C /tmp/nvidia-ko-x 2>/dev/null || { mkdir -p /tmp/nvidia-ko-x && tar -xzf "$DL/$KOF" -C /tmp/nvidia-ko-x; }
-for ko in /tmp/nvidia-ko-x/*.ko; do
-  [ -f "$ko" ] || continue
-  cp -f "$ko" "$KMODDIR/$(basename "$ko")"
-  log "  staged $(basename "$ko")"
-done
+# --- shared: locate ext files/tools, platform, GPU, resolve driver + files ---
+# Sets: IDX SUP PLATFORM GPUID DRV WANT_FF BASE KOF USF FFF KOSHA USSHA FFFSHA
+init_common(){
+  EXTDIR=/exts/nvidiadriver                       # redpill lays ext files here
+  [ -f "$EXTDIR/nvidia-index.json" ] || EXTDIR="$(dirname "$0")"
+  IDX="$EXTDIR/nvidia-index.json"
+  SUP="$EXTDIR/nvidia-gpu-support.json"
+  [ -f "$IDX" ] || { log "no nvidia-index.json, skipping"; return 1; }
+  ensure_bin jq   || { log "jq not found, skipping"; return 1; }
+  ensure_bin curl || { log "curl not found, skipping"; return 1; }
+  find_sha
 
-# --- inject userspace layer --------------------------------------------------
-USDIR="$TMPROOT/usr/local/nvidia"
-mkdir -p "$USDIR"
-tar -xzf "$DL/$USF" -C "$USDIR"
-# recreate sonames (libnvidia-ml.so.1 -> .so.<ver>, libcuda.so.1, ...)
-( cd "$USDIR/lib" 2>/dev/null && for f in *.so."$DRV"; do
-    [ -f "$f" ] || continue
-    base="${f%.so.$DRV}.so"; ln -sf "$f" "$base.1"; ln -sf "$base.1" "$base"
-  done ) 2>/dev/null || true
-# Expose the sonames on the default loader path. DSM has no /etc/ld.so.conf.d and
-# ldconfig does NOT reliably honor /etc/ld.so.conf, so symlink the libs straight
-# into /usr/lib - verified on-box that Plex/jellyfin-ffmpeg then resolve
-# libnvidia-encode/libnvcuvid/libcuda WITHOUT LD_LIBRARY_PATH. (Also redone at
-# boot in rc.d/nvidia.sh, since /usr/lib is rebuilt from the pat each boot.)
-mkdir -p "$TMPROOT/usr/lib"
-( cd "$USDIR/lib" 2>/dev/null && for so in *.so*; do
-    [ -e "$so" ] && ln -sf "/usr/local/nvidia/lib/$so" "$TMPROOT/usr/lib/$so"
-  done ) 2>/dev/null || true
+  # menu choice baked into /addons/nvidia.conf (junior can't read user_config.json)
+  [ -f /addons/nvidia.conf ] && . /addons/nvidia.conf 2>/dev/null
 
-# --- optional: NVENC-capable ffmpeg layer ------------------------------------
-# For the SynoCommunity Jellyfin *package* (its bundled ffmpeg has no NVENC) and
-# for CLI use. Plex has its own NVENC transcoder and does NOT need this. Enable
-# with user_config.json  "nvidia_ffmpeg": true . The ffmpeg version is pinned
-# per driver in nvidia-index.json so its NVENC API always matches the driver.
-WANT_FF="${nvidia_ffmpeg:-false}"          # from /addons/nvidia.conf
-if [ "$WANT_FF" = "true" ]; then
-  FFF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.file // empty' "$IDX")"
-  FFFSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.sha256 // empty' "$IDX")"
-  if [ -n "$FFF" ] && fetch "$BASE/$FFF" "$DL/$FFF" "$FFFSHA"; then
-    mkdir -p "$USDIR/bin"
-    tar -xzf "$DL/$FFF" -C "$USDIR"        # -> bin/ffmpeg, bin/ffprobe, SOURCE
-    chmod +x "$USDIR/bin/ffmpeg" "$USDIR/bin/ffprobe" 2>/dev/null
-    log "ffmpeg layer staged -> /usr/local/nvidia/bin/ffmpeg (point Jellyfin 'FFmpeg path' here)"
+  PLATFORM="$(uname -a | awk '{print $NF}' | cut -d'_' -f2)"
+  [ -n "$PLATFORM" ] || PLATFORM="$(jq -r '.platforms | keys[0]' "$IDX")"
+  jq -e ".platforms[\"$PLATFORM\"]" "$IDX" >/dev/null 2>&1 || { log "platform $PLATFORM not in index, skipping"; return 1; }
+
+  # detect NVIDIA GPU (lspci, sysfs fallback for junior)
+  GPUID="$(lspci -nn 2>/dev/null | grep -iE '\[03(00|02)\]' | grep -io '10de:[0-9a-f]\{4\}' | head -1 | tr 'A-Z' 'a-z')"
+  if [ -z "$GPUID" ]; then
+    for d in /sys/bus/pci/devices/*; do
+      [ "$(cat "$d/vendor" 2>/dev/null)" = "0x10de" ] || continue
+      case "$(cat "$d/class" 2>/dev/null)" in 0x0300*|0x0302*)
+        GPUID="10de:$(sed 's/^0x//' "$d/device" 2>/dev/null)"; break ;; esac
+    done
   fi
-fi
+  [ -n "$GPUID" ] && log "detected NVIDIA GPU $GPUID" || log "no NVIDIA GPU detected"
 
-# --- boot script: load order + device nodes ----------------------------------
-RCD="$TMPROOT/usr/local/etc/rc.d"; mkdir -p "$RCD"
-cat > "$RCD/nvidia.sh" <<'RC'
+  # resolve version: /addons override -> GPU branch -> newest
+  DRV="${nvidia_driver:-}"
+  if [ -z "$DRV" ] && [ -n "$GPUID" ] && [ -f "$SUP" ]; then
+    BRANCH="$(jq -r --arg g "$GPUID" '.gpus[$g].branches[0] // .default_branch' "$SUP" 2>/dev/null)"
+    DRV="$(jq -r --arg p "$PLATFORM" --arg b "$BRANCH" '.platforms[$p].drivers | keys | map(select(startswith($b+"."))) | sort | reverse | .[0] // empty' "$IDX")"
+  fi
+  [ -z "$DRV" ] && DRV="$(jq -r --arg p "$PLATFORM" '.platforms[$p].drivers | keys | sort | reverse | .[0]' "$IDX")"
+  { [ -z "$DRV" ] || [ "$DRV" = "null" ]; } && { log "no driver resolved, skipping"; return 1; }
+  WANT_FF="${nvidia_ffmpeg:-false}"
+
+  BASE="$(jq -r '.release_base' "$IDX")"
+  KOF="$(jq   -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.file' "$IDX")"
+  USF="$(jq   -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.file' "$IDX")"
+  FFF="$(jq   -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.file // empty' "$IDX")"
+  KOSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.sha256' "$IDX")"
+  USSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.sha256' "$IDX")"
+  FFFSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.sha256 // empty' "$IDX")"
+  return 0
+}
+
+###############################################################################
+# PHASE 1 - on_patches : download every layer to the cache (network available)
+###############################################################################
+do_download(){
+  mkdir -p "$CACHE"
+  log "pre-downloading driver $DRV for $PLATFORM -> $CACHE (patches phase)"
+  fetch "$BASE/$KOF" "$CACHE/$KOF" "$KOSHA" || return 1
+  fetch "$BASE/$USF" "$CACHE/$USF" "$USSHA" || return 1
+  if [ "$WANT_FF" = "true" ] && [ -n "$FFF" ]; then
+    fetch "$BASE/$FFF" "$CACHE/$FFF" "$FFFSHA" || log "ffmpeg layer download failed (optional)"
+  fi
+  log "pre-download complete: $(ls "$CACHE" 2>/dev/null | tr '\n' ' ')"
+}
+
+###############################################################################
+# PHASE 2 - on_os_load : inject the cached layers into the mounted /tmpRoot
+###############################################################################
+do_inject(){
+  TR="${TMPROOT:-/tmpRoot}"
+  [ -d "$TR/usr" ] || { echo "nvidiadriver: $TR not mounted (os_load) - abort" >&2; return 1; }
+  LOGF="$TR/var/log/nvidiadriver.log"
+  mkdir -p "$TR/var/log" 2>/dev/null; echo "===== nvidiadriver os_load $(date) =====" >> "$LOGF" 2>/dev/null
+
+  # normally the patches phase already cached the layers; fall back to a
+  # download here only if they are missing (network may or may not be up).
+  if [ ! -s "$CACHE/$KOF" ] || [ ! -s "$CACHE/$USF" ]; then
+    log "cache missing - trying download at os_load (network may be down)"
+    do_download || { log "no cached layers and download failed - aborting"; return 1; }
+  fi
+  log "injecting driver $DRV into $TR"
+
+  # --- kernel layer -> /tmpRoot/usr/lib/modules ---
+  KMODDIR="$TR/usr/lib/modules"; mkdir -p "$KMODDIR"
+  rm -rf /tmp/nv-ko-x; mkdir -p /tmp/nv-ko-x; tar -xzf "$CACHE/$KOF" -C /tmp/nv-ko-x
+  for ko in /tmp/nv-ko-x/*.ko; do
+    [ -f "$ko" ] && { cp -f "$ko" "$KMODDIR/$(basename "$ko")"; log "  staged $(basename "$ko")"; }
+  done
+
+  # --- userspace layer -> /tmpRoot/usr/local/nvidia ---
+  USDIR="$TR/usr/local/nvidia"; mkdir -p "$USDIR"
+  tar -xzf "$CACHE/$USF" -C "$USDIR"
+  ( cd "$USDIR/lib" 2>/dev/null && for f in *.so."$DRV"; do
+      [ -f "$f" ] || continue; base="${f%.so.$DRV}.so"; ln -sf "$f" "$base.1"; ln -sf "$base.1" "$base"
+    done ) 2>/dev/null || true
+  # expose libs on the default loader path (DSM lacks ld.so.conf.d; rc.d redoes
+  # this each boot since /usr/lib is rebuilt from the pat)
+  mkdir -p "$TR/usr/lib"
+  ( cd "$USDIR/lib" 2>/dev/null && for so in *.so*; do
+      [ -e "$so" ] && ln -sf "/usr/local/nvidia/lib/$so" "$TR/usr/lib/$so"
+    done ) 2>/dev/null || true
+
+  # --- optional NVENC ffmpeg layer (SynoCommunity Jellyfin pkg / CLI) ---
+  if [ "$WANT_FF" = "true" ] && [ -s "$CACHE/$FFF" ]; then
+    mkdir -p "$USDIR/bin"; tar -xzf "$CACHE/$FFF" -C "$USDIR"
+    chmod +x "$USDIR/bin/ffmpeg" "$USDIR/bin/ffprobe" 2>/dev/null
+    log "ffmpeg staged -> /usr/local/nvidia/bin/ffmpeg (point Jellyfin 'FFmpeg path' here)"
+  fi
+
+  # --- boot hook: load modules + create nodes + expose libs at DSM boot ---
+  RCD="$TR/usr/local/etc/rc.d"; mkdir -p "$RCD"
+  cat > "$RCD/nvidia.sh" <<'RC'
 #!/bin/sh
 # nvidiadriver boot hook - load modules in dependency order, create nodes.
 # nvidia + nvidia-uvm are the compute core (nvidia-smi/CUDA). nvidia-modeset and
-# nvidia-drm are display-only and are best-effort: DSM kernels ship no
-# backlight.ko, so modeset may fail with 'Unknown symbol backlight_device_*' -
-# that is expected and does NOT affect compute. Failures are ignored.
+# nvidia-drm are display-only and best-effort: DSM ships no backlight.ko so
+# modeset may fail with 'Unknown symbol backlight_device_*' - expected, ignored.
 RCLOG=/var/log/nvidiadriver.log
 rclog(){ echo "$(date '+%H:%M:%S') rc.d/nvidia: $*" >> "$RCLOG" 2>/dev/null; }
 case "$1" in start|"")
@@ -200,7 +181,6 @@ case "$1" in start|"")
       if /sbin/insmod "/usr/lib/modules/$m.ko" 2>>"$RCLOG"; then rclog "insmod $m OK"; else rclog "insmod $m FAILED (see above)"; fi
     fi
   done
-  # device nodes (nvidia-modprobe normally does this; do it explicitly)
   major=$(awk '$2=="nvidia-frontend"||$2=="nvidia"{print $1}' /proc/devices | head -1)
   [ -n "$major" ] && {
     [ -e /dev/nvidiactl ] || mknod -m 666 /dev/nvidiactl c "$major" 255
@@ -208,9 +188,6 @@ case "$1" in start|"")
   }
   umajor=$(awk '$2=="nvidia-uvm"{print $1}' /proc/devices | head -1)
   [ -n "$umajor" ] && { [ -e /dev/nvidia-uvm ] || mknod -m 666 /dev/nvidia-uvm c "$umajor" 0; }
-  # expose libs on the default loader path so Plex/Jellyfin/ffmpeg resolve
-  # libnvidia-encode/libnvcuvid/libcuda without LD_LIBRARY_PATH. DSM lacks
-  # /etc/ld.so.conf.d and rebuilds /usr/lib each boot, so (re)symlink here.
   for so in /usr/local/nvidia/lib/*.so*; do
     [ -e "$so" ] && ln -sf "$so" "/usr/lib/$(basename "$so")"
   done
@@ -221,11 +198,17 @@ case "$1" in start|"")
   ;;
 esac
 RC
-chmod +x "$RCD/nvidia.sh"
+  chmod +x "$RCD/nvidia.sh"
+  mkdir -p "$TR/etc/ld.so.conf.d"; echo "/usr/local/nvidia/lib" > "$TR/etc/ld.so.conf.d/nvidia.conf"
+  log "done - driver $DRV injected into $TR (loads at DSM boot via rc.d/nvidia.sh)"
+}
 
-# ld path for the userspace libs
-LDC="$TMPROOT/etc/ld.so.conf.d"; mkdir -p "$LDC"
-echo "/usr/local/nvidia/lib" > "$LDC/nvidia.conf"
-
-log "done - driver $DRV staged into $TMPROOT (loads at DSM boot via rc.d/nvidia.sh)"
+###############################################################################
+# dispatcher - keep the two events strictly separated
+###############################################################################
+case "$1" in
+  patches)  init_common && do_download ;;   # download only (internet OK, no /tmpRoot)
+  os_load)  init_common && do_inject   ;;   # inject cached layers into /tmpRoot
+  *)        echo "nvidiadriver: usage: $0 {patches|os_load}" >&2 ;;
+esac
 exit 0

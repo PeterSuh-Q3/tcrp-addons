@@ -3,7 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/install.sh",
-      "sha256": "cb5f41aab2b6e20c059aadd7e07c7ce790db431b68a15edec86b494cffad2018",
+      "sha256": "b1bd26f8f7a38f5b945d53cc1fff6bf8f79bd7602ff6b98f5f4a13ece36e43af",
       "packed": false
     },
     {
@@ -20,6 +20,7 @@
     }
   ],
   "scripts": {
+    "on_patches": "install.sh",
     "on_os_load": "install.sh"
   }
 }
