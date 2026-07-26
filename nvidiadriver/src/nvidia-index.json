@@ -1,6 +1,6 @@
 {
   "_comment": "2-layer NVIDIA package index. platform -> driver_ver -> {ko, userspace}. ko is platform-specific; userspace is shared across kver5 platforms (dedup by version). sha256 values are emitted by build/build-nvidia.sh; fill them after the build. tgz assets are hosted on the GitHub Release tagged 'nvidia'.",
-  "release_base": "https://github.com/PeterSuh-Q3/tcrp-addons/releases/download/nvidia",
+  "release_base": "https://github.com/PeterSuh-Q3/syno_nvidia_driver/releases/download/nvidia",
   "platforms": {
     "epyc7002": {
       "kver": "5.10.55",

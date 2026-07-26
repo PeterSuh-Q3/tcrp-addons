@@ -9,7 +9,7 @@
     {
       "name": "nvidia-index.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/nvidia-index.json",
-      "sha256": "72500948615918d0ecf503ac3f384edc5c2179fd5db4e850c865df69f861f09d",
+      "sha256": "cdad15357716636895899d543ac07ba091616869337eb41a57018a5f23f44eca",
       "packed": false
     },
     {
