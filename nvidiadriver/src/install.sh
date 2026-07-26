@@ -9,7 +9,8 @@
 # and drops a boot script that modprobes in order + creates device nodes.
 #
 # Driver VERSION selection (first match wins):
-#   1) user_config.json  ."nvidia_driver"   (explicit override, e.g. "535.183.06")
+#   1) /addons/nvidia.conf  nvidia_driver=...  (menu choice, baked by functions.sh
+#      since junior cannot read /home/tc/user_config.json)
 #   2) GPU auto-detect via nvidia-gpu-support.json  (default_branch for the PCI id)
 #   3) first driver listed for this platform in nvidia-index.json
 #
@@ -24,7 +25,13 @@ EXTDIR="$(dirname "$0")"
 IDX="$EXTDIR/nvidia-index.json"
 SUP="$EXTDIR/nvidia-gpu-support.json"
 TMPROOT="${TMPROOT:-/tmpRoot}"
-UCONF="/home/tc/user_config.json"
+# Junior cannot read /home/tc/user_config.json. The loader build (functions.sh)
+# bakes the user's menu choice into /addons/nvidia.conf, e.g.:
+#   nvidia_driver=550.163.01
+#   nvidia_ffmpeg=true
+# Absent keys => Auto (GPU-detected default below).
+NVCONF="/addons/nvidia.conf"
+[ -f "$NVCONF" ] && . "$NVCONF" 2>/dev/null
 
 log(){ echo "nvidiadriver: $*" >&2; }
 have(){ command -v "$1" >/dev/null 2>&1; }
@@ -40,11 +47,18 @@ jq -e ".platforms[\"$PLATFORM\"]" "$IDX" >/dev/null 2>&1 || {
 
 # --- detect GPU (physical/passthrough) ---------------------------------------
 GPUID="$(lspci -nn 2>/dev/null | grep -iE '\[03(00|02)\]' | grep -io '10de:[0-9a-f]\{4\}' | head -1 | tr 'A-Z' 'a-z')"
+if [ -z "$GPUID" ]; then          # lspci may be absent in junior -> sysfs fallback
+  for d in /sys/bus/pci/devices/*; do
+    [ "$(cat "$d/vendor" 2>/dev/null)" = "0x10de" ] || continue
+    case "$(cat "$d/class" 2>/dev/null)" in 0x0300*|0x0302*)
+      GPUID="10de:$(sed 's/^0x//' "$d/device" 2>/dev/null)"; break ;;
+    esac
+  done
+fi
 [ -n "$GPUID" ] && log "detected NVIDIA GPU $GPUID" || log "no NVIDIA GPU detected (will still stage driver)"
 
 # --- resolve driver version --------------------------------------------------
-DRV=""
-[ -f "$UCONF" ] && DRV="$(jq -r '."nvidia_driver" // empty' "$UCONF" 2>/dev/null)"
+DRV="${nvidia_driver:-}"           # from /addons/nvidia.conf (empty => Auto)
 if [ -z "$DRV" ] && [ -n "$GPUID" ] && [ -f "$SUP" ]; then
   BRANCH="$(jq -r --arg g "$GPUID" '.gpus[$g].branches[0] // .default_branch' "$SUP" 2>/dev/null)"
   # newest indexed driver whose major branch == $BRANCH
@@ -117,7 +131,7 @@ mkdir -p "$TMPROOT/usr/lib"
 # for CLI use. Plex has its own NVENC transcoder and does NOT need this. Enable
 # with user_config.json  "nvidia_ffmpeg": true . The ffmpeg version is pinned
 # per driver in nvidia-index.json so its NVENC API always matches the driver.
-WANT_FF="$( [ -f "$UCONF" ] && jq -r '."nvidia_ffmpeg" // false' "$UCONF" 2>/dev/null )"
+WANT_FF="${nvidia_ffmpeg:-false}"          # from /addons/nvidia.conf
 if [ "$WANT_FF" = "true" ]; then
   FFF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.file // empty' "$IDX")"
   FFFSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.sha256 // empty' "$IDX")"
