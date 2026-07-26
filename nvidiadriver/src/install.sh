@@ -112,6 +112,23 @@ mkdir -p "$TMPROOT/usr/lib"
     [ -e "$so" ] && ln -sf "/usr/local/nvidia/lib/$so" "$TMPROOT/usr/lib/$so"
   done ) 2>/dev/null || true
 
+# --- optional: NVENC-capable ffmpeg layer ------------------------------------
+# For the SynoCommunity Jellyfin *package* (its bundled ffmpeg has no NVENC) and
+# for CLI use. Plex has its own NVENC transcoder and does NOT need this. Enable
+# with user_config.json  "nvidia_ffmpeg": true . The ffmpeg version is pinned
+# per driver in nvidia-index.json so its NVENC API always matches the driver.
+WANT_FF="$( [ -f "$UCONF" ] && jq -r '."nvidia_ffmpeg" // false' "$UCONF" 2>/dev/null )"
+if [ "$WANT_FF" = "true" ]; then
+  FFF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.file // empty' "$IDX")"
+  FFFSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.sha256 // empty' "$IDX")"
+  if [ -n "$FFF" ] && fetch "$BASE/$FFF" "$DL/$FFF" "$FFFSHA"; then
+    mkdir -p "$USDIR/bin"
+    tar -xzf "$DL/$FFF" -C "$USDIR"        # -> bin/ffmpeg, bin/ffprobe, SOURCE
+    chmod +x "$USDIR/bin/ffmpeg" "$USDIR/bin/ffprobe" 2>/dev/null
+    log "ffmpeg layer staged -> /usr/local/nvidia/bin/ffmpeg (point Jellyfin 'FFmpeg path' here)"
+  fi
+fi
+
 # --- boot script: load order + device nodes ----------------------------------
 RCD="$TMPROOT/usr/local/etc/rc.d"; mkdir -p "$RCD"
 cat > "$RCD/nvidia.sh" <<'RC'
