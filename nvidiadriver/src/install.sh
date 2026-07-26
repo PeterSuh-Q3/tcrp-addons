@@ -209,10 +209,10 @@ RC
 # NOTE on the arg: redpill's LKM passes an internal STAGE name, not the hook
 # name. The on_patches hook runs the script with "patches"; the on_os_load hook
 # runs it with "late" (same as the disks addon's install-new.sh 'late)' case,
-# which is what does the /tmpRoot work). Handle both "late" and "os_load".
+# which is what does the /tmpRoot work).
 case "$1" in
-  patches)       init_common && do_download ;;   # download only (internet OK, no /tmpRoot)
-  late|os_load)  init_common && do_inject   ;;   # inject cached layers into /tmpRoot
-  *)             echo "nvidiadriver: usage: $0 {patches|late}" >&2 ;;
+  patches)  init_common && do_download ;;   # download only (internet OK, no /tmpRoot)
+  late)     init_common && do_inject   ;;   # inject cached layers into /tmpRoot
+  *)        echo "nvidiadriver: usage: $0 {patches|late}" >&2 ;;
 esac
 exit 0
