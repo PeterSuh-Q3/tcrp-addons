@@ -125,7 +125,7 @@ do_download(){
 ###############################################################################
 do_inject(){
   TR="${TMPROOT:-/tmpRoot}"
-  [ -d "$TR/usr" ] || { echo "nvidiadriver: $TR not mounted (os_load) - abort" >&2; return 1; }
+  [ -d "$TR/usr" ] || { echo "nvidiadriver: $TR not mounted (late) - abort" >&2; return 1; }
   LOGF="$TR/var/log/nvidiadriver.log"
   mkdir -p "$TR/var/log" 2>/dev/null; echo "===== nvidiadriver os_load $(date) =====" >> "$LOGF" 2>/dev/null
 
@@ -206,9 +206,13 @@ RC
 ###############################################################################
 # dispatcher - keep the two events strictly separated
 ###############################################################################
+# NOTE on the arg: redpill's LKM passes an internal STAGE name, not the hook
+# name. The on_patches hook runs the script with "patches"; the on_os_load hook
+# runs it with "late" (same as the disks addon's install-new.sh 'late)' case,
+# which is what does the /tmpRoot work). Handle both "late" and "os_load".
 case "$1" in
-  patches)  init_common && do_download ;;   # download only (internet OK, no /tmpRoot)
-  os_load)  init_common && do_inject   ;;   # inject cached layers into /tmpRoot
-  *)        echo "nvidiadriver: usage: $0 {patches|os_load}" >&2 ;;
+  patches)       init_common && do_download ;;   # download only (internet OK, no /tmpRoot)
+  late|os_load)  init_common && do_inject   ;;   # inject cached layers into /tmpRoot
+  *)             echo "nvidiadriver: usage: $0 {patches|late}" >&2 ;;
 esac
 exit 0
