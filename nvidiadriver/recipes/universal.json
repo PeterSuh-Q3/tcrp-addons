@@ -15,7 +15,7 @@
     {
       "name": "nvidia-gpu-support.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/nvidia-gpu-support.json",
-      "sha256": "94605bc3027d0226452b90074fc651c8746d4bcc7b2a0cb141e573d188b0b15e",
+      "sha256": "2801e32b2cf2ff7df061e7e2198a5e2a04e12e621f15441c8aed7c2e3fb8fd6a",
       "packed": false
     }
   ],
