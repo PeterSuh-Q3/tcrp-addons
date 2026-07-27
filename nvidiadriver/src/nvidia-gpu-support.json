@@ -2,7 +2,7 @@
   "_comment": "GPU PCI-id -> compatible driver branch(es). Used by install.sh to auto-pick / validate the driver version for the detected GPU, so users never land on an incompatible branch (issue #77 class). 'branches' lists supported major branches, newest-preferred first. Extend as GPUs/branches are validated.",
   "default_branch": "535",
   "gpus": {
-    "10de:1cb6": { "name": "Quadro P620",  "arch": "Pascal GP107", "branches": ["550", "535", "525"], "verified": ["535.183.06"] },
+    "10de:1cb6": { "name": "Quadro P620",  "arch": "Pascal GP107", "branches": ["535", "550", "525"], "verified": ["535.230.02"], "build_ok": ["550.163.01"] },
     "10de:1cba": { "name": "Quadro P620 (rev)", "arch": "Pascal GP107", "branches": ["550", "535", "525"] },
     "10de:1c8c": { "name": "GTX 1050 Ti Mobile", "arch": "Pascal GP107", "branches": ["550", "535", "525"] },
     "10de:1f82": { "name": "GTX 1650",     "arch": "Turing TU117", "branches": ["550", "535", "525"] },
