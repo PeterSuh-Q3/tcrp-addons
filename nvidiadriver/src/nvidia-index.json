@@ -38,6 +38,17 @@
             "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
             "optional": true
           }
+        },
+        "470.256.02": {
+          "ko": {
+            "file": "nv-ko-470.256.02-epyc7002-51055.tgz",
+            "sha256": "210d9441c9bb0913b93a4ba34f30d92ce5844298093cbfe7bb9c80387c15130c"
+          },
+          "userspace": {
+            "file": "nv-userspace-470.256.02.tgz",
+            "sha256": "406b152aecd2b78457d60f4f39d2e6bf864aab5901b2c5bdb5cc6548bc4a5b25",
+            "version": "470.256.02"
+          }
         }
       }
     },
@@ -76,6 +87,17 @@
             "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
             "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
             "optional": true
+          }
+        },
+        "470.256.02": {
+          "ko": {
+            "file": "nv-ko-470.256.02-geminilakenk-51055.tgz",
+            "sha256": "c2d4380b2f40f0f0d78df86b1d7d9e2b5a9b15f412032d6544fe06c1ea77bc88"
+          },
+          "userspace": {
+            "file": "nv-userspace-470.256.02.tgz",
+            "sha256": "406b152aecd2b78457d60f4f39d2e6bf864aab5901b2c5bdb5cc6548bc4a5b25",
+            "version": "470.256.02"
           }
         }
       }
@@ -116,6 +138,17 @@
             "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
             "optional": true
           }
+        },
+        "470.256.02": {
+          "ko": {
+            "file": "nv-ko-470.256.02-epyc7003-51055.tgz",
+            "sha256": "9a0572e95e7b0dd9def2ca9eec6b585443e6468ae6e6fefaf8f2c8d143910151"
+          },
+          "userspace": {
+            "file": "nv-userspace-470.256.02.tgz",
+            "sha256": "406b152aecd2b78457d60f4f39d2e6bf864aab5901b2c5bdb5cc6548bc4a5b25",
+            "version": "470.256.02"
+          }
         }
       }
     },
@@ -154,6 +187,17 @@
             "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
             "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
             "optional": true
+          }
+        },
+        "470.256.02": {
+          "ko": {
+            "file": "nv-ko-470.256.02-epyc7003ntb-51055.tgz",
+            "sha256": "9c4dd463e438778656f71cc9579773357156a05a79ea3646c3403cc798e98b63"
+          },
+          "userspace": {
+            "file": "nv-userspace-470.256.02.tgz",
+            "sha256": "406b152aecd2b78457d60f4f39d2e6bf864aab5901b2c5bdb5cc6548bc4a5b25",
+            "version": "470.256.02"
           }
         }
       }
@@ -194,6 +238,17 @@
             "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
             "optional": true
           }
+        },
+        "470.256.02": {
+          "ko": {
+            "file": "nv-ko-470.256.02-icelaked-51055.tgz",
+            "sha256": "87fc99d26ab5af7d6f714ac4ad607f8ba3460510abfa7da012b5c69b198837f3"
+          },
+          "userspace": {
+            "file": "nv-userspace-470.256.02.tgz",
+            "sha256": "406b152aecd2b78457d60f4f39d2e6bf864aab5901b2c5bdb5cc6548bc4a5b25",
+            "version": "470.256.02"
+          }
         }
       }
     },
@@ -233,6 +288,17 @@
             "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
             "optional": true
           }
+        },
+        "470.256.02": {
+          "ko": {
+            "file": "nv-ko-470.256.02-v1000nk-51055.tgz",
+            "sha256": "7e992660c6fec77d53c2a429cfa2cb53c45acdaaddf1c67eec1ad86249d61ac6"
+          },
+          "userspace": {
+            "file": "nv-userspace-470.256.02.tgz",
+            "sha256": "406b152aecd2b78457d60f4f39d2e6bf864aab5901b2c5bdb5cc6548bc4a5b25",
+            "version": "470.256.02"
+          }
         }
       }
     },
@@ -271,6 +337,17 @@
             "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
             "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
             "optional": true
+          }
+        },
+        "470.256.02": {
+          "ko": {
+            "file": "nv-ko-470.256.02-r1000nk-51055.tgz",
+            "sha256": "38c77d9333f401f8f4aadcc981b6bbf80fcad9f329f2f869d0c2a6f9b67288c5"
+          },
+          "userspace": {
+            "file": "nv-userspace-470.256.02.tgz",
+            "sha256": "406b152aecd2b78457d60f4f39d2e6bf864aab5901b2c5bdb5cc6548bc4a5b25",
+            "version": "470.256.02"
           }
         }
       }
