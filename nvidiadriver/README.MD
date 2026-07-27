@@ -38,4 +38,4 @@ detected GPU (the issue-#77 failure mode).
 
 PoC target: **epyc7002 (5.10.55) + 535.183.06 + Quadro P620**. After the first
 build (in syno_nvidia_driver) + on-hardware verification, expand
-`nvidia-index.json` with more versions/platforms (525/550, other kver5 platforms).
+`nvidia-index.json` with more versions/platforms (470/550, other kver5 platforms).

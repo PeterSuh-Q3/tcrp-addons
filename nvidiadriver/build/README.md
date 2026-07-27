@@ -38,7 +38,7 @@ mv NVIDIA-Linux-x86_64-535.183.06.run run/
 
 ## Expanding versions/platforms
 
-- Another version, same platform: re-run with `525.x` / `550.x`. The userspace
+- Another version, same platform: re-run with `470.x` / `550.x`. The userspace
   layer for a new version is built once; the ko layer is small.
 - Another kver5 platform: re-run with that platform; **reuse** the existing
   `nv-userspace-<ver>.tgz` (don't rebuild it). If two platforms share an
@@ -51,6 +51,7 @@ mv NVIDIA-Linux-x86_64-535.183.06.run run/
 - `.ko` are unsigned → DSM logs `module verification failed ... tainting` — a
   benign warning; `MODULE_SIG_FORCE` is not set, modules still load.
 - Branch × kernel-age: on **4.4.x** (kver4) newer branches may not compile — use
-  legacy (470). On **5.10.55** (kver5, our target) 525/535/550 build fine.
+  legacy (470). On **5.10.55** (kver5, our target) 470/535/550 build fine
+  (470.256.02 PoC verified: vermagic matches, nvUvmInterface exported).
 - R515+ branches load **GSP firmware** — if a chosen branch needs it, add the
   firmware blob to the userspace layer and copy it to `/lib/firmware/nvidia/<ver>/`.
