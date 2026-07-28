@@ -519,5 +519,16 @@
     "toolkit_version": "1.19.1",
     "file": "nv-container-runtime-1.19.1.tgz",
     "sha256": "5c39123aa2cc2a2539828aa557f812b14a789fc865ce2cf242e625381de0257e"
+  },
+  "gsp_firmware": {
+    "_comment": "Driver-version-keyed (not platform-specific, not kernel-specific). Extracted from the official NVIDIA .run's firmware/ dir. Turing+ GPUs load these via request_firmware() from /lib/firmware/nvidia/<driver_ver>/ - install.sh deploys them there for GPUs whose gpu-support.json entry names a 'gsp_fw' file present in this layer's 'chips' list.",
+    "580.173.02": {
+      "file": "nv-gsp-580.173.02.tgz",
+      "sha256": "39f99970299a398f82b7c6d61a20f22faca1589b044822bdf1e5a36094c7d62b",
+      "chips": [
+        "gsp_tu10x.bin",
+        "gsp_ga10x.bin"
+      ]
+    }
   }
 }
