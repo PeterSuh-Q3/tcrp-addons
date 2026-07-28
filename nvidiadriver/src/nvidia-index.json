@@ -513,5 +513,11 @@
         }
       }
     }
+  },
+  "container_runtime": {
+    "_comment": "Platform/kernel-independent. Wraps the NVIDIA driver's /dev/nvidia* + libnvidia-*.so for Docker via a 'nvidia' runtime registered in daemon.json. Built from upstream nvidia-container-toolkit CentOS7 prebuilt binaries (glibc-compatible with DSM) plus 2 bundled shared libs DSM lacks (libelf.so.1, libseccomp.so.2) and a static ldconfig (DSM has none, needed to generate a --ldcache file for nvidia-container-cli). See docs/container-runtime-design.md.",
+    "toolkit_version": "1.19.1",
+    "file": "nv-container-runtime-1.19.1.tgz",
+    "sha256": "5c39123aa2cc2a2539828aa557f812b14a789fc865ce2cf242e625381de0257e"
   }
 }
