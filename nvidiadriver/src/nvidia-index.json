@@ -128,6 +128,23 @@
             "source": "jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1, matches driver 470 ceiling)",
             "optional": true
           }
+        },
+        "580.173.02": {
+          "ko": {
+            "file": "nv-ko-580.173.02-geminilakenk-51055.tgz",
+            "sha256": "de35cac94a6a3f18dffbbe16c5e42861b87bfc034be809c4251664b989d5bb51"
+          },
+          "userspace": {
+            "file": "nv-userspace-580.173.02.tgz",
+            "sha256": "362d89477c7217927c17e71f0209c51a3a349756f195633b61ede2905844be79",
+            "version": "580.173.02"
+          },
+          "ffmpeg": {
+            "file": "nv-ffmpeg-580.173.02.tgz",
+            "sha256": "64ee797d1b391eec07ebf1a9b558079d8ad1bbb2fb48352f3c3cb77a38e242a3",
+            "source": "jellyfin-ffmpeg 7.1.4-3 (NVENC SDK 12.0, needs driver >= 530)",
+            "optional": true
+          }
         }
       }
     },
@@ -182,6 +199,23 @@
             "file": "nv-ffmpeg-470.256.02.tgz",
             "sha256": "797a7807df4e1758f3bc70972608665da3bead8122bde8647a36eebbfa54e25c",
             "source": "jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1, matches driver 470 ceiling)",
+            "optional": true
+          }
+        },
+        "580.173.02": {
+          "ko": {
+            "file": "nv-ko-580.173.02-epyc7003-51055.tgz",
+            "sha256": "f7386e20d42722bce1a599c20e9f0b3961a5f17b79dec2b94c3cf82c867c82d4"
+          },
+          "userspace": {
+            "file": "nv-userspace-580.173.02.tgz",
+            "sha256": "362d89477c7217927c17e71f0209c51a3a349756f195633b61ede2905844be79",
+            "version": "580.173.02"
+          },
+          "ffmpeg": {
+            "file": "nv-ffmpeg-580.173.02.tgz",
+            "sha256": "64ee797d1b391eec07ebf1a9b558079d8ad1bbb2fb48352f3c3cb77a38e242a3",
+            "source": "jellyfin-ffmpeg 7.1.4-3 (NVENC SDK 12.0, needs driver >= 530)",
             "optional": true
           }
         }
@@ -240,6 +274,23 @@
             "source": "jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1, matches driver 470 ceiling)",
             "optional": true
           }
+        },
+        "580.173.02": {
+          "ko": {
+            "file": "nv-ko-580.173.02-epyc7003ntb-51055.tgz",
+            "sha256": "8b30b53840e70c63f16991e16747c57efedfb397e7d87354708069f02db75ead"
+          },
+          "userspace": {
+            "file": "nv-userspace-580.173.02.tgz",
+            "sha256": "362d89477c7217927c17e71f0209c51a3a349756f195633b61ede2905844be79",
+            "version": "580.173.02"
+          },
+          "ffmpeg": {
+            "file": "nv-ffmpeg-580.173.02.tgz",
+            "sha256": "64ee797d1b391eec07ebf1a9b558079d8ad1bbb2fb48352f3c3cb77a38e242a3",
+            "source": "jellyfin-ffmpeg 7.1.4-3 (NVENC SDK 12.0, needs driver >= 530)",
+            "optional": true
+          }
         }
       }
     },
@@ -294,6 +345,23 @@
             "file": "nv-ffmpeg-470.256.02.tgz",
             "sha256": "797a7807df4e1758f3bc70972608665da3bead8122bde8647a36eebbfa54e25c",
             "source": "jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1, matches driver 470 ceiling)",
+            "optional": true
+          }
+        },
+        "580.173.02": {
+          "ko": {
+            "file": "nv-ko-580.173.02-icelaked-51055.tgz",
+            "sha256": "c4440aea6ed3df7ddea71fb4f89949a31f859518ccb4e80ef770e0a71154708e"
+          },
+          "userspace": {
+            "file": "nv-userspace-580.173.02.tgz",
+            "sha256": "362d89477c7217927c17e71f0209c51a3a349756f195633b61ede2905844be79",
+            "version": "580.173.02"
+          },
+          "ffmpeg": {
+            "file": "nv-ffmpeg-580.173.02.tgz",
+            "sha256": "64ee797d1b391eec07ebf1a9b558079d8ad1bbb2fb48352f3c3cb77a38e242a3",
+            "source": "jellyfin-ffmpeg 7.1.4-3 (NVENC SDK 12.0, needs driver >= 530)",
             "optional": true
           }
         }
@@ -352,6 +420,23 @@
             "source": "jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1, matches driver 470 ceiling)",
             "optional": true
           }
+        },
+        "580.173.02": {
+          "ko": {
+            "file": "nv-ko-580.173.02-v1000nk-51055.tgz",
+            "sha256": "b6ea95345a626496feb634890791b5a289c8f4bd01db23d124e6f61902b2f8df"
+          },
+          "userspace": {
+            "file": "nv-userspace-580.173.02.tgz",
+            "sha256": "362d89477c7217927c17e71f0209c51a3a349756f195633b61ede2905844be79",
+            "version": "580.173.02"
+          },
+          "ffmpeg": {
+            "file": "nv-ffmpeg-580.173.02.tgz",
+            "sha256": "64ee797d1b391eec07ebf1a9b558079d8ad1bbb2fb48352f3c3cb77a38e242a3",
+            "source": "jellyfin-ffmpeg 7.1.4-3 (NVENC SDK 12.0, needs driver >= 530)",
+            "optional": true
+          }
         }
       }
     },
@@ -406,6 +491,23 @@
             "file": "nv-ffmpeg-470.256.02.tgz",
             "sha256": "797a7807df4e1758f3bc70972608665da3bead8122bde8647a36eebbfa54e25c",
             "source": "jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1, matches driver 470 ceiling)",
+            "optional": true
+          }
+        },
+        "580.173.02": {
+          "ko": {
+            "file": "nv-ko-580.173.02-r1000nk-51055.tgz",
+            "sha256": "c6f78644c1d424481f5361e516d473ac2552633cf0c620415cc8d3e63341497f"
+          },
+          "userspace": {
+            "file": "nv-userspace-580.173.02.tgz",
+            "sha256": "362d89477c7217927c17e71f0209c51a3a349756f195633b61ede2905844be79",
+            "version": "580.173.02"
+          },
+          "ffmpeg": {
+            "file": "nv-ffmpeg-580.173.02.tgz",
+            "sha256": "64ee797d1b391eec07ebf1a9b558079d8ad1bbb2fb48352f3c3cb77a38e242a3",
+            "source": "jellyfin-ffmpeg 7.1.4-3 (NVENC SDK 12.0, needs driver >= 530)",
             "optional": true
           }
         }
