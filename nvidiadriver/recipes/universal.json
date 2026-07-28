@@ -9,13 +9,13 @@
     {
       "name": "nvidia-index.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/nvidia-index.json",
-      "sha256": "781fd3afb09452e59a204653227bb2a0e1a20d83a2a1942e2029e9f15b110ea9",
+      "sha256": "eb98ffffd8062e476340865a0b244d003ad18894f50b3a3da1e2eff8f4fe10d7",
       "packed": false
     },
     {
       "name": "nvidia-gpu-support.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/nvidia-gpu-support.json",
-      "sha256": "2801e32b2cf2ff7df061e7e2198a5e2a04e12e621f15441c8aed7c2e3fb8fd6a",
+      "sha256": "763f071c5b01653693ed17c014d2e3d3c43ba401192beaa25583a5df200da6b8",
       "packed": false
     }
   ],

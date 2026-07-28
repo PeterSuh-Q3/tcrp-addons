@@ -1,18 +1,96 @@
 {
-  "_comment": "GPU PCI-id -> compatible driver branch(es). Used by install.sh to auto-pick / validate the driver version for the detected GPU, so users never land on an incompatible branch (issue #77 class). 'branches' lists supported major branches, newest-preferred first. Extend as GPUs/branches are validated.",
+  "_comment": "GPU PCI-id -> compatible driver branch(es). Used by install.sh to auto-pick / validate the driver version for the detected GPU, so users never land on an incompatible branch (issue #77 class). 'branches' lists supported major branches, newest-preferred first. Extend as GPUs/branches are validated. 'cuda_max' is the highest CUDA toolkit version that can target this GPU (driver-independent, set by compute capability); 'needs_gsp' marks GPUs that require GSP firmware on 580.",
   "default_branch": "535",
   "gpus": {
-    "10de:1cb6": { "name": "Quadro P620",  "arch": "Pascal GP107", "branches": ["535", "550", "470"], "verified": ["535.230.02"], "build_ok": ["550.163.01"] },
-    "10de:1cba": { "name": "Quadro P620 (rev)", "arch": "Pascal GP107", "branches": ["550", "535", "470"] },
-    "10de:1c8c": { "name": "GTX 1050 Ti Mobile", "arch": "Pascal GP107", "branches": ["550", "535", "470"] },
-    "10de:1f82": { "name": "GTX 1650",     "arch": "Turing TU117", "branches": ["550", "535", "470"] },
-    "10de:1eb1": { "name": "Quadro RTX 4000", "arch": "Turing TU104", "branches": ["550", "535", "470"] },
-    "10de:2204": { "name": "RTX 3090",     "arch": "Ampere GA102", "branches": ["550", "535"] },
-    "10de:2684": { "name": "RTX 4090",     "arch": "Ada AD102",    "branches": ["550"] }
+    "10de:1cb6": {
+      "name": "Quadro P620",
+      "arch": "Pascal GP107",
+      "branches": [
+        "580",
+        "535",
+        "550",
+        "470"
+      ],
+      "verified": [
+        "535.230.02"
+      ],
+      "build_ok": [
+        "550.163.01"
+      ],
+      "cuda_max": "12.9"
+    },
+    "10de:1cba": {
+      "name": "Quadro P620 (rev)",
+      "arch": "Pascal GP107",
+      "branches": [
+        "580",
+        "535",
+        "550",
+        "470"
+      ],
+      "cuda_max": "12.9"
+    },
+    "10de:1c8c": {
+      "name": "GTX 1050 Ti Mobile",
+      "arch": "Pascal GP107",
+      "branches": [
+        "580",
+        "535",
+        "550",
+        "470"
+      ],
+      "cuda_max": "12.9"
+    },
+    "10de:1f82": {
+      "name": "GTX 1650",
+      "arch": "Turing TU117",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "cuda_max": "13.0",
+      "needs_gsp": true
+    },
+    "10de:1eb1": {
+      "name": "Quadro RTX 4000",
+      "arch": "Turing TU104",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "cuda_max": "13.0",
+      "needs_gsp": true
+    },
+    "10de:2204": {
+      "name": "RTX 3090",
+      "arch": "Ampere GA102",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "cuda_max": "13.0",
+      "needs_gsp": true
+    },
+    "10de:2684": {
+      "name": "RTX 4090",
+      "arch": "Ada AD102",
+      "branches": [
+        "580",
+        "550"
+      ],
+      "cuda_max": "13.0",
+      "needs_gsp": true
+    }
   },
   "branch_notes": {
     "470": "Legacy LTSB. Kepler..Ampere (no Ada). Use for older GPUs 535/550 dropped; builds clean on kver5. NVENC/NVDEC present (H.264/HEVC); no AV1. ffmpeg layer is pinned to jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1) - never pair with the 535/550 ffmpeg (API 12.x, will fail to load). Kepler GPUs: H.264 encode only, no HEVC encode (HEVC encode needs Maxwell 2nd-gen GM206+).",
     "535": "Production Branch. Maxwell..Ada. Recommended default for Pascal/Turing (verified: P620).",
-    "550": "Newer GPUs; Pascal/Maxwell support present but being phased out in later branches - verify per GPU."
+    "550": "Newer GPUs; Pascal/Maxwell support present but being phased out in later branches - verify per GPU.",
+    "580": "Last branch covering Maxwell..Blackwell(RTX 50). Native CUDA 13.0. Raises the usable CUDA ceiling on Pascal from 12.4 (550) to 12.9 - CUDA 13.0 itself needs compute capability >= 7.5 (Turing), so Pascal/Maxwell/Volta stay at 12.9. Turing+ REQUIRES GSP firmware (gsp_*.bin under /lib/firmware/nvidia/<ver>/) - not yet shipped, so 580 is currently validated for pre-Turing only. No ffmpeg layer published yet."
   }
 }

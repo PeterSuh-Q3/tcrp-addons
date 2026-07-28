@@ -55,6 +55,17 @@
             "source": "jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1, matches driver 470 ceiling)",
             "optional": true
           }
+        },
+        "580.173.02": {
+          "ko": {
+            "file": "nv-ko-580.173.02-epyc7002-51055.tgz",
+            "sha256": "896c2539d06caddcdf151cbd7ab56deed3e4afdc4db603e438a4922c778d0c18"
+          },
+          "userspace": {
+            "file": "nv-userspace-580.173.02.tgz",
+            "sha256": "362d89477c7217927c17e71f0209c51a3a349756f195633b61ede2905844be79",
+            "version": "580.173.02"
+          }
         }
       }
     },
