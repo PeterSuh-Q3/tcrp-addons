@@ -90,7 +90,7 @@
   "branch_notes": {
     "470": "Legacy LTSB. Kepler..Ampere (no Ada). Use for older GPUs 535/550 dropped; builds clean on kver5. NVENC/NVDEC present (H.264/HEVC); no AV1. ffmpeg layer is pinned to jellyfin-ffmpeg 5.1.2-9 (NVENC API 11.1) - never pair with the 535/550 ffmpeg (API 12.x, will fail to load). Kepler GPUs: H.264 encode only, no HEVC encode (HEVC encode needs Maxwell 2nd-gen GM206+).",
     "535": "Production Branch. Maxwell..Ada. Recommended default for Pascal/Turing (verified: P620).",
-    "550": "Newer GPUs; Pascal/Maxwell support present but being phased out in later branches - verify per GPU.",
-    "580": "Last branch covering Maxwell..Blackwell(RTX 50). Native CUDA 13.0. Raises the usable CUDA ceiling on Pascal from 12.4 (550) to 12.9 - CUDA 13.0 itself needs compute capability >= 7.5 (Turing), so Pascal/Maxwell/Volta stay at 12.9. Turing+ REQUIRES GSP firmware (gsp_*.bin under /lib/firmware/nvidia/<ver>/) - not yet shipped, so 580 is currently validated for pre-Turing only. No ffmpeg layer published yet."
+    "550": "Maxwell..Ada. ffmpeg layer jellyfin-ffmpeg 7.0.2-9 (NVENC SDK 12.0, same pin as 535 - not 12.1). Superseded by 580.",
+    "580": "Last branch covering Maxwell..Blackwell(RTX 50). Native CUDA 13.0. Raises the usable CUDA ceiling on Pascal from 12.4 (550) to 12.9 - CUDA 13.0 itself needs compute capability >= 7.5 (Turing), so Pascal/Maxwell/Volta stay at 12.9. Turing+ REQUIRES GSP firmware (gsp_*.bin under /lib/firmware/nvidia/<ver>/) - not yet shipped, so 580 is currently validated for pre-Turing only. ffmpeg layer: jellyfin-ffmpeg 7.1.4-3 (NVENC SDK 12.0, needs driver >= 530)."
   }
 }

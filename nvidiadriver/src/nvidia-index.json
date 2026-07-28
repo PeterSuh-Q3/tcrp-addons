@@ -65,6 +65,12 @@
             "file": "nv-userspace-580.173.02.tgz",
             "sha256": "362d89477c7217927c17e71f0209c51a3a349756f195633b61ede2905844be79",
             "version": "580.173.02"
+          },
+          "ffmpeg": {
+            "file": "nv-ffmpeg-580.173.02.tgz",
+            "sha256": "64ee797d1b391eec07ebf1a9b558079d8ad1bbb2fb48352f3c3cb77a38e242a3",
+            "source": "jellyfin-ffmpeg 7.1.4-3 (NVENC SDK 12.0, needs driver >= 530)",
+            "optional": true
           }
         }
       }
