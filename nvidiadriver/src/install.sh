@@ -121,6 +121,11 @@ init_common(){
   [ -z "$DRV" ] && DRV="$(jq -r --arg p "$PLATFORM" '.platforms[$p].drivers | keys | sort | reverse | .[0]' "$IDX")"
   { [ -z "$DRV" ] || [ "$DRV" = "null" ]; } && { log "no driver resolved, skipping"; return 1; }
   WANT_FF="${nvidia_ffmpeg:-false}"
+  # Container Manager (Docker) runtime integration - platform/kernel-independent,
+  # one shared layer for all drivers/platforms (see nvidia-index.json.container_runtime).
+  WANT_CR="${nvidia_container_runtime:-false}"
+  CRF="$(jq -r '.container_runtime.file // empty' "$IDX")"
+  CRSHA="$(jq -r '.container_runtime.sha256 // empty' "$IDX")"
 
   BASE="$(jq -r '.release_base' "$IDX")"
   KOF="$(jq   -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.file' "$IDX")"
@@ -159,6 +164,9 @@ do_download(){
   fi
   if [ -n "$GFF" ]; then
     fetch "$BASE/$GFF" "$CACHE/$GFF" "$GFSHA" || log "GSP firmware download failed (GPU needs it - modeset/uvm may not init)"
+  fi
+  if [ "$WANT_CR" = "true" ] && [ -n "$CRF" ]; then
+    fetch "$BASE/$CRF" "$CACHE/$CRF" "$CRSHA" || log "container runtime layer download failed (optional)"
   fi
   log "pre-download complete: $(ls "$CACHE" 2>/dev/null | tr '\n' ' ')"
 }
@@ -245,6 +253,65 @@ do_inject(){
     log "ffmpeg staged -> /usr/local/nvidia/bin/ffmpeg (point Jellyfin 'FFmpeg path' here)"
   fi
 
+  # --- optional Container Manager (Docker) runtime integration ---
+  # Platform/kernel-independent (one shared layer), so this can run every boot
+  # this addon is active, not just on first install - do_inject re-extracts
+  # unconditionally, which is fine (idempotent: same bytes each time).
+  CRDIR="$TR/usr/local/nvidia-runtime"
+  if [ "$WANT_CR" = "true" ] && [ -s "$CACHE/$CRF" ]; then
+    rm -rf "$CRDIR"; mkdir -p "$CRDIR"
+    tar -xzf "$CACHE/$CRF" -C "$CRDIR"
+    chmod +x "$CRDIR"/bin/* "$CRDIR"/tools/* 2>/dev/null
+
+    # DSM ships no ldconfig/ld.so.cache; nvidia-container-cli needs one to
+    # locate the driver's libs. Build it against the /tmpRoot paths the
+    # container runtime will actually see once booted.
+    "$CRDIR/tools/ldconfig" -C "$CRDIR/ld.so.cache" \
+      "$TR/usr/lib" "$TR/usr/local/nvidia/lib" "$CRDIR/lib" 2>/dev/null
+
+    # nvidia-ctk's own OCI hooks hardcode --ldconfig-path=/sbin/ldconfig and
+    # do not honor config.toml's ldconfig= for that default; DSM has neither
+    # /sbin nor /usr/sbin/ldconfig, so fill it with the bundled static binary.
+    if [ ! -e "$TR/usr/sbin/ldconfig" ]; then
+      mkdir -p "$TR/usr/sbin"
+      cp "$CRDIR/tools/ldconfig" "$TR/usr/sbin/ldconfig"
+      chmod +x "$TR/usr/sbin/ldconfig"
+    fi
+
+    mkdir -p "$TR/etc/nvidia-container-runtime"
+    cat > "$TR/etc/nvidia-container-runtime/config.toml" <<TOML
+[nvidia-container-cli]
+root = "/"
+path = "/usr/local/nvidia-runtime/bin/nvidia-container-cli"
+ldcache = "/usr/local/nvidia-runtime/ld.so.cache"
+ldconfig = "@/usr/sbin/ldconfig"
+environment = ["LD_LIBRARY_PATH=/usr/local/nvidia-runtime/lib"]
+
+[nvidia-container-runtime]
+runtimes = ["/var/packages/ContainerManager/target/usr/bin/runc"]
+
+[nvidia-container-runtime-hook]
+path = "/usr/local/nvidia-runtime/bin/nvidia-container-runtime-hook"
+
+[nvidia-ctk]
+path = "/usr/local/nvidia-runtime/bin/nvidia-ctk"
+TOML
+    log "container runtime staged -> /usr/local/nvidia-runtime, config.toml written"
+
+    # register the 'nvidia' runtime in Container Manager's daemon.json now, if
+    # the package happens to already be present in this /tmpRoot image - merge,
+    # never overwrite (DSM already has bip/data-root/etc in there). The boot
+    # hook below re-asserts this on every subsequent boot regardless, since
+    # rc.d runs before ContainerManager's own auto-start (confirmed on real
+    # hardware - kernel module load logged ~8s ahead of the package's synopkg
+    # start sequence).
+    DJ="$TR/var/packages/ContainerManager/etc/dockerd.json"
+    if [ -f "$DJ" ]; then
+      NEWDJ="$(jq '.runtimes.nvidia = {"path": "/usr/local/nvidia-runtime/bin/nvidia-container-runtime", "runtimeArgs": []}' "$DJ" 2>/dev/null)"
+      [ -n "$NEWDJ" ] && echo -E "$NEWDJ" > "$DJ" && log "daemon.json: 'nvidia' runtime registered"
+    fi
+  fi
+
   # --- boot hook: load modules + create nodes + expose libs at DSM boot ---
   RCD="$TR/usr/local/etc/rc.d"; mkdir -p "$RCD"
   cat > "$RCD/nvidia.sh" <<'RC'
@@ -296,6 +363,23 @@ case "$1" in start|"")
   done
   [ -x /sbin/ldconfig ] && /sbin/ldconfig 2>/dev/null
   export PATH="/usr/local/nvidia/bin:$PATH"
+  # Container Manager runtime integration (if do_inject set it up): re-assert
+  # the 'nvidia' entry in dockerd.json on every boot, in case a DSM update or
+  # config restore reverted it. rc.d runs before ContainerManager's own
+  # auto-start (confirmed on real hardware, ~8s ahead), so this is already in
+  # place by the time dockerd reads it - idempotent, no-op if already correct.
+  CRDIR=/usr/local/nvidia-runtime
+  DJ=/var/packages/ContainerManager/etc/dockerd.json
+  if [ -x "$CRDIR/bin/nvidia-container-runtime" ] && [ -f "$DJ" ] && command -v jq >/dev/null 2>&1; then
+    CUR="$(jq -r '.runtimes.nvidia.path // empty' "$DJ" 2>/dev/null)"
+    if [ "$CUR" != "$CRDIR/bin/nvidia-container-runtime" ]; then
+      NEWDJ="$(jq --arg p "$CRDIR/bin/nvidia-container-runtime" '.runtimes.nvidia = {"path": $p, "runtimeArgs": []}' "$DJ" 2>/dev/null)"
+      if [ -n "$NEWDJ" ]; then
+        echo -E "$NEWDJ" > "$DJ"
+        rclog "container runtime: re-registered 'nvidia' in dockerd.json (was missing/stale)"
+      fi
+    fi
+  fi
   rclog "loaded: $(lsmod 2>/dev/null | grep -c '^nvidia') nvidia modules; nodes: $(ls /dev/nvidia* 2>/dev/null | tr '\n' ' ')"
   rclog "=== boot hook done (run 'nvidia-smi' to verify) ==="
   ;;
