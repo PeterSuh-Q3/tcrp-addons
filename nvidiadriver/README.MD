@@ -36,18 +36,32 @@ All 4 branches are built for all 7 kver5 platforms (`epyc7002`, `epyc7003`,
 ## Version selection (install.sh, first match wins)
 
 1. `user_config.json` → `"nvidia_driver": "580.173.02"` (explicit override)
-2. GPU auto-detect via `nvidia-gpu-support.json` (`default_branch` / per-GPU `branches[0]` for the PCI id)
+2. GPU auto-detect via `nvidia-gpu-support.json` — the newest branch in the PCI
+   id's `branches[]` that is also indexed for this platform **and** kernel
 3. newest driver indexed for the platform
 
 `nvidia-gpu-support.json` guards against picking a branch incompatible with the
 detected GPU (the issue-#77 failure mode), and against picking 580 on a GPU
 needing GSP firmware that isn't bundled (Ada/Blackwell).
 
+It is **generated**, not hand-maintained — see
+[build/gen-gpu-support.py](build/gen-gpu-support.py). The source of truth is
+NVIDIA's own per-release `supportedchips.html`, so `branches[]` is fact rather
+than guesswork, and coverage is every GPU NVIDIA lists (1095 PCI ids) instead of
+the handful anyone got around to typing in. Re-run it whenever a driver branch
+in `nvidia-index.json` changes version, then update the file's `sha256` in
+[recipes/universal.json](recipes/universal.json):
+
+```bash
+python3 nvidiadriver/build/gen-gpu-support.py > nvidiadriver/src/nvidia-gpu-support.json
+sha256sum nvidiadriver/src/nvidia-gpu-support.json
+```
+
 ## Files (delivery only)
 
 - [src/install.sh](src/install.sh) — runtime inject (fetch layers → `/tmpRoot`, boot hook)
 - [src/nvidia-index.json](src/nvidia-index.json) — platform → version → {ko, userspace, ffmpeg} + sha256, plus the `container_runtime` / `gsp_firmware` top-level keys (Release URLs)
-- [src/nvidia-gpu-support.json](src/nvidia-gpu-support.json) — GPU PCI-id → compatible branches, `cuda_max`, `needs_gsp` / `gsp_fw`
+- [src/nvidia-gpu-support.json](src/nvidia-gpu-support.json) — GPU PCI-id → compatible branches, `cuda_max`, `needs_gsp` / `gsp_fw`, `legacy_driver`; **generated** by [build/gen-gpu-support.py](build/gen-gpu-support.py)
 - [recipes/universal.json](recipes/universal.json), [rpext-index.json](rpext-index.json) — addon manifest
 
 ## Status
