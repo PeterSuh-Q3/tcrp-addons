@@ -92,11 +92,31 @@ init_common(){
   fi
   [ -n "$GPUID" ] && log "detected NVIDIA GPU $GPUID" || log "no NVIDIA GPU detected"
 
-  # resolve version: /addons override -> GPU branch -> newest
+  # resolve version: /addons override -> GPU branch (GSP-aware) -> newest.
+  # GSP-aware: a GPU's branches[] is newest-preferred (usually 580 first), but
+  # 580 on a needs_gsp GPU with NO available firmware blob (currently Ada/RTX 40,
+  # Blackwell/RTX 50 - NVIDIA's .run only bundles gsp_tu10x.bin/gsp_ga10x.bin)
+  # would install a driver that loads but fails to initialise. The interactive
+  # standalone installer catches this with a confirm prompt; this addon runs
+  # unattended at boot, so it must skip such a branch on its own and fall
+  # through to the GPU's next candidate (e.g. 550) instead of silently
+  # installing something broken.
   DRV="${nvidia_driver:-}"
   if [ -z "$DRV" ] && [ -n "$GPUID" ] && [ -f "$SUP" ]; then
-    BRANCH="$(jq -r --arg g "$GPUID" '.gpus[$g].branches[0] // .default_branch' "$SUP" 2>/dev/null)"
-    DRV="$(jq -r --arg p "$PLATFORM" --arg b "$BRANCH" '.platforms[$p].drivers | keys | map(select(startswith($b+"."))) | sort | reverse | .[0] // empty' "$IDX")"
+    NEEDS_GSP="$(jq -r --arg g "$GPUID" '.gpus[$g].needs_gsp // false' "$SUP" 2>/dev/null)"
+    GSP_FW="$(jq -r --arg g "$GPUID" '.gpus[$g].gsp_fw // empty' "$SUP" 2>/dev/null)"
+    for BRANCH in $(jq -r --arg g "$GPUID" '.gpus[$g].branches[]? // empty' "$SUP" 2>/dev/null); do
+      CAND="$(jq -r --arg p "$PLATFORM" --arg b "$BRANCH" '.platforms[$p].drivers | keys | map(select(startswith($b+"."))) | sort | reverse | .[0] // empty' "$IDX")"
+      { [ -n "$CAND" ] && [ "$CAND" != "null" ]; } || continue
+      if [ "$BRANCH" = "580" ] && [ "$NEEDS_GSP" = "true" ]; then
+        if [ -z "$GSP_FW" ] || [ "$GSP_FW" = "null" ]; then
+          log "GPU $GPUID needs GSP firmware but none is bundled for it - skipping 580"; continue
+        fi
+        AVAIL="$(jq -r --arg d "$CAND" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
+        [ -n "$AVAIL" ] || { log "GPU $GPUID needs GSP firmware ($GSP_FW) but $CAND's index has none - skipping 580"; continue; }
+      fi
+      DRV="$CAND"; break
+    done
   fi
   [ -z "$DRV" ] && DRV="$(jq -r --arg p "$PLATFORM" '.platforms[$p].drivers | keys | sort | reverse | .[0]' "$IDX")"
   { [ -z "$DRV" ] || [ "$DRV" = "null" ]; } && { log "no driver resolved, skipping"; return 1; }
@@ -109,6 +129,19 @@ init_common(){
   KOSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.sha256' "$IDX")"
   USSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.sha256' "$IDX")"
   FFFSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.sha256 // empty' "$IDX")"
+
+  # GSP firmware (Turing/Ampere-GA10x only for now; see comment above). GSP_FW
+  # may already be set from the loop above; re-derive it here too so the
+  # `nvidia_driver` override path (which skips that loop) still gets it.
+  [ -n "${GSP_FW:-}" ] || GSP_FW="$(jq -r --arg g "$GPUID" '.gpus[$g].gsp_fw // empty' "$SUP" 2>/dev/null)"
+  GFF=""; GFSHA=""
+  if [ -n "$GSP_FW" ] && [ "$GSP_FW" != "null" ]; then
+    AVAIL="$(jq -r --arg d "$DRV" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
+    if [ -n "$AVAIL" ]; then
+      GFF="$(jq -r --arg d "$DRV" '.gsp_firmware[$d].file' "$IDX")"
+      GFSHA="$(jq -r --arg d "$DRV" '.gsp_firmware[$d].sha256' "$IDX")"
+    fi
+  fi
   return 0
 }
 
@@ -123,6 +156,9 @@ do_download(){
   fetch "$BASE/$USF" "$CACHE/$USF" "$USSHA" || return 1
   if [ "$WANT_FF" = "true" ] && [ -n "$FFF" ]; then
     fetch "$BASE/$FFF" "$CACHE/$FFF" "$FFFSHA" || log "ffmpeg layer download failed (optional)"
+  fi
+  if [ -n "$GFF" ]; then
+    fetch "$BASE/$GFF" "$CACHE/$GFF" "$GFSHA" || log "GSP firmware download failed (GPU needs it - modeset/uvm may not init)"
   fi
   log "pre-download complete: $(ls "$CACHE" 2>/dev/null | tr '\n' ' ')"
 }
@@ -143,6 +179,11 @@ do_inject(){
     KOF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.file' "$IDX")"
     USF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.file' "$IDX")"
     FFF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.file // empty' "$IDX")"
+    GFF=""
+    if [ -n "${GSP_FW:-}" ] && [ "$GSP_FW" != "null" ]; then
+      AVAIL="$(jq -r --arg d "$DRV" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
+      [ -n "$AVAIL" ] && GFF="$(jq -r --arg d "$DRV" '.gsp_firmware[$d].file' "$IDX")"
+    fi
     log "using pre-downloaded driver $DRV (locked at patches phase)"
   fi
 
@@ -160,6 +201,22 @@ do_inject(){
   for ko in /tmp/nv-ko-x/*.ko; do
     [ -f "$ko" ] && { cp -f "$ko" "$KMODDIR/$(basename "$ko")"; log "  staged $(basename "$ko")"; }
   done
+  # Platform marker for the boot hook's mismatch guard (see rc.d/nvidia.sh
+  # below) - all kver5 platforms share the exact same vermagic string, so the
+  # kernel's own check can't catch a leftover .ko from a previously-selected
+  # platform (e.g. after switching the loader's declared platform).
+  echo "$PLATFORM" > "$KMODDIR/.nvidia-platform"
+
+  # --- GSP firmware -> /tmpRoot/lib/firmware/nvidia/<driver_ver>/ (must exist
+  # before nvidia.ko loads - request_firmware() is called at probe time) ---
+  if [ -n "$GFF" ] && [ -s "$CACHE/$GFF" ]; then
+    FWDIR="$TR/lib/firmware/nvidia/$DRV"; mkdir -p "$FWDIR"
+    rm -rf /tmp/nv-gsp-x; mkdir -p /tmp/nv-gsp-x; tar -xzf "$CACHE/$GFF" -C /tmp/nv-gsp-x firmware 2>/dev/null
+    if [ -f "/tmp/nv-gsp-x/firmware/$GSP_FW" ]; then
+      cp -f "/tmp/nv-gsp-x/firmware/$GSP_FW" "$FWDIR/$GSP_FW"
+      log "  staged GSP firmware $GSP_FW -> /lib/firmware/nvidia/$DRV/"
+    fi
+  fi
 
   # --- userspace layer -> /tmpRoot/usr/local/nvidia ---
   USDIR="$TR/usr/local/nvidia"; mkdir -p "$USDIR"
@@ -174,6 +231,13 @@ do_inject(){
       [ -e "$so" ] && ln -sf "/usr/local/nvidia/lib/$so" "$TR/usr/lib/$so"
     done ) 2>/dev/null || true
 
+  # nvidia-smi: a REAL binary copy, not just a PATH export. nvidia-container-cli
+  # discovers /usr/bin/nvidia-smi by path and bind-mounts that exact file into
+  # containers, where /usr/local/nvidia doesn't exist - a PATH-only fix (what
+  # the boot hook used to do) leaves that binary broken inside containers.
+  mkdir -p "$TR/usr/bin"
+  [ -f "$USDIR/bin/nvidia-smi" ] && { cp -f "$USDIR/bin/nvidia-smi" "$TR/usr/bin/nvidia-smi"; chmod +x "$TR/usr/bin/nvidia-smi"; }
+
   # --- optional NVENC ffmpeg layer (SynoCommunity Jellyfin pkg / CLI) ---
   if [ "$WANT_FF" = "true" ] && [ -s "$CACHE/$FFF" ]; then
     mkdir -p "$USDIR/bin"; tar -xzf "$CACHE/$FFF" -C "$USDIR"
@@ -186,13 +250,26 @@ do_inject(){
   cat > "$RCD/nvidia.sh" <<'RC'
 #!/bin/sh
 # nvidiadriver boot hook - load modules in dependency order, create nodes.
-# nvidia + nvidia-uvm are the compute core (nvidia-smi/CUDA). nvidia-modeset and
-# nvidia-drm are display-only and best-effort: DSM ships no backlight.ko so
-# modeset may fail with 'Unknown symbol backlight_device_*' - expected, ignored.
+# nvidia + nvidia-uvm are the compute core (nvidia-smi/CUDA) and load on every
+# platform. nvidia-modeset/nvidia-drm are display-only and best-effort: on
+# headless platforms (no backlight.ko in that platform's DSM kernel) modeset
+# fails to load with 'Unknown symbol backlight_device_*' - harmless, expected,
+# irrelevant to compute/NVENC. On platforms with real backlight/display
+# support (e.g. geminilakenk) it loads fine - confirmed on real hardware.
 RCLOG=/var/log/nvidiadriver.log
 rclog(){ echo "$(date '+%H:%M:%S') rc.d/nvidia: $*" >> "$RCLOG" 2>/dev/null; }
 case "$1" in start|"")
   rclog "=== boot hook start ==="
+  # Platform guard: skip if the installed .ko were built for a different
+  # platform than the one currently running. vermagic alone can't catch this
+  # (identical text across kver5 platforms) and per-platform kernel .config
+  # can genuinely differ (e.g. backlight/acpi_video on/off).
+  CURP="$(uname -a | awk '{print $NF}' | cut -d'_' -f2)"
+  STOREDP="$(cat /usr/lib/modules/.nvidia-platform 2>/dev/null)"
+  if [ -n "$STOREDP" ] && [ "$STOREDP" != "$CURP" ]; then
+    rclog "SKIPPED: installed .ko are for platform '$STOREDP' but running on '$CURP' - re-select the driver for this platform"
+    exit 0
+  fi
   for m in nvidia nvidia-uvm nvidia-modeset nvidia-drm; do
     if [ -f "/usr/lib/modules/$m.ko" ]; then
       if /sbin/insmod "/usr/lib/modules/$m.ko" 2>>"$RCLOG"; then rclog "insmod $m OK"; else rclog "insmod $m FAILED (see above)"; fi
@@ -208,6 +285,12 @@ case "$1" in start|"")
   }
   umajor=$(awk '$2=="nvidia-uvm"{print $1}' /proc/devices | head -1)
   [ -n "$umajor" ] && { [ -e /dev/nvidia-uvm ] || mknod -m 666 /dev/nvidia-uvm c "$umajor" 0; }
+  # /dev/nvidia-modeset: unlike nvidia-uvm-tools and /dev/dri/* (auto-created
+  # by DSM's udev once the module registers), this one needs an explicit
+  # create - confirmed on real hardware. Use NVIDIA's own bundled tool rather
+  # than hardcoding the minor (254 by convention). No-ops harmlessly if
+  # nvidia-modeset.ko didn't load (e.g. headless platform, no backlight.ko).
+  [ -e /dev/nvidia-modeset ] || /usr/local/nvidia/bin/nvidia-modprobe -m 2>/dev/null
   for so in /usr/local/nvidia/lib/*.so*; do
     [ -e "$so" ] && ln -sf "$so" "/usr/lib/$(basename "$so")"
   done
