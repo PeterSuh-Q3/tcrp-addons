@@ -81,6 +81,28 @@ init_common(){
   [ -n "$PLATFORM" ] || PLATFORM="$(jq -r '.platforms | keys[0]' "$IDX")"
   jq -e ".platforms[\"$PLATFORM\"]" "$IDX" >/dev/null 2>&1 || { log "platform $PLATFORM not in index, skipping"; return 1; }
 
+  # The platform NAME alone does not identify the kernel ABI. The same platform
+  # ships different kernels across DSM releases (broadwell & friends are
+  # 4.4.180 on DSM 7.0/7.1 but 4.4.302 on 7.2+), and module vermagic embeds the
+  # exact version, so insmod rejects a mismatch. Junior already runs the real
+  # DSM kernel - that is why the uname-based PLATFORM detection above works -
+  # so uname -r is authoritative here too.
+  # Platforms present on several kernels carry a 'kernels' map keyed by
+  # version; single-kernel ones keep the flat 'drivers' plus a 'kver'.
+  KVER="$(uname -r | sed 's/[^0-9.].*$//')"
+  if jq -e --arg p "$PLATFORM" '.platforms[$p].kernels' "$IDX" >/dev/null 2>&1; then
+    jq -e --arg p "$PLATFORM" --arg k "$KVER" '.platforms[$p].kernels[$k]' "$IDX" >/dev/null 2>&1 || {
+      log "platform $PLATFORM has no modules for kernel $KVER (published: $(jq -r --arg p "$PLATFORM" '.platforms[$p].kernels|keys|join(",")' "$IDX")), skipping"; return 1; }
+  else
+    IKVER="$(jq -r --arg p "$PLATFORM" '.platforms[$p].kver // empty' "$IDX")"
+    if [ -n "$IKVER" ] && [ "$IKVER" != "$KVER" ]; then
+      log "platform $PLATFORM modules are built for kernel $IKVER but this box runs $KVER - skipping (vermagic would be rejected)"; return 1
+    fi
+  fi
+  log "platform $PLATFORM, kernel $KVER"
+  # Resolved drivers node - per-kernel entry when present, flat otherwise.
+  DQ='(.platforms[$p].kernels[$k].drivers // .platforms[$p].drivers)'
+
   # detect NVIDIA GPU (lspci, sysfs fallback for junior)
   GPUID="$(lspci -nn 2>/dev/null | grep -iE '\[03(00|02)\]' | grep -io '10de:[0-9a-f]\{4\}' | head -1 | tr 'A-Z' 'a-z')"
   if [ -z "$GPUID" ]; then
@@ -106,7 +128,7 @@ init_common(){
     NEEDS_GSP="$(jq -r --arg g "$GPUID" '.gpus[$g].needs_gsp // false' "$SUP" 2>/dev/null)"
     GSP_FW="$(jq -r --arg g "$GPUID" '.gpus[$g].gsp_fw // empty' "$SUP" 2>/dev/null)"
     for BRANCH in $(jq -r --arg g "$GPUID" '.gpus[$g].branches[]? // empty' "$SUP" 2>/dev/null); do
-      CAND="$(jq -r --arg p "$PLATFORM" --arg b "$BRANCH" '.platforms[$p].drivers | keys | map(select(startswith($b+"."))) | sort | reverse | .[0] // empty' "$IDX")"
+      CAND="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg b "$BRANCH" "$DQ"' | keys | map(select(startswith($b+"."))) | sort | reverse | .[0] // empty' "$IDX")"
       { [ -n "$CAND" ] && [ "$CAND" != "null" ]; } || continue
       if [ "$BRANCH" = "580" ] && [ "$NEEDS_GSP" = "true" ]; then
         if [ -z "$GSP_FW" ] || [ "$GSP_FW" = "null" ]; then
@@ -118,7 +140,7 @@ init_common(){
       DRV="$CAND"; break
     done
   fi
-  [ -z "$DRV" ] && DRV="$(jq -r --arg p "$PLATFORM" '.platforms[$p].drivers | keys | sort | reverse | .[0]' "$IDX")"
+  [ -z "$DRV" ] && DRV="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" "$DQ"' | keys | sort | reverse | .[0]' "$IDX")"
   { [ -z "$DRV" ] || [ "$DRV" = "null" ]; } && { log "no driver resolved, skipping"; return 1; }
   WANT_FF="${nvidia_ffmpeg:-false}"
   # Container Manager (Docker) runtime integration - platform/kernel-independent,
@@ -128,12 +150,12 @@ init_common(){
   CRSHA="$(jq -r '.container_runtime.sha256 // empty' "$IDX")"
 
   BASE="$(jq -r '.release_base' "$IDX")"
-  KOF="$(jq   -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.file' "$IDX")"
-  USF="$(jq   -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.file' "$IDX")"
-  FFF="$(jq   -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.file // empty' "$IDX")"
-  KOSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.sha256' "$IDX")"
-  USSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.sha256' "$IDX")"
-  FFFSHA="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.sha256 // empty' "$IDX")"
+  KOF="$(jq   -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].ko.file' "$IDX")"
+  USF="$(jq   -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].userspace.file' "$IDX")"
+  FFF="$(jq   -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].ffmpeg.file // empty' "$IDX")"
+  KOSHA="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].ko.sha256' "$IDX")"
+  USSHA="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].userspace.sha256' "$IDX")"
+  FFFSHA="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].ffmpeg.sha256 // empty' "$IDX")"
 
   # GSP firmware (Turing/Ampere-GA10x only for now; see comment above). GSP_FW
   # may already be set from the loop above; re-derive it here too so the
@@ -184,9 +206,9 @@ do_inject(){
   # enumerable at os_load, so re-resolving here could pick a different one).
   if [ -f "$CACHE/selected" ]; then
     DRV="$(cat "$CACHE/selected")"
-    KOF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ko.file' "$IDX")"
-    USF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].userspace.file' "$IDX")"
-    FFF="$(jq -r --arg p "$PLATFORM" --arg d "$DRV" '.platforms[$p].drivers[$d].ffmpeg.file // empty' "$IDX")"
+    KOF="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].ko.file' "$IDX")"
+    USF="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].userspace.file' "$IDX")"
+    FFF="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].ffmpeg.file // empty' "$IDX")"
     GFF=""
     if [ -n "${GSP_FW:-}" ] && [ "$GSP_FW" != "null" ]; then
       AVAIL="$(jq -r --arg d "$DRV" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
@@ -213,7 +235,9 @@ do_inject(){
   # below) - all kver5 platforms share the exact same vermagic string, so the
   # kernel's own check can't catch a leftover .ko from a previously-selected
   # platform (e.g. after switching the loader's declared platform).
-  echo "$PLATFORM" > "$KMODDIR/.nvidia-platform"
+  # The kernel version goes in too: a DSM upgrade (7.1 -> 7.2) keeps the
+  # platform name but moves 4.4.180 -> 4.4.302, invalidating these modules.
+  echo "$PLATFORM $KVER" > "$KMODDIR/.nvidia-platform"
 
   # --- GSP firmware -> /tmpRoot/lib/firmware/nvidia/<driver_ver>/ (must exist
   # before nvidia.ko loads - request_firmware() is called at probe time) ---
@@ -332,9 +356,20 @@ case "$1" in start|"")
   # (identical text across kver5 platforms) and per-platform kernel .config
   # can genuinely differ (e.g. backlight/acpi_video on/off).
   CURP="$(uname -a | awk '{print $NF}' | cut -d'_' -f2)"
-  STOREDP="$(cat /usr/lib/modules/.nvidia-platform 2>/dev/null)"
+  CURK="$(uname -r | sed 's/[^0-9.].*$//')"
+  STORED="$(cat /usr/lib/modules/.nvidia-platform 2>/dev/null)"
+  STOREDP="${STORED%% *}"
+  # markers written by older installs hold the platform only (no space)
+  STOREDK=""; case "$STORED" in *" "*) STOREDK="${STORED##* }" ;; esac
   if [ -n "$STOREDP" ] && [ "$STOREDP" != "$CURP" ]; then
     rclog "SKIPPED: installed .ko are for platform '$STOREDP' but running on '$CURP' - re-select the driver for this platform"
+    exit 0
+  fi
+  # Kernel guard: a DSM upgrade can move the same platform to a new kernel
+  # (4.4.180 -> 4.4.302). insmod rejects the vermagic anyway; catching it here
+  # puts the reason in the log instead of a bare failure.
+  if [ -n "$STOREDK" ] && [ "$STOREDK" != "$CURK" ]; then
+    rclog "SKIPPED: installed .ko are for kernel '$STOREDK' but running '$CURK' (DSM upgraded?) - re-run the addon"
     exit 0
   fi
   for m in nvidia nvidia-uvm nvidia-modeset nvidia-drm; do

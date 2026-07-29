@@ -512,6 +512,429 @@
           }
         }
       }
+    },
+    "apollolake": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-apollolake-44180.tgz",
+                "sha256": "70bc00598f7a00cbeb70b35346b416fff5a607d8d61f2a86f6cc422b86e9819f"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-apollolake-44302.tgz",
+                "sha256": "7758ce707240feb700fffa995aad1e13276802c2017eede3db5ccf2fd6ef4ec7"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "broadwell": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-broadwell-44180.tgz",
+                "sha256": "02810a5f1a9924f055059298ede2d1bd2ceb8217129ab3cee4dd1d4828561e25"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-broadwell-44302.tgz",
+                "sha256": "58490e76bcdf26769f37e9768ef1402db71f2293ac565f8b33251e5ee097a114"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "broadwellnk": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-broadwellnk-44180.tgz",
+                "sha256": "c564f144ebd7d66b81d8241b982b6462e41aa8cea6d7138ad1ac288d832e1e27"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-broadwellnk-44302.tgz",
+                "sha256": "5fdcfe1962cbb2b5c20adda9c00050f312cf30dfb2eb2ea5dfcd6010c9fd562d"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "broadwellnkv2": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-broadwellnkv2-44180.tgz",
+                "sha256": "e8b3d5ad02d078e6ce8e9487c39c175bc94a7bb0be067f14d22bd3e774c3354b"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-broadwellnkv2-44302.tgz",
+                "sha256": "439dcd3854b082419b60ba90bd167665985cd04250433a67d909470a05e5ad2e"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "broadwellntbap": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-broadwellntbap-44180.tgz",
+                "sha256": "77fba56e687c63ff3fcb6cd9bdef6d0f0d61b1a7c36a2eed180c8d5b54a572af"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-broadwellntbap-44302.tgz",
+                "sha256": "6ccaf3807845d41305d3ce94d32dd46b82d6064b52f373110ed722613ef8ae1a"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "geminilake": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-geminilake-44180.tgz",
+                "sha256": "fa77fb6a5bca10c9c06a2b36e9afd1671a338d23d235eaf6e24045b184959fb9"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-geminilake-44302.tgz",
+                "sha256": "86937302958c42d16a572e6abf3dc3387c5045bb7fec9f6e5370d00db615ba19"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "purley": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-purley-44180.tgz",
+                "sha256": "3ed6a589a8aa52987263e9dc776581c403210039e26cd7f19c69880a3237373e"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-purley-44302.tgz",
+                "sha256": "7756ca7dafc7df0ed1d2610bbb7f1c66b1c0d0a3f18dc6f7275b92263fe67ece"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "r1000": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-r1000-44180.tgz",
+                "sha256": "06a8e8d96998f9a82cd8bb7b2c65e3d239517f70052ada83ea762bbb358e73a6"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-r1000-44302.tgz",
+                "sha256": "967177ca715bd26de23725aadaf5b3c8f9ed7a24bf176c6f444f0403a7b881b6"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "v1000": {
+      "_comment": "Kernel 4.4 platform: the same platform name maps to different kernels across DSM releases (4.4.180 on DSM 7.0/7.1, 4.4.302 on 7.2+), so modules are keyed by kernel version - vermagic must match exactly. 550 is the ceiling here: 560+ hard-fail with 'does not support kernels older than Linux 4.15'. denverton is intentionally absent - DSM already ships a vanilla NVIDIA driver there for DVA.",
+      "kernels": {
+        "4.4.180": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-v1000-44180.tgz",
+                "sha256": "5a8b9ee771ab5a692b1b716c5807514bab2b450207e0741ddec775266a7cce7c"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        },
+        "4.4.302": {
+          "drivers": {
+            "550.163.01": {
+              "ko": {
+                "file": "nv-ko-550.163.01-v1000-44302.tgz",
+                "sha256": "9d82a2e05896914d9684f3c162afc0af34661fa54b4784e5a031b93d1b7bc4fd"
+              },
+              "userspace": {
+                "file": "nv-userspace-550.163.01.tgz",
+                "sha256": "038aebb0b1775ad294f82e89f388a8921e928183d0fb96e6de17158d8319fcb8",
+                "version": "550.163.01"
+              },
+              "ffmpeg": {
+                "file": "nv-ffmpeg-550.163.01.tgz",
+                "sha256": "509fd4f7f6e07ae616c7f16f65bee6aaebdd33d34653816c5c4dbc4f708b8165",
+                "source": "jellyfin-ffmpeg 7.0.2-9 (NVENC 12.1)",
+                "optional": true
+              }
+            }
+          }
+        }
+      }
     }
   },
   "container_runtime": {
