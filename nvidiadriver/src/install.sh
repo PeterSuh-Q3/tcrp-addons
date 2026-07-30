@@ -457,6 +457,32 @@ case "$1" in start|"")
       fi
     fi
   fi
+  # Jellyfin package ffmpeg path: SynoCommunity's jellyfin hardcodes
+  #   --ffmpeg /var/packages/ffmpeg7/target/bin/ffmpeg
+  # as a *launch argument* in its service-setup. That argument outranks
+  # encoding.xml and greys out the Dashboard field, so the user cannot point
+  # Jellyfin at our NVENC build from the UI - and ffmpeg7's own binary has no
+  # NVENC encoders, leaving transcoding on CPU.
+  #
+  # Re-assert it on every boot rather than only at install time: a Jellyfin
+  # package update or reinstall restores the original service-setup, silently
+  # reverting the path. rc.d runs before synopkgd auto-starts jellyfin
+  # (measured on real hardware: modules loaded 19:09:00, jellyfin started
+  # 19:09:08 - about 8s of headroom), so the patch is already in place by the
+  # time jellyfin reads the file. A single sed is fast enough for that window.
+  #
+  # Gated on our ffmpeg actually existing: the ffmpeg layer is optional
+  # (nvidia_ffmpeg flag), and pointing jellyfin at a missing binary would be
+  # worse than leaving ffmpeg7 in place. Idempotent - only rewrites when the
+  # file still names ffmpeg7.
+  JF_SS=/var/packages/jellyfin/scripts/service-setup
+  NVFF=/usr/local/nvidia/bin/ffmpeg
+  if [ -x "$NVFF" ] && [ -f "$JF_SS" ] && grep -q -- '--ffmpeg /var/packages/ffmpeg7/target/bin/ffmpeg' "$JF_SS"; then
+    cp -n "$JF_SS" "$JF_SS.pre-nvidia.bak" 2>/dev/null
+    if sed -i "s#--ffmpeg /var/packages/ffmpeg7/target/bin/ffmpeg#--ffmpeg $NVFF#" "$JF_SS" 2>/dev/null; then
+      rclog "jellyfin: ffmpeg path repointed to $NVFF (was ffmpeg7, no NVENC)"
+    fi
+  fi
   rclog "loaded: $(lsmod 2>/dev/null | grep -c '^nvidia') nvidia modules; nodes: $(ls /dev/nvidia* 2>/dev/null | tr '\n' ' ')"
   rclog "=== boot hook done (run 'nvidia-smi' to verify) ==="
   ;;
