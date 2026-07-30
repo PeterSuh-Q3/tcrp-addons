@@ -480,6 +480,17 @@ case "$1" in start|"")
   if [ -x "$NVFF" ] && [ -f "$JF_SS" ] && grep -q -- '--ffmpeg /var/packages/ffmpeg7/target/bin/ffmpeg' "$JF_SS"; then
     cp -n "$JF_SS" "$JF_SS.pre-nvidia.bak" 2>/dev/null
     if sed -i "s#--ffmpeg /var/packages/ffmpeg7/target/bin/ffmpeg#--ffmpeg $NVFF#" "$JF_SS" 2>/dev/null; then
+      # sed -i (and cp above) replace the file with a NEW inode built under
+      # the current umask, which does NOT preserve the original 755 - caught
+      # on real hardware where it landed as root:root 700. DSM runs this
+      # script as the package's own service account (sc-jellyfin here, from
+      # conf/privilege's run-as:"package"), so a non-executable/unreadable
+      # file makes jellyfin exit within ~20s ("begin to stop due to abnormal
+      # status") before it ever logs anything - looks like a crash, is really
+      # a permissions regression. Force both files back to what every other
+      # script in this directory already is.
+      chown root:root "$JF_SS" "$JF_SS.pre-nvidia.bak" 2>/dev/null
+      chmod 755 "$JF_SS" "$JF_SS.pre-nvidia.bak" 2>/dev/null
       rclog "jellyfin: ffmpeg path repointed to $NVFF (was ffmpeg7, no NVENC)"
     fi
   fi
