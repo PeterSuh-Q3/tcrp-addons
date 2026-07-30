@@ -114,34 +114,76 @@ init_common(){
   fi
   [ -n "$GPUID" ] && log "detected NVIDIA GPU $GPUID" || log "no NVIDIA GPU detected"
 
-  # resolve version: /addons override -> GPU branch (GSP-aware) -> newest.
-  # GSP-aware: a GPU's branches[] is newest-preferred (usually 580 first), but
-  # 580 on a needs_gsp GPU with NO available firmware blob (currently Ada/RTX 40,
-  # Blackwell/RTX 50 - NVIDIA's .run only bundles gsp_tu10x.bin/gsp_ga10x.bin)
-  # would install a driver that loads but fails to initialise. The interactive
-  # standalone installer catches this with a confirm prompt; this addon runs
-  # unattended at boot, so it must skip such a branch on its own and fall
-  # through to the GPU's next candidate (e.g. 550) instead of silently
-  # installing something broken.
+  # --- resolve the driver version -------------------------------------------
+  # Mirrors the standalone installer's logic, minus the prompts: this runs
+  # unattended at boot, so every judgement it would ask about has to be decided
+  # here and explained in the log.
+  #
+  # AVAIL = the branches actually indexed for THIS platform+kernel. Everything
+  # below intersects with it, so it is structurally impossible to select a
+  # driver we do not publish (kver4 platforms only have 550, kver5 have all four).
+  AVAIL="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" "$DQ"' | keys | map(.[0:3]) | unique | join(" ")' "$IDX")"
+  has_branch(){ case " $AVAIL " in *" $1 "*) return 0 ;; esac; return 1; }
+  log "branches published for $PLATFORM/$KVER: ${AVAIL:-none}"
+
+  GKNOWN=false; GBRANCHES=""; GLEGACY=""
+  if [ -n "$GPUID" ] && [ -f "$SUP" ] && jq -e --arg g "$GPUID" '.gpus[$g]' "$SUP" >/dev/null 2>&1; then
+    GKNOWN=true
+    GBRANCHES="$(jq -r --arg g "$GPUID" '.gpus[$g].branches // [] | join(" ")' "$SUP" 2>/dev/null)"
+    GLEGACY="$(jq -r --arg g "$GPUID" '.gpus[$g].legacy_driver // ""' "$SUP" 2>/dev/null)"
+  fi
+  NEEDS_GSP="$(jq -r --arg g "$GPUID" '.gpus[$g].needs_gsp // false' "$SUP" 2>/dev/null)"
+  GSP_FW="$(jq -r --arg g "$GPUID" '.gpus[$g].gsp_fw // empty' "$SUP" 2>/dev/null)"
+
   DRV="${nvidia_driver:-}"
-  if [ -z "$DRV" ] && [ -n "$GPUID" ] && [ -f "$SUP" ]; then
-    NEEDS_GSP="$(jq -r --arg g "$GPUID" '.gpus[$g].needs_gsp // false' "$SUP" 2>/dev/null)"
-    GSP_FW="$(jq -r --arg g "$GPUID" '.gpus[$g].gsp_fw // empty' "$SUP" 2>/dev/null)"
-    for BRANCH in $(jq -r --arg g "$GPUID" '.gpus[$g].branches[]? // empty' "$SUP" 2>/dev/null); do
+  if [ -z "$DRV" ]; then
+    # A GPU that NVIDIA only supports through a legacy branch (390.xx and older)
+    # cannot be driven by anything this project builds. Installing anyway would
+    # download ~300MB and inject modules that load and then bind to no device -
+    # skip and say why instead.
+    if [ -n "$GLEGACY" ] && [ "$GLEGACY" != "null" ]; then
+      log "GPU $GPUID is only supported by NVIDIA's $GLEGACY legacy driver, which this project does not build - skipping"
+      return 1
+    fi
+    # Newest branch the GPU supports that we also publish here. branches[] is
+    # newest-preferred. 580 uses the open kernel module, which on Turing+
+    # refuses to initialise without a GSP blob; we only ship the blobs NVIDIA's
+    # .run bundles (Turing + consumer Ampere), so for Ada/Blackwell/GA100 580 is
+    # present but unusable and must be passed over.
+    for BRANCH in $GBRANCHES; do
+      has_branch "$BRANCH" || continue
       CAND="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg b "$BRANCH" "$DQ"' | keys | map(select(startswith($b+"."))) | sort | reverse | .[0] // empty' "$IDX")"
       { [ -n "$CAND" ] && [ "$CAND" != "null" ]; } || continue
       if [ "$BRANCH" = "580" ] && [ "$NEEDS_GSP" = "true" ]; then
         if [ -z "$GSP_FW" ] || [ "$GSP_FW" = "null" ]; then
           log "GPU $GPUID needs GSP firmware but none is bundled for it - skipping 580"; continue
         fi
-        AVAIL="$(jq -r --arg d "$CAND" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
-        [ -n "$AVAIL" ] || { log "GPU $GPUID needs GSP firmware ($GSP_FW) but $CAND's index has none - skipping 580"; continue; }
+        GHAVE="$(jq -r --arg d "$CAND" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
+        [ -n "$GHAVE" ] || { log "GPU $GPUID needs GSP firmware ($GSP_FW) but $CAND's index has none - skipping 580"; continue; }
       fi
       DRV="$CAND"; break
     done
+    # Known GPU, but none of its branches exist for this platform+kernel - e.g.
+    # a Kepler card on a kver4 platform, where the GPU needs 470 and only 550 is
+    # built. 550 would install cleanly and drive nothing.
+    if [ -z "$DRV" ] && [ "$GKNOWN" = "true" ] && [ -n "$GBRANCHES" ]; then
+      log "GPU $GPUID needs one of [$GBRANCHES] but $PLATFORM/$KVER only has [$AVAIL] - nothing here will drive this GPU, skipping"
+      return 1
+    fi
+    # No GPU detected, or its PCI id is newer than the catalog: fall back to the
+    # per-kernel default (kver5 -> 580, kver4 -> 550), intersected with AVAIL.
+    if [ -z "$DRV" ]; then
+      KMAJ="${KVER%%.*}"
+      KDEF="$(jq -r --arg k "$KMAJ" '.default_branch_by_kernel[$k] // .default_branch // empty' "$SUP" 2>/dev/null)"
+      if [ -n "$KDEF" ] && [ "$KDEF" != "null" ] && has_branch "$KDEF"; then
+        DRV="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg b "$KDEF" "$DQ"' | keys | map(select(startswith($b+"."))) | sort | reverse | .[0] // empty' "$IDX")"
+        log "GPU unknown/undetected - falling back to the kernel ${KMAJ}.x default branch $KDEF"
+      fi
+    fi
   fi
   [ -z "$DRV" ] && DRV="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" "$DQ"' | keys | sort | reverse | .[0]' "$IDX")"
   { [ -z "$DRV" ] || [ "$DRV" = "null" ]; } && { log "no driver resolved, skipping"; return 1; }
+  log "resolved driver $DRV"
   WANT_FF="${nvidia_ffmpeg:-false}"
   # Container Manager (Docker) runtime integration - platform/kernel-independent,
   # one shared layer for all drivers/platforms (see nvidia-index.json.container_runtime).
@@ -163,8 +205,8 @@ init_common(){
   [ -n "${GSP_FW:-}" ] || GSP_FW="$(jq -r --arg g "$GPUID" '.gpus[$g].gsp_fw // empty' "$SUP" 2>/dev/null)"
   GFF=""; GFSHA=""
   if [ -n "$GSP_FW" ] && [ "$GSP_FW" != "null" ]; then
-    AVAIL="$(jq -r --arg d "$DRV" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
-    if [ -n "$AVAIL" ]; then
+    GHAVE="$(jq -r --arg d "$DRV" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
+    if [ -n "$GHAVE" ]; then
       GFF="$(jq -r --arg d "$DRV" '.gsp_firmware[$d].file' "$IDX")"
       GFSHA="$(jq -r --arg d "$DRV" '.gsp_firmware[$d].sha256' "$IDX")"
     fi
@@ -211,8 +253,8 @@ do_inject(){
     FFF="$(jq -r --arg p "$PLATFORM" --arg k "$KVER" --arg d "$DRV" "$DQ"'[$d].ffmpeg.file // empty' "$IDX")"
     GFF=""
     if [ -n "${GSP_FW:-}" ] && [ "$GSP_FW" != "null" ]; then
-      AVAIL="$(jq -r --arg d "$DRV" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
-      [ -n "$AVAIL" ] && GFF="$(jq -r --arg d "$DRV" '.gsp_firmware[$d].file' "$IDX")"
+      GHAVE="$(jq -r --arg d "$DRV" --arg f "$GSP_FW" '.gsp_firmware[$d].chips // [] | index($f) // empty' "$IDX" 2>/dev/null)"
+      [ -n "$GHAVE" ] && GFF="$(jq -r --arg d "$DRV" '.gsp_firmware[$d].file' "$IDX")"
     fi
     log "using pre-downloaded driver $DRV (locked at patches phase)"
   fi
