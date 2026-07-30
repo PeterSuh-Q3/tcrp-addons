@@ -568,7 +568,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-broadwell-44180.tgz",
-                "sha256": "02810a5f1a9924f055059298ede2d1bd2ceb8217129ab3cee4dd1d4828561e25"
+                "sha256": "6560b0054d6d8fdf0cf7e945816ac46f5d9abbf2a98988a44546842ac0d3f74a"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -589,7 +589,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-broadwell-44302.tgz",
-                "sha256": "58490e76bcdf26769f37e9768ef1402db71f2293ac565f8b33251e5ee097a114"
+                "sha256": "f121ea80e7848013f870e08c3b3ecd73ec6a254a34f1c4c90544e5c04857ea46"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -615,7 +615,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-broadwellnk-44180.tgz",
-                "sha256": "c564f144ebd7d66b81d8241b982b6462e41aa8cea6d7138ad1ac288d832e1e27"
+                "sha256": "6eda5b133731751500e63fcfacef9e13882244b50637f027722d0832ffe3b25d"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -636,7 +636,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-broadwellnk-44302.tgz",
-                "sha256": "5fdcfe1962cbb2b5c20adda9c00050f312cf30dfb2eb2ea5dfcd6010c9fd562d"
+                "sha256": "fba1425012c9a4d1cb480e46119cda2144ba8f85e95c2f4b8f10c0185eca88db"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -662,7 +662,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-broadwellnkv2-44180.tgz",
-                "sha256": "e8b3d5ad02d078e6ce8e9487c39c175bc94a7bb0be067f14d22bd3e774c3354b"
+                "sha256": "3e05933727dfe255936bd86e5d6eadf0271147c5ec6519da690830d8f510d149"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -683,7 +683,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-broadwellnkv2-44302.tgz",
-                "sha256": "439dcd3854b082419b60ba90bd167665985cd04250433a67d909470a05e5ad2e"
+                "sha256": "9511859de4518dce0f77aa59024b0ff2ed4af7bc8135d978f177e8929f5306a2"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -709,7 +709,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-broadwellntbap-44180.tgz",
-                "sha256": "77fba56e687c63ff3fcb6cd9bdef6d0f0d61b1a7c36a2eed180c8d5b54a572af"
+                "sha256": "a5a26830319d50a7b72793dc163706d00a1bd0859fc6dfba1be2ebd4e12e0466"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -730,7 +730,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-broadwellntbap-44302.tgz",
-                "sha256": "6ccaf3807845d41305d3ce94d32dd46b82d6064b52f373110ed722613ef8ae1a"
+                "sha256": "3dc10aef9957e38580bf8db51fa105189d56c7291dea79b3e8507bf2fa251987"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -803,7 +803,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-purley-44180.tgz",
-                "sha256": "3ed6a589a8aa52987263e9dc776581c403210039e26cd7f19c69880a3237373e"
+                "sha256": "184ce55cbf7784b412e77671686813ac152c8795c470a3c913d1d817ab278c82"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -824,7 +824,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-purley-44302.tgz",
-                "sha256": "7756ca7dafc7df0ed1d2610bbb7f1c66b1c0d0a3f18dc6f7275b92263fe67ece"
+                "sha256": "c60ffc65e6250e29deb412f947b48aee207edc24a7fd0c54cc7764b754d94881"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -850,7 +850,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-r1000-44180.tgz",
-                "sha256": "06a8e8d96998f9a82cd8bb7b2c65e3d239517f70052ada83ea762bbb358e73a6"
+                "sha256": "b9fd8de33e61a7442b2d9645ff86b93ae046efbcafa3fbb54b1ab9abd564a304"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -871,7 +871,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-r1000-44302.tgz",
-                "sha256": "967177ca715bd26de23725aadaf5b3c8f9ed7a24bf176c6f444f0403a7b881b6"
+                "sha256": "8e91ebbed1722e950970a0b8c681cf237c81f65dc003a0b5e61b127e48aa1ef8"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -897,7 +897,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-v1000-44180.tgz",
-                "sha256": "5a8b9ee771ab5a692b1b716c5807514bab2b450207e0741ddec775266a7cce7c"
+                "sha256": "5567f5b1331eb85f441e85e3cb1ec6a4209a68c00db65a6231406e97fb3d2751"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
@@ -918,7 +918,7 @@
             "550.163.01": {
               "ko": {
                 "file": "nv-ko-550.163.01-v1000-44302.tgz",
-                "sha256": "9d82a2e05896914d9684f3c162afc0af34661fa54b4784e5a031b93d1b7bc4fd"
+                "sha256": "be20c2c70dbd6dbda4cfdf5fdd0a7db7803d72e36c636d9c4a9d8fd08295e6bf"
               },
               "userspace": {
                 "file": "nv-userspace-550.163.01.tgz",
