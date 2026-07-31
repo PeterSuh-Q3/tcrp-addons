@@ -461,6 +461,27 @@ case "$1" in start|"")
         rclog "container runtime: re-registered 'nvidia' in dockerd.json (was missing/stale)"
       fi
     fi
+  elif [ -f "$DJ" ] && command -v jq >/dev/null 2>&1; then
+    # The layer is optional (nvidia_container_runtime flag) and can be turned
+    # back off from the menu, but dockerd.json is not ours and is never rebuilt
+    # - so switching the flag off used to leave a registration pointing at a
+    # binary that no longer exists. Docker still advertises the runtime, and
+    # anything started with --runtime=nvidia then dies at exec time with
+    #   fork/exec /usr/local/nvidia-runtime/bin/nvidia-container-runtime:
+    #   no such file or directory
+    # which gives no hint that an addon left it behind. Found exactly that
+    # state on real hardware.
+    #
+    # Only ever removes an entry pointing at OUR path: a user who wired up
+    # their own nvidia runtime somewhere else keeps it.
+    CUR="$(jq -r '.runtimes.nvidia.path // empty' "$DJ" 2>/dev/null)"
+    if [ "$CUR" = "$CRDIR/bin/nvidia-container-runtime" ]; then
+      NEWDJ="$(jq 'del(.runtimes.nvidia)' "$DJ" 2>/dev/null)"
+      if [ -n "$NEWDJ" ]; then
+        echo -E "$NEWDJ" > "$DJ"
+        rclog "container runtime: removed stale 'nvidia' entry from dockerd.json (layer not installed)"
+      fi
+    fi
   fi
   # Jellyfin package ffmpeg path: SynoCommunity's jellyfin hardcodes
   #   --ffmpeg /var/packages/ffmpeg7/target/bin/ffmpeg
