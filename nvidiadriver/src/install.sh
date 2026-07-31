@@ -569,6 +569,34 @@ case "$1" in start|"")
       jfset AllowAv1Encoding           "$JF_AV1"
       jfset EnableTonemapping          true
       jfset EncoderAppPathDisplay      "$NVFF"
+      # Encoder preset. Measured on real hardware (P620, entry-level Pascal,
+      # 1080p30 hevc_nvenc): p1 10.6x, p4 9.86x, p5 9.35x, p6 9.27x, p7 8.83x -
+      # only 17% between fastest and slowest. NVENC quality presets are nearly
+      # free because the work happens in fixed-function silicon, so the usual
+      # x264 instinct of trading quality for throughput does not apply. slow
+      # (p5) still sustains ~9 simultaneous 1080p streams on the weakest card
+      # this addon supports, and Jellyfin maps its preset names straight onto
+      # p1-p7 (fast=p3, medium=p4, slow=p5, slower=p6, veryslow=p7).
+      jfset EncoderPreset              slow
+      # Transcoding scratch space in RAM. This is a real win - HLS segments are
+      # written and deleted constantly, and keeping that off the array avoids
+      # waking disks and burning SSD writes - but it is only safe when the
+      # transcode cannot outrun the player. At the speeds measured above ffmpeg
+      # renders a 2-hour movie into /dev/shm in about 13 minutes, which would
+      # fill a 3.8G tmpfs several times over, so throttling (pause once far
+      # enough ahead of the playhead) and segment deletion (drop what has been
+      # played) go on with it. Skipped entirely on a small /dev/shm: below a
+      # couple of GB even a throttled 4K stream has no comfortable headroom,
+      # and the default on-disk path is the safer answer there.
+      JF_SHM="$(df -m /dev/shm 2>/dev/null | awk 'NR==2{print $2}')"
+      if [ -d /dev/shm ] && [ -n "$JF_SHM" ] && [ "$JF_SHM" -ge 2048 ] 2>/dev/null; then
+        jfset TranscodingTempPath    /dev/shm
+        jfset EnableThrottling       true
+        jfset EnableSegmentDeletion  true
+        JF_TMP="/dev/shm (${JF_SHM}MB, throttling+segment deletion on)"
+      else
+        JF_TMP="default on-disk (/dev/shm ${JF_SHM:-absent}MB, too small)"
+      fi
       # HardwareDecodingCodecs is a list, so it needs the whole element
       # replaced rather than a value substitution - and it may be empty and
       # self-closing on a config jellyfin has never had acceleration set on.
@@ -591,7 +619,7 @@ case "$1" in start|"")
       chmod 644 "$JF_CFG" 2>/dev/null
       : > "$JF_STAMP" 2>/dev/null
       [ -n "$JF_OWN" ] && chown "$JF_OWN" "$JF_STAMP" 2>/dev/null
-      rclog "jellyfin: NVENC auto-configured (arch=${JF_ARCH:-unknown} hevc=$JF_HEVC av1=$JF_AV1 decode='$JF_DEC')"
+      rclog "jellyfin: NVENC auto-configured (arch=${JF_ARCH:-unknown} hevc=$JF_HEVC av1=$JF_AV1 preset=slow tmp=$JF_TMP decode='$JF_DEC')"
     fi
   fi
   rclog "loaded: $(lsmod 2>/dev/null | grep -c '^nvidia') nvidia modules; nodes: $(ls /dev/nvidia* 2>/dev/null | tr '\n' ' ')"
