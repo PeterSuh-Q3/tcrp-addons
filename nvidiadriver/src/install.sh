@@ -520,6 +520,7 @@ case "$1" in start|"")
   # and rewrites the file on change, so editing underneath it would be undone.
   JF_CFG=/var/packages/jellyfin/var/config/encoding.xml
   JF_STAMP=/var/packages/jellyfin/var/config/.nvidia-autoconf
+  JF_TTPDIR=/dev/shm/jellyfin-transcodes
   JF_PID="$(cat /var/packages/jellyfin/var/jellyfin.pid 2>/dev/null)"
   if [ -x "$NVFF" ] && [ -f "$JF_CFG" ] && [ ! -f "$JF_STAMP" ] \
      && ! { [ -n "$JF_PID" ] && [ -d "/proc/$JF_PID" ]; }; then
@@ -602,14 +603,21 @@ case "$1" in start|"")
         # XmlSerializer expects elements in schema order and quietly ignores
         # ones that arrive out of sequence, so it goes immediately after
         # EncodingThreadCount, where jellyfin itself writes it.
+        # A dedicated subdirectory, never /dev/shm itself. Jellyfin treats the
+        # transcode path as exclusively its own and its cleanup task empties
+        # it wholesale - pointed at /dev/shm that means trying to delete
+        # everything else living in the same tmpfs. On real hardware that is
+        # Plex's /dev/shm/Transcode, DSM's PostgreSQL shared memory segment and
+        # nginx's scratch file; the attempts only fail because jellyfin runs
+        # unprivileged, which is luck rather than design.
         if grep -q "<TranscodingTempPath[ >/]" "$JF_CFG" 2>/dev/null; then
-          jfset TranscodingTempPath  /dev/shm
+          jfset TranscodingTempPath  "$JF_TTPDIR"
         else
-          sed -i "s#</EncodingThreadCount>#</EncodingThreadCount>\n  <TranscodingTempPath>/dev/shm</TranscodingTempPath>#" "$JF_CFG" 2>/dev/null
+          sed -i "s#</EncodingThreadCount>#</EncodingThreadCount>\n  <TranscodingTempPath>$JF_TTPDIR</TranscodingTempPath>#" "$JF_CFG" 2>/dev/null
         fi
         jfset EnableThrottling       true
         jfset EnableSegmentDeletion  true
-        JF_TMP="/dev/shm (${JF_SHM}MB, throttling+segment deletion on)"
+        JF_TMP="$JF_TTPDIR (${JF_SHM}MB tmpfs, throttling+segment deletion on)"
       else
         JF_TMP="default on-disk (/dev/shm ${JF_SHM:-absent}MB, too small)"
       fi
@@ -637,6 +645,25 @@ case "$1" in start|"")
       [ -n "$JF_OWN" ] && chown "$JF_OWN" "$JF_STAMP" 2>/dev/null
       rclog "jellyfin: NVENC auto-configured (arch=${JF_ARCH:-unknown} hevc=$JF_HEVC av1=$JF_AV1 preset=slow tmp=$JF_TMP decode='$JF_DEC')"
     fi
+  fi
+  # Transcode scratch directory, every boot - deliberately outside the one-shot
+  # block above. /dev/shm is a tmpfs and comes up empty, so a path that lives
+  # there has to be recreated before jellyfin starts, on every boot, for as
+  # long as the config points at it. Reads the path back out of the config
+  # rather than assuming ours, so a hand-picked tmpfs path is handled too.
+  if [ -f "$JF_CFG" ]; then
+    JF_TTP="$(sed -n 's#.*<TranscodingTempPath>\([^<]*\)</TranscodingTempPath>.*#\1#p' "$JF_CFG" 2>/dev/null)"
+    case "$JF_TTP" in
+      /dev/shm/?*)
+        if [ ! -d "$JF_TTP" ]; then
+          mkdir -p "$JF_TTP" 2>/dev/null
+          JF_DOWN="$(stat -c '%U:%G' /var/packages/jellyfin/var/config 2>/dev/null)"
+          [ -n "$JF_DOWN" ] && chown "$JF_DOWN" "$JF_TTP" 2>/dev/null
+          chmod 755 "$JF_TTP" 2>/dev/null
+          rclog "jellyfin: created transcode scratch $JF_TTP (tmpfs starts empty)"
+        fi
+        ;;
+    esac
   fi
   rclog "loaded: $(lsmod 2>/dev/null | grep -c '^nvidia') nvidia modules; nodes: $(ls /dev/nvidia* 2>/dev/null | tr '\n' ' ')"
   rclog "=== boot hook done (run 'nvidia-smi' to verify) ==="
