@@ -557,11 +557,17 @@ case "$1" in start|"")
       # mode bits. A root-owned encoding.xml would stop jellyfin from ever
       # saving playback settings from the UI again.
       JF_OWN="$(stat -c '%U:%G' "$JF_CFG" 2>/dev/null)"
-      # First expression fills in an element .NET serialised as empty (and so
-      # self-closing, with or without the space); the second replaces one that
-      # already carries a value. Delimiter is # because one of the values is a
-      # path.
-      jfset(){ sed -i -e "s#<$1 */>#<$1>$2</$1>#" -e "s#<$1>[^<]*</$1>#<$1>$2</$1>#" "$JF_CFG" 2>/dev/null; }
+      # Three forms have to be covered, all of which a real jellyfin config
+      # actually contains: a bare self-closing element (<QsvDevice />), one
+      # .NET serialised as nil and so self-closing *with an attribute*
+      # (<EncoderPreset xsi:nil="true" />), and an ordinary element carrying a
+      # value. Requiring a space or '/' straight after the tag name keeps a
+      # name from matching a longer one that starts with it. Delimiter is #
+      # because one of the values is a path.
+      jfset(){ sed -i \
+        -e "s#<$1 */>#<$1>$2</$1>#" \
+        -e "s#<$1 [^>]*/>#<$1>$2</$1>#" \
+        -e "s#<$1>[^<]*</$1>#<$1>$2</$1>#" "$JF_CFG" 2>/dev/null; }
       jfset HardwareAccelerationType   nvenc
       jfset EnableHardwareEncoding     true
       jfset EnableEnhancedNvdecDecoder true
@@ -590,7 +596,17 @@ case "$1" in start|"")
       # and the default on-disk path is the safer answer there.
       JF_SHM="$(df -m /dev/shm 2>/dev/null | awk 'NR==2{print $2}')"
       if [ -d /dev/shm ] && [ -n "$JF_SHM" ] && [ "$JF_SHM" -ge 2048 ] 2>/dev/null; then
-        jfset TranscodingTempPath    /dev/shm
+        # Unlike every other key here, TranscodingTempPath is simply absent
+        # from a config jellyfin has just created - there is nothing to
+        # substitute, so it has to be inserted. Position matters: .NET's
+        # XmlSerializer expects elements in schema order and quietly ignores
+        # ones that arrive out of sequence, so it goes immediately after
+        # EncodingThreadCount, where jellyfin itself writes it.
+        if grep -q "<TranscodingTempPath[ >/]" "$JF_CFG" 2>/dev/null; then
+          jfset TranscodingTempPath  /dev/shm
+        else
+          sed -i "s#</EncodingThreadCount>#</EncodingThreadCount>\n  <TranscodingTempPath>/dev/shm</TranscodingTempPath>#" "$JF_CFG" 2>/dev/null
+        fi
         jfset EnableThrottling       true
         jfset EnableSegmentDeletion  true
         JF_TMP="/dev/shm (${JF_SHM}MB, throttling+segment deletion on)"
