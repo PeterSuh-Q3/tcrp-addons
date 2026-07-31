@@ -280,6 +280,11 @@ do_inject(){
   # The kernel version goes in too: a DSM upgrade (7.1 -> 7.2) keeps the
   # platform name but moves 4.4.180 -> 4.4.302, invalidating these modules.
   echo "$PLATFORM $KVER" > "$KMODDIR/.nvidia-platform"
+  # GPU architecture marker for the boot hook's Jellyfin auto-configuration.
+  # nvidia-gpu-support.json only exists here in the patches/late phase (it ships
+  # inside the addon, not into /tmpRoot), so the arch has to be handed forward
+  # as a file the hook can read at boot. Used to pick NVDEC decode codecs.
+  jq -r --arg g "$GPUID" '.gpus[$g].arch // "unknown"' "$SUP" 2>/dev/null > "$KMODDIR/.nvidia-gpuarch" || echo unknown > "$KMODDIR/.nvidia-gpuarch"
 
   # --- GSP firmware -> /tmpRoot/lib/firmware/nvidia/<driver_ver>/ (must exist
   # before nvidia.ko loads - request_firmware() is called at probe time) ---
@@ -492,6 +497,101 @@ case "$1" in start|"")
       chown root:root "$JF_SS" "$JF_SS.pre-nvidia.bak" 2>/dev/null
       chmod 755 "$JF_SS" "$JF_SS.pre-nvidia.bak" 2>/dev/null
       rclog "jellyfin: ffmpeg path repointed to $NVFF (was ffmpeg7, no NVENC)"
+    fi
+  fi
+  # Jellyfin hardware transcoding auto-configuration. Jellyfin ships with
+  # hardware acceleration off and expects the user to pick NVENC by hand in
+  # Dashboard -> Playback and then tick the right decode codecs - which they
+  # cannot know without reading NVIDIA's per-architecture capability tables.
+  # Plex just detects and enables; do the same, but GPU-model-aware (Plex is
+  # not): the encoders are probed against the real card, so a Pascal box never
+  # gets AV1 encoding switched on and a Kepler box never gets HEVC.
+  #
+  # This runs at most once. The stamp lives in jellyfin's own config directory,
+  # not ours - /usr/local/nvidia is rebuilt from scratch by the addon on every
+  # boot, so a stamp there would never survive; this one also disappears with
+  # the package, which is the right lifetime. Once stamped, everything the user
+  # subsequently changes in the UI is left alone forever.
+  #
+  # No stamp is written when encoding.xml does not exist yet: a freshly
+  # installed jellyfin has no config until its setup wizard has been completed,
+  # so this quietly retries on the next boot rather than giving up. Same for a
+  # jellyfin that is somehow already running - it holds this config in memory
+  # and rewrites the file on change, so editing underneath it would be undone.
+  JF_CFG=/var/packages/jellyfin/var/config/encoding.xml
+  JF_STAMP=/var/packages/jellyfin/var/config/.nvidia-autoconf
+  JF_PID="$(cat /var/packages/jellyfin/var/jellyfin.pid 2>/dev/null)"
+  if [ -x "$NVFF" ] && [ -f "$JF_CFG" ] && [ ! -f "$JF_STAMP" ] \
+     && ! { [ -n "$JF_PID" ] && [ -d "/proc/$JF_PID" ]; }; then
+    JF_HW="$(sed -n 's#.*<HardwareAccelerationType>\([^<]*\)</HardwareAccelerationType>.*#\1#p' "$JF_CFG" 2>/dev/null)"
+    if [ -n "$JF_HW" ] && [ "$JF_HW" != "none" ]; then
+      # Already configured by hand - record that and never look again.
+      : > "$JF_STAMP" 2>/dev/null
+      rclog "jellyfin: hardware acceleration already set to '$JF_HW' - left as is"
+    else
+      # Ask the card itself what it can encode. Each probe is a 1-frame encode
+      # to /dev/null and takes ~0.5s on real hardware; the boot hook has ~8s of
+      # headroom before synopkgd starts jellyfin. timeout is belt-and-braces so
+      # a wedged probe can never hold up the package start.
+      nvprobe(){ timeout 15 "$NVFF" -hide_banner -loglevel quiet \
+        -f lavfi -i nullsrc=s=128x128:d=0.04 -c:v "$1" -f null - >/dev/null 2>&1; }
+      JF_HEVC=false; nvprobe hevc_nvenc && JF_HEVC=true
+      JF_AV1=false;  nvprobe av1_nvenc  && JF_AV1=true
+      # NVDEC decode support is not probeable the same way (it would need real
+      # encoded input per codec), so it comes from the architecture instead.
+      # Erring generous is safe here: ffmpeg silently falls back to software
+      # decode for a codec the chip cannot handle, whereas leaving a supported
+      # codec off would cost performance permanently and invisibly.
+      JF_ARCH="$(cat /usr/lib/modules/.nvidia-gpuarch 2>/dev/null)"
+      JF_DEC="h264 vc1 mpeg2video mpeg4"
+      case "$JF_ARCH" in
+        Kepler)                   ;;
+        Maxwell)                  JF_DEC="$JF_DEC vp8 hevc" ;;
+        Ampere*|Ada|Blackwell)    JF_DEC="$JF_DEC vp8 hevc vp9 av1" ;;
+        *)                        JF_DEC="$JF_DEC vp8 hevc vp9" ;;
+      esac
+      # Preserve ownership across the edits below: this file belongs to the
+      # package's service account (sc-jellyfin), and both sed -i and the awk
+      # rewrite replace it with a new inode owned by root - the same class of
+      # regression that made jellyfin fail to start when service-setup lost its
+      # mode bits. A root-owned encoding.xml would stop jellyfin from ever
+      # saving playback settings from the UI again.
+      JF_OWN="$(stat -c '%U:%G' "$JF_CFG" 2>/dev/null)"
+      # First expression fills in an element .NET serialised as empty (and so
+      # self-closing, with or without the space); the second replaces one that
+      # already carries a value. Delimiter is # because one of the values is a
+      # path.
+      jfset(){ sed -i -e "s#<$1 */>#<$1>$2</$1>#" -e "s#<$1>[^<]*</$1>#<$1>$2</$1>#" "$JF_CFG" 2>/dev/null; }
+      jfset HardwareAccelerationType   nvenc
+      jfset EnableHardwareEncoding     true
+      jfset EnableEnhancedNvdecDecoder true
+      jfset AllowHevcEncoding          "$JF_HEVC"
+      jfset AllowAv1Encoding           "$JF_AV1"
+      jfset EnableTonemapping          true
+      jfset EncoderAppPathDisplay      "$NVFF"
+      # HardwareDecodingCodecs is a list, so it needs the whole element
+      # replaced rather than a value substitution - and it may be empty and
+      # self-closing on a config jellyfin has never had acceleration set on.
+      awk -v list="$JF_DEC" '
+        function emit(  n,a,i) {
+          print "  <HardwareDecodingCodecs>"
+          n = split(list, a, " ")
+          for (i = 1; i <= n; i++) print "    <string>" a[i] "</string>"
+          print "  </HardwareDecodingCodecs>"
+        }
+        /<HardwareDecodingCodecs *\/>/            { emit(); next }
+        /<HardwareDecodingCodecs>/                { emit(); skip = 1; next }
+        skip && /<\/HardwareDecodingCodecs>/      { skip = 0; next }
+        skip                                      { next }
+                                                  { print }
+      ' "$JF_CFG" > "$JF_CFG.nvtmp" 2>/dev/null \
+        && [ -s "$JF_CFG.nvtmp" ] && mv -f "$JF_CFG.nvtmp" "$JF_CFG"
+      rm -f "$JF_CFG.nvtmp" 2>/dev/null
+      [ -n "$JF_OWN" ] && chown "$JF_OWN" "$JF_CFG" 2>/dev/null
+      chmod 644 "$JF_CFG" 2>/dev/null
+      : > "$JF_STAMP" 2>/dev/null
+      [ -n "$JF_OWN" ] && chown "$JF_OWN" "$JF_STAMP" 2>/dev/null
+      rclog "jellyfin: NVENC auto-configured (arch=${JF_ARCH:-unknown} hevc=$JF_HEVC av1=$JF_AV1 decode='$JF_DEC')"
     fi
   fi
   rclog "loaded: $(lsmod 2>/dev/null | grep -c '^nvidia') nvidia modules; nodes: $(ls /dev/nvidia* 2>/dev/null | tr '\n' ' ')"
