@@ -182,6 +182,18 @@ ok "cpuinfo-gpu.service + .path written"
 systemctl daemon-reload
 systemctl enable cpuinfo.service cpuinfo-gpu.path >/dev/null 2>&1
 ok "enabled for every future boot"
+# `enable` alone only wires the boot-time symlink - a .path unit does not
+# actually start *watching* until it (or the boot that WantedBy triggers it
+# on) is started. Start it now too, so a GPU driver installed later *in this
+# same session* still gets picked up without a reboot (verified: shows
+# "active (waiting)" immediately after `systemctl start`, "inactive (dead)"
+# with only `enable`). cpuinfo.service itself is intentionally not started
+# this way - it's a oneshot we run directly instead, see below.
+if systemctl start cpuinfo-gpu.path >/dev/null 2>&1; then
+  ok "GPU watch active for the rest of this session too"
+else
+  warn "could not start cpuinfo-gpu.path now - it will still activate on next boot"
+fi
 
 # ==================================================== 5) apply now ==
 step "Step 5/5  Applying now"
