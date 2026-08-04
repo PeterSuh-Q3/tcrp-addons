@@ -33,6 +33,14 @@ err(){  say "  ${RED}x${R} $*"; }
 die(){  err "$*"; exit 1; }
 
 REPO_RAW="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/cpuinfo/src"
+# $0 is not a usable path when this runs as `curl ... | sudo bash` (the
+# README's primary install method) - it's literally the string "bash", since
+# there is no real script file. Point every "how to run this again" hint at
+# a fresh download instead of `$0`, so the printed command actually works
+# regardless of how this copy was invoked.
+INSTALL_URL="https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/cpuinfo/standalone/install.sh"
+INSTALL_HINT="curl -sL ${INSTALL_URL} | sudo bash"
+UNINSTALL_HINT="curl -sL ${INSTALL_URL} -o /tmp/cpuinfo-install.sh && sudo bash /tmp/cpuinfo-install.sh --uninstall"
 BIN=/usr/sbin/cpuinfo.sh
 PROXY=/usr/sbin/mshellscgiproxy
 SVC=/usr/lib/systemd/system/cpuinfo.service
@@ -49,7 +57,7 @@ say "${BLU}${B}  ╚════════════════════
 if [ "${1:-}" = "--uninstall" ] || [ "${1:-}" = "-u" ]; then
   step "Removing cpuinfo"
   if [ "$(id -u 2>/dev/null || echo 1)" != "0" ]; then
-    die "Must be run as ${B}root${R}. Try:  ${WHT}sudo $0 --uninstall${R}"
+    die "Must be run as ${B}root${R}. Try:  ${WHT}${UNINSTALL_HINT}${R}"
   fi
   systemctl disable --now cpuinfo-gpu.path >/dev/null 2>&1
   systemctl stop cpuinfo-gpu.service >/dev/null 2>&1
@@ -75,7 +83,7 @@ fi
 # ============================================================ 1) ROOT check ==
 step "Step 1/5  Privilege check"
 if [ "$(id -u 2>/dev/null || echo 1)" != "0" ]; then
-  die "Must be run as ${B}root${R}. Try:  ${WHT}sudo $0${R}"
+  die "Must be run as ${B}root${R}. Try:  ${WHT}${INSTALL_HINT}${R}"
 fi
 ok "running as root"
 command -v systemctl >/dev/null 2>&1 || die "systemd (systemctl) not found - is this DSM 7+?"
@@ -196,5 +204,5 @@ say "  ${DIM}cpuinfo.service itself shows inactive until the next boot - it ran 
 say "  ${DIM}already, directly, above. That's expected and does not need fixing.${R}"
 say "  re-run : ${WHT}sudo $BIN${R}          (re-apply by hand any time)"
 say "  logs   : ${WHT}journalctl -u cpuinfo.service${R}  /  ${WHT}cat /var/log/cpuinfo_firstboot.log${R}  (from the next boot on)"
-say "  revert : ${WHT}sudo bash $0 --uninstall${R}"
+say "  revert : ${WHT}${UNINSTALL_HINT}${R}"
 hr
