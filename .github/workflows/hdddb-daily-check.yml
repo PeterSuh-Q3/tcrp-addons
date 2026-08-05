@@ -1,0 +1,79 @@
+name: hdddb Daily Check for Scriptversion Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'  # 매일 자정 UTC 기준 실행
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get latest release tag from 007revad/Synology_HDD_db
+        id: get_tag
+        run: |
+          latest_tag=$(curl -s https://api.github.com/repos/007revad/Synology_HDD_db/releases/latest | jq -r .tag_name)
+          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
+
+      - name: Get current scriptversion from hdddb/script.json
+        id: get_scriptversion
+        run: |
+          current_version=$(jq -r '.scriptversion' hdddb/script.json)
+          echo "current_version=$current_version" >> $GITHUB_OUTPUT
+
+      - name: Compare versions and update if different
+        run: |
+          set -euo pipefail
+          LATEST_TAG="${{ steps.get_tag.outputs.latest_tag }}"
+          CURRENT_VER="${{ steps.get_scriptversion.outputs.current_version }}"
+
+          if [ "${LATEST_TAG}" = "${CURRENT_VER}" ]; then
+            echo "Versions match (${CURRENT_VER}). No action needed."
+            exit 0
+          fi
+
+          echo "Upstream ${LATEST_TAG} != ours ${CURRENT_VER} - updating."
+
+          # Pull the actual script (renamed syno_hdd_db.sh -> hdddb.sh),
+          # not just the version string - same reasoning as
+          # SynoSmartInfo's daily_check.yml: verify what was actually
+          # downloaded before trusting it, so the repo can never end up
+          # with script.json claiming a version that src/hdddb.sh
+          # doesn't actually match.
+          curl -sf --retry 5 --retry-delay 3 -L \
+            "https://raw.githubusercontent.com/007revad/Synology_HDD_db/${LATEST_TAG}/syno_hdd_db.sh" \
+            -o hdddb/src/hdddb.sh
+
+          DOWNLOADED_VER=$(grep -m1 '^scriptver=' hdddb/src/hdddb.sh | tr -d '"' | cut -d= -f2)
+          if [ "${DOWNLOADED_VER}" != "${LATEST_TAG}" ]; then
+            echo "::error::Downloaded hdddb.sh reports '${DOWNLOADED_VER}', expected '${LATEST_TAG}' - aborting."
+            exit 1
+          fi
+          echo "Downloaded and verified hdddb.sh ${DOWNLOADED_VER}"
+
+          chmod +x hdddb/src/hdddb.sh
+
+          jq --arg tag "${LATEST_TAG}" '.scriptversion = $tag' hdddb/script.json > tmp.json && mv tmp.json hdddb/script.json
+
+          # Refresh hdddb.sh's sha256 in recipes/universal.json - this
+          # is what the loader actually verifies against before trusting
+          # the downloaded file, so it must stay in lockstep with the
+          # script itself, not just script.json's version string.
+          NEW_SHA=$(sha256sum hdddb/src/hdddb.sh | awk '{print $1}')
+          jq --arg sha "${NEW_SHA}" \
+            '(.files[] | select(.name == "hdddb.sh") | .sha256) = $sha' \
+            hdddb/recipes/universal.json > tmp.json && mv tmp.json hdddb/recipes/universal.json
+          echo "Updated hdddb.sh sha256 to ${NEW_SHA}"
+
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add hdddb/script.json hdddb/src/hdddb.sh hdddb/recipes/universal.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update hdddb.sh to ${LATEST_TAG}"
+            git push
+          fi
