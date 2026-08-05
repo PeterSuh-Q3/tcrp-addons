@@ -9,11 +9,10 @@
     {
       "name": "hdddb.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/hdddb/src/hdddb.sh",
-      "sha256": "6a3703ce8d82ace9c9bcbea1b70aca80fe3f4050d448a4caaa10bbcad05e9127",
+      "sha256": "6caab6de84e2c90253a66d9386b1a011a999d26773d4ce4da16fc2b46a3d694b",
       "packed": false
     }
   ],
-
   "scripts": {
     "on_os_load": "install.sh"
   }

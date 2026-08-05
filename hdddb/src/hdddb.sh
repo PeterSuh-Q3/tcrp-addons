@@ -29,7 +29,7 @@
 # /var/packages/StorageManager/target/ui/storage_panel.js
 
 
-scriptver="v3.6.132"
+scriptver="v3.6.137"
 script=Synology_HDD_db
 repo="007revad/Synology_HDD_db"
 scriptname=syno_hdd_db
@@ -258,17 +258,20 @@ if [[ $( whoami ) != "root" ]]; then
     exit 1
 fi
 
+
 detect_scheduler(){ 
-    # Check if stdin is a terminal (interactive)
-    [ ! -t 0 ] && return 0
-    
-    # Check parent process
-    local parent
-    parent=$(ps -p $PPID -o comm=)
-    [[ "$parent" =~ (systemd-run|sched|crond) ]] && return 0
-    
+    # SYNO.Core.TaskS is regular scheduled task
+    # SYNO.Core.Event is triggered scheduled task
+    local pid=$PPID
+    local comm
+    while [[ "$pid" != "1" && -n "$pid" ]]; do
+        comm=$(ps -p "$pid" -o comm=)
+        [[ "$comm" =~ (SYNO.Core.TaskS|SYNO.Core.Event|crond) ]] && return 0
+        pid=$(ps -p "$pid" -o ppid= | tr -d ' ')
+    done
     return 1
 }
+
 
 # Get DSM major version
 dsm=$(/usr/syno/bin/synogetkeyvalue /etc.defaults/VERSION majorversion)
@@ -357,12 +360,12 @@ fi
 if [[ -f "/var/lib/disk-compatibility/${model}_host_v7.version" ]]; then
     echo -n "- ${model}_host_v7 version "
     cat "/var/lib/disk-compatibility/${model}_host_v7.version"
-    echo -e "\n"
+    #echo -e "\n"
 fi
 if [[ -f "/var/lib/disk-compatibility/${model}_host.version" ]]; then
     echo -n "- ${model}_host version "
     cat "/var/lib/disk-compatibility/${model}_host.version"
-    echo -e "\n"
+    #echo -e "\n"
 fi
 
 
@@ -372,6 +375,19 @@ if [[ ${#args[@]} -gt "0" ]]; then
 fi
 
 #echo ""  # To keep output readable
+
+
+# Check if script is running in an interactive shell or from schedule
+if [[ -t 1 ]]; then  # Running in terminal
+    echo -e "- Running in an interactive shell (user terminal).\n"
+else
+    # Check if running via task scheduler
+    if detect_scheduler; then
+        sch_task="yes"
+        color="no"
+    fi
+    echo -e "- Running from a scheduled task.\n"
+fi
 
 
 # shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
@@ -688,7 +704,7 @@ reboot_file="${scriptpath}/syno_hdd_reboot.txt"
 if [[ ! -f "$reboot_file" ]]; then
     echo "Do NOT delete this file!" > "$reboot_file"
     echo "It is used to track if DSM has updated." >> "$reboot_file"
-    synosetkeyvalue "$reboot_file" dsm_build "$buildnumber"
+    /usr/syno/bin/synosetkeyvalue "$reboot_file" dsm_build "$buildnumber"
 fi
 
 
@@ -767,6 +783,35 @@ if [[ $restore == "yes" ]]; then
         # Delete "drive_db_test_url=127.0.0.1" line (and line break) from synoinfo.conf
         sed -i "/drive_db_test_url=*/d" "$synoinfo"
         sed -i "/drive_db_test_url=*/d" /etc/synoinfo.conf
+
+        # Restore SynoOnlinePack version
+        if [[ $dsmversion -ge "73" ]]; then
+            # Is DSM 7.3 or later
+            if [[ -f /var/packages/SynoOnlinePack_v3/INFO ]]; then
+                SOPinfo="/var/packages/SynoOnlinePack_v3/INFO"
+            elif [[ -f /var/packages/SynoOnlinePack_v2/INFO ]]; then
+                SOPinfo="/var/packages/SynoOnlinePack_v2/INFO"
+            else
+                SOPinfo="/var/packages/SynoOnlinePack/INFO"
+            fi
+            SOPpkgver="$(/usr/syno/bin/synogetkeyvalue $SOPinfo version)"
+
+            # Re-enable drive db updates
+            if [[ ${SOPpkgver:0:4} == "9999" ]]; then
+                # Remove 9999 from version
+                /usr/syno/bin/synosetkeyvalue "$SOPinfo" version "${SOPpkgver:4}"
+
+                # Check if we re-enabled drive db auto updates
+                SOPpkgver2="$(/usr/syno/bin/synogetkeyvalue $SOPinfo version)"
+                if [[ ${SOPpkgver2:0:4} != "9999" ]]; then
+                    echo -e "Re-enabled drive db auto updates."
+                else
+                    echo -e "${Error}ERROR${Off} Failed to enable drive db auto updates!"
+                fi
+            else
+                echo -e "Drive db auto updates already enabled."
+            fi
+        fi
 
         # Restore adapter_cards.conf from backup
         # /usr/syno/etc.defaults/adapter_cards.conf
@@ -853,6 +898,7 @@ if [[ $restore == "yes" ]]; then
         done
 
         # Update .db files from Synology
+        echo -e "\nUpdating .db files from Synology"
         /usr/syno/bin/syno_disk_db_update --update
 
         # Enable SynoMemCheck.service if disabled
@@ -945,7 +991,7 @@ vendor_from_id(){
                     echo "$vidlist" >&2
                 fi
             else
-                echo -e "\n${Error}ERROR{OFF} $vidlist not found!" >&2
+                echo -e "\n${Error}ERROR${OFF} $vidlist not found!" >&2
             fi
         ;;
     esac
@@ -1032,9 +1078,9 @@ fixdrivemodel(){
 get_size_gb(){ 
     # $1 is /sys/block/sata1 or /sys/block/nvme0n1 etc
     local disk_size_gb
-    #disk_size_gb=$(synodisk --info /dev/"$(basename -- "$1")" 2>/dev/null | grep 'Total capacity' | awk '{print int($4 * 1.073741824)}')
+    #disk_size_gb=$(/usr/syno/bin/synodisk --info /dev/"$(basename -- "$1")" 2>/dev/null | grep 'Total capacity' | awk '{print int($4 * 1.073741824)}')
     # Prevent 6 TB drives getting rounded up to 6001 !!!
-    disk_size_gb=$(synodisk --info /dev/"$(basename -- "$1")" 2>/dev/null | grep 'Total capacity' | awk '{gb = $4 * 1.073741824; printf "%d\n", int(gb / 4 + 0.5) * 4}')
+    disk_size_gb=$(/usr/syno/bin/synodisk --info /dev/"$(basename -- "$1")" 2>/dev/null | grep 'Total capacity' | awk '{gb = $4 * 1.073741824; printf "%d\n", int(gb / 4 + 0.5) * 4}')
     echo "$disk_size_gb"
 }
 
@@ -1341,7 +1387,7 @@ get_eunit_container_aliases(){
 
 
 # Expansion units
-ebox_conected=$(synodisk --enum -t ebox)
+ebox_conected=$(/usr/syno/bin/synodisk --enum -t ebox)
 if [[ $ebox_conected ]]; then
     # Only device tree models have syno_slot_mapping
     # eSATA and InfiniBand ports both appear in syno_slot_mapping as:
@@ -1349,7 +1395,7 @@ if [[ $ebox_conected ]]; then
     # Eunit port 1 - RX1214
     if which syno_slot_mapping >/dev/null; then
         # syno_slot_mapping does not find SAS eunits
-        eunitlist=($(syno_slot_mapping | grep 'Eunit port' | awk '{print $5}'))
+        eunitlist=($(/usr/syno/bin/syno_slot_mapping | grep 'Eunit port' | awk '{print $5}'))
     fi
     if [[ ${#eunitlist[@]} -eq "0" ]]; then
         # Create new /var/log/diskprediction log to ensure newly connected ebox is in latest log
@@ -1423,8 +1469,10 @@ readarray -t eunitdb2list < <(find_eunit_db_files "$dbpath" ".db.new" "${eunits[
 
 # M.2 Card db files
 for i in "${!m2cards[@]}"; do
-    m2carddb1list+=("$(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db")")
-    m2carddb2list+=("$(find "$dbpath" -maxdepth 1 -name "*_${m2cards[i],,}*.db.new")")
+    m2card_db1=$(find "$dbpath" -maxdepth 1 -name "${model}_${m2cards[i],,}*.db")
+    m2card_db2=$(find "$dbpath" -maxdepth 1 -name "${model}_${m2cards[i],,}*.db.new")
+    [[ -n "$m2card_db1" ]] && m2carddb1list+=("$m2card_db1")
+    [[ -n "$m2card_db2" ]] && m2carddb2list+=("$m2card_db2")
 done
 
 
@@ -1438,14 +1486,16 @@ fi
 getdbtype(){ 
     # Detect drive db type
     # Synology misspelt compatibility as compatbility
-    if grep -q -F '{"disk_compatbility_info":' "$1"; then
-        # DSM 7 drive db files start with {"disk_compatbility_info":
+    if jq -e 'has("disk_compatbility_info")' "$1" >/dev/null 2>&1; then
+        # DSM 7 drive db files have a top-level disk_compatbility_info key
         dbtype=7
-    elif grep -q -F '{"success":1,"list":[' "$1"; then
-        # DSM 6 drive db files start with {"success":1,"list":[
+    elif jq -e '.success == 1 and (.list | type == "array")' "$1" >/dev/null 2>&1; then
+        # DSM 6 drive db files have success:1 and a list array
         dbtype=6
     elif [[ ! $1 =~ .*'.db.new' ]]; then
-        if [[ $(stat -c%s "$1") -eq "0" ]]; then
+        # .db.new files are legitimately absent/empty on new installs, so only
+        # warn for .db files
+        if [[ ! -s "$1" ]]; then
             echo -e "${Error}ERROR${Off} $(basename -- "${1}") is 0 bytes!" >&2
         else
             echo -e "${Error}ERROR${Off} Unknown database type $(basename -- "${1}")!" >&2
@@ -1458,14 +1508,33 @@ getdbtype(){
 }
 
 
+sanitize_smart_quotes(){ 
+    # Fix manually edited db files edited in iOS or Word. Issue #591
+    # Replace curly/smart quotes with straight ASCII quotes
+    # Fixes db files that were hand-edited with an editor/app that
+    # auto-converts straight quotes to curly quotes, breaking the JSON
+    local file="$1"
+    if grep -q $'\xe2\x80\x9c\|\xe2\x80\x9d' "$file" 2>/dev/null; then
+        sed -i $'s/\xe2\x80\x9c/"/g; s/\xe2\x80\x9d/"/g' "$file"
+        echo -e "Fixed smart quotes in ${Cyan}$(basename -- "$file")${Off}" >&2
+    fi
+}
+
+
 backupdb(){ 
     # Backup database file if needed
     local bakversion newversion fname
-    [[ -z "$1" || ! -f "$1" ]] || return 0  # Don't try to backup non-existent files
+    [[ -z "$1" || ! -f "$1" ]] && return 1  # Don't try to backup non-existent files
     if [[ $2 == "long" ]]; then
         fname="$1"
     else
         fname=$(basename -- "${1}")
+    fi
+
+    # Fix smart quotes before backing up or using the file, so the
+    # backup (and every later jq call) sees clean JSON
+    if [[ "$1" =~ \.db$ || "$1" =~ \.db\.new$ ]]; then
+        sanitize_smart_quotes "$1"
     fi
 
     if [[ ! -f "$1.bak" ]]; then
@@ -1656,51 +1725,62 @@ editcount(){
 
 
 editdb7(){ 
-    local hdmodel_sed
-    hdmodel_sed="${hdmodel//\"/\\\"}"   # escape " for sed/JSON
-    hdmodel_sed="${hdmodel_sed//\//\\/}"  # escape / for sed
+    # $1 is the db file
+    local dbfile="$1" tmpfile existed
 
-    if [[ $1 == "append" ]]; then  # model not in db file
-        if sed -i "s/}}}/}},\"${hdmodel_sed}\":{$fwstrng$default/" "$2"; then  # append
-            if jq -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
-                '.disk_compatbility_info[$hdmodel] | has($fwrev)' "$2" > /dev/null; then
-                echo -e "Added ${Yellow}$hdmodel ($fwrev)${Off} to ${Cyan}$(basename -- "$2")${Off}"
-                editcount "$2"
+    tmpfile="$(mktemp "${dbfile}.XXXXXX")" || {
+        echo -e "\n${Error}ERROR${Off} Failed to create tmp file for $(basename -- "$dbfile")"
+        return 1
+    }
+
+    # Was the model already in the db? Determines "Added" vs "Updated" wording
+    # and whether we also need to write the "default" block.
+    if jq -c -e --arg model "$hdmodel" '.disk_compatbility_info[$model]' "$dbfile" >/dev/null; then
+        existed=yes
+    fi
+
+    if jq -c --arg model "$hdmodel" --arg fw "$fwrev" --argjson fwbn 1 --argjson size_gb "$size_gb" '
+        def interval:
+            {
+                compatibility: "support",
+                not_yet_rolling_status: "support",
+                fw_dsm_update_status_notify: false,
+                barebone_installable: true,
+                barebone_installable_v2: "auto",
+                smart_test_ignore: false,
+                smart_attr_ignore: false
+            };
+        if (.disk_compatbility_info[$model] == null) then
+            .disk_compatbility_info[$model] = {
+                ($fw): { fw_buildnumber: $fwbn, compatibility_interval: [interval] },
+                default: { size_gb: $size_gb, compatibility_interval: [interval] }
+            }
+        else
+            .disk_compatbility_info[$model][$fw] = { fw_buildnumber: $fwbn, compatibility_interval: [interval] }
+        end
+    ' "$dbfile" > "$tmpfile"; then
+
+        if jq -c -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
+            '.disk_compatbility_info[$hdmodel] | has($fwrev)' "$tmpfile" > /dev/null; then
+            if mv "$tmpfile" "$dbfile"; then
+                chmod 644 "$dbfile"
+                if [[ $existed == "yes" ]]; then
+                    echo -e "Updated ${Yellow}$hdmodel ($fwrev)${Off} in ${Cyan}$(basename -- "$dbfile")${Off}"
+                else
+                    echo -e "Added ${Yellow}$hdmodel ($fwrev)${Off} to ${Cyan}$(basename -- "$dbfile")${Off}"
+                    editcount "$dbfile"
+                fi
             else
-                echo -e "\n${Error}ERROR{Off} Failed to add $hdmodel ($fwrev) to $(basename -- "$2")${Off}"
+                echo -e "\n${Error}ERROR${Off} Failed to save $(basename -- "$dbfile")"
+                rm -f "$tmpfile"
             fi
         else
-            echo -e "\n${Error}ERROR 6a${Off} Failed to add $hdmodel ($fwrev) to $(basename -- "$2")${Off}"
-            #exit 6
+            echo -e "\n${Error}ERROR${Off} Failed to add $hdmodel ($fwrev) to $(basename -- "$dbfile")"
+            rm -f "$tmpfile"
         fi
-
-    elif [[ $1 == "insert" ]]; then  # model and default exists
-        if sed -i "s/\"${hdmodel_sed}\":{/\"${hdmodel_sed}\":{$fwstrng/" "$2"; then  # insert firmware
-            if jq -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
-                '.disk_compatbility_info[$hdmodel] | has($fwrev)' "$2" > /dev/null; then
-                echo -e "Updated ${Yellow}$hdmodel ($fwrev)${Off} in ${Cyan}$(basename -- "$2")${Off}"
-                #editcount "$2"
-            else
-                echo -e "\n${Error}ERROR{Off} Failed to update $hdmodel for ($fwrev) in $(basename -- "$2")"
-            fi
-        else
-            echo -e "\n${Error}ERROR 6b${Off} Failed to update $hdmodel for ($fwrev) in $(basename -- "$2")"
-            #exit 6
-        fi
-
-    elif [[ $1 == "empty" ]]; then  # db file only contains {}
-        if sed -i "s/{}/{\"${hdmodel_sed}\":{$fwstrng${default}/" "$2"; then  # empty
-            if jq -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
-                '.disk_compatbility_info[$hdmodel] | has($fwrev)' "$2" > /dev/null; then
-                echo -e "Added ${Yellow}$hdmodel ($fwrev)${Off} to ${Cyan}$(basename -- "$2")${Off}"
-                editcount "$2"
-            else
-                echo -e "\n${Error}ERROR{Off} Failed to add $hdmodel ($fwrev) to $(basename -- "$2")"
-            fi
-        else
-            echo -e "\n${Error}ERROR 6c${Off} Failed to add $hdmodel ($fwrev) to $(basename -- "$2")"
-            #exit 6
-        fi
+    else
+        echo -e "\n${Error}ERROR${Off} jq failed editing $(basename -- "$dbfile")"
+        rm -f "$tmpfile"
     fi
 }
 
@@ -1710,59 +1790,26 @@ updatedb(){
     fwrev=$(printf "%s" "$1" | cut -d"," -f 2)
     size_gb=$(printf "%s" "$1" | cut -d"," -f 3)
 
-    #echo arg1 "$1" >&2           # debug
-    #echo arg2 "$2" >&2           # debug
-    #echo hdmodel "$hdmodel" >&2  # debug
-    #echo fwrev "$fwrev" >&2      # debug
-
     # Check if db file is new or old style
     getdbtype "$2"
 
     if [[ $dbtype -gt "6" ]]; then
         # db type 7 used from DSM 7.1 and later
-        if jq -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
+        if jq -c -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
             '.disk_compatbility_info[$hdmodel] | has($fwrev)' "$2" > /dev/null; then
-            echo -e "${Yellow}$hdmodel ($fwrev)${Off} already exists in ${Cyan}$(basename -- "$2")${Off}" >&2
-        else
-            #common_string=\"size_gb\":$size_gb,
-            #common_string="$common_string"\"compatibility_interval\":[{
-            common_string=\"compatibility_interval\":[{
-            common_string="$common_string"\"compatibility\":\"support\",
-            common_string="$common_string"\"not_yet_rolling_status\":\"support\",
-            common_string="$common_string"\"fw_dsm_update_status_notify\":false,
-            common_string="$common_string"\"barebone_installable\":true,
-            common_string="$common_string"\"barebone_installable_v2\":\"auto\",
-            common_string="$common_string"\"smart_test_ignore\":false,
-            common_string="$common_string"\"smart_attr_ignore\":false
 
-            #fwstrng=\"$fwrev\":{
-            fwstrng=\"$fwrev\":{\"fw_buildnumber\":1,  # Issue 585. Fix drive temperature for XPE
-            fwstrng="$fwstrng$common_string"
-            fwstrng="$fwstrng"}]},
-
-            #default=\"default\":{
-            default=\"default\":{\"size_gb\":$size_gb,
-            #default=\"default\":{\"fw_buildnumber\":1,\"size_gb\":$size_gb,  # Issue 585. Fix drive temperature for XPE
-            default="$default$common_string"
-            default="$default"}]}}}
-
-            # Synology misspelt compatibility as compatbility
-            if grep -q '"disk_compatbility_info":{}' "$2"; then
-                # Replace "disk_compatbility_info":{} with
-                # "disk_compatbility_info":{"WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}}
-                #echo "Edit empty db file:"  # debug
-                editdb7 "empty" "$2"
-
-            elif jq -e --arg hdmodel "$hdmodel" '.disk_compatbility_info[$hdmodel]' "$2" >/dev/null; then
-                # Replace "WD40PURX-64GVNY0":{ with "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},
-                #echo "Insert firmware version:"  # debug
-                editdb7 "insert" "$2"
-
+            # Entry exists. Check it has fw_buildnumber (added by the #585 fix).
+            # Entries written by older script versions may be missing it, which
+            # stops synostgdisk generating compatibility_action for that disk. Issue #598
+            if jq -c -e --arg hdmodel "$hdmodel" --arg fwrev "$fwrev" \
+                '.disk_compatbility_info[$hdmodel][$fwrev] | has("fw_buildnumber") | not' \
+                "$2" > /dev/null; then
+                backfill_fw_buildnumber "$hdmodel" "$fwrev" "$2"
             else
-                # Add "WD40PURX-64GVNY0":{"80.00A80":{ ... }}},"default":{ ... }}}
-                #echo "Append drive and firmware:"  # debug
-                editdb7 "append" "$2"
+                echo -e "${Yellow}$hdmodel ($fwrev)${Off} already exists in ${Cyan}$(basename -- "$2")${Off}" >&2
             fi
+        else
+            editdb7 "$2"
         fi
 
         # Edit existing drives in db with compatibility:unverified  # Issue #224
@@ -1804,13 +1851,32 @@ updatedb(){
             #if sed -i "s/$startstring/$startstring$string/" "$2"; then
             #if sed -i "s/${startstring//\//\\/}/${startstring//\//\\/}$string/" "$2"; then
             if sed -i "s/$startstring/$startstring${string//\//\\/}/" "$2"; then
-                echo -e "Added ${Yellow}$hdmodel$ ($fwrev){Off} to ${Cyan}$(basename -- "$2")${Off}"
+                echo -e "Added ${Yellow}$hdmodel$ ($fwrev)${Off} to ${Cyan}$(basename -- "$2")${Off}"
             else
                 ding
                 echo -e "\n${Error}ERROR 8${Off} Failed to update $(basename -- "$2")${Off}" >&2
                 exit 8
             fi
         fi
+    fi
+}
+
+
+backfill_fw_buildnumber(){ 
+    # $1 hdmodel, $2 fwrev, $3 db file
+    local dbfile="$3" tmpfile
+    tmpfile="$(mktemp "${dbfile}.XXXXXX")" || {
+        echo -e "\n${Error}ERROR${Off} Failed to create tmp file for $(basename -- "$dbfile")"
+        return 1
+    }
+    if jq -c --arg model "$1" --arg fw "$2" --argjson fwbn 1 \
+        '.disk_compatbility_info[$model][$fw].fw_buildnumber = $fwbn' \
+        "$dbfile" > "$tmpfile" && mv "$tmpfile" "$dbfile"; then
+        chmod 644 "$dbfile"
+        echo -e "Updated ${Yellow}$1 ($2)${Off} in ${Cyan}$(basename -- "$dbfile")${Off} (added missing fw_buildnumber)"
+    else
+        echo -e "\n${Error}ERROR${Off} Failed to backfill fw_buildnumber for $1 ($2) in $(basename -- "$dbfile")"
+        rm -f "$tmpfile"
     fi
 }
 
@@ -1930,7 +1996,7 @@ enable_card(){
                 # /usr/syno/etc/adapter_cards.conf
                 /usr/syno/bin/set_section_key_value "$adapter_cards2" "$2" "$modelrplowercase" yes
                 echo -e "Enabled ${Yellow}$3${Off} for ${Cyan}$modelname${Off}" >&2
-                rebootmsg=yes
+                rebootmsg=yes  # Show reboot message at end
             else
                 echo -e "${Error}ERROR 9${Off} Failed to enable $3 for ${modelname}!" >&2
             fi
@@ -2162,7 +2228,7 @@ edit_modeldtb(){
             chmod a+r "$dtb_file"
             chown root:root "$dtb_file"
             cp -pu "$dtb_file" "$dtb2_file"  # Copy dtb file to /etc
-            rebootmsg=yes
+            rebootmsg=yes  # Show reboot message at end
         else
             echo -e "${Error}ERROR${Off} Missing /usr/sbin/dtc or not executable!" >&2
         fi
@@ -2221,11 +2287,15 @@ if [[ $ssd == "yes" ]]; then
     elif [[ ${#ssds_writemostly[@]} -gt "0" ]]; then
         # User specified their fast drive(s)
         echo -e "\nSetting slow internal HDDs state to write_mostly"
-        for idrive in "${internal_drives[@]}"; do
-            if [[ ! ${ssds_writemostly[*]} =~ $idrive ]]; then
-                set_writemostly writemostly "$idrive"
-            fi
-        done
+        if [[ ${ssds_writemostly[*]} =~ "nvme" ]]; then
+            echo "NVMe drives don't have DSM system or swap partitions"
+        else
+            for idrive in "${internal_drives[@]}"; do
+                if [[ ! ${ssds_writemostly[*]} =~ $idrive ]]; then
+                    set_writemostly writemostly "$idrive"
+                fi
+            done
+        fi
 
     else
         # Get list of internal HDDs and qty of SSDs
@@ -2250,6 +2320,8 @@ if [[ $ssd == "yes" ]]; then
             for idrive in "${internal_hdds[@]}"; do
                 set_writemostly writemostly "$idrive"
             done
+        else
+            echo -e "\nNo internal 2.5 inch SSDs found so not setting write mostly on the HDDs"
         fi
     fi
 fi
@@ -2768,15 +2840,16 @@ if [[ $show_trim_warning == "yes" ]]; then
     echo "https://tinyurl.com/ssd-trim"
 fi
 
+
 # Show reboot message or reboot cleanly once if needed
-if [[ $do_reboot == "yes" && $sch_task == "yes" ]];then
+if [[ $do_reboot == "yes" && $sch_task == "yes" ]]; then
     # Reboot cleanly after DSM update if needed
-    previous_build="$(synogetkeyvalue "$reboot_file" dsm_build)"
+    previous_build="$(/usr/syno/bin/synogetkeyvalue "$reboot_file" dsm_build)"
     if [[ $buildnumber -gt "$previous_build" ]]; then
-        synosetkeyvalue "$reboot_file" dsm_build "$buildnumber"  # Update buildnumber
+        /usr/syno/bin/synosetkeyvalue "$reboot_file" dsm_build "$buildnumber"  # Update buildnumber
         echo -e "\nDSM has updated from build $previous_build to $buildnumber"
         echo "Rebooting..."
-        synoshutdown --reboot  # Reboot cleanly
+        /usr/syno/sbin/synoshutdown --reboot  # Reboot cleanly
         exit
     fi
 elif [[ $dsm -eq "6" || $rebootmsg == "yes" ]]; then
