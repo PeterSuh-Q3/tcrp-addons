@@ -81,7 +81,7 @@ def fetch(ver):
 
 
 def parse(page):
-    """-> (current: {devid: name}, legacy: {devid: (branch, name)})"""
+    """-> (current: {devid: [name, ...]}, legacy: {devid: (branch, name)})"""
     # Everything before the first legacy anchor is the current-release table.
     anchors = [(m.start(), m.group(1))
                for m in re.finditer(r'<a name="legacy_([0-9.]+xx)"', page)]
@@ -92,14 +92,34 @@ def parse(page):
         if label is None:
             break
         chunk = page[start:bounds[i + 1][0]]
+        # id is either bare (devidXXXX) or subsystem-qualified
+        # (devidXXXX_VVVV_DDDD, one row per subsystem SKU sharing the same
+        # chip - e.g. Tesla A2/A16 both under devid 25B6). The trailing
+        # (?:_...)? used to be a bare `"` requirement, which silently
+        # dropped every device that ships only in qualified form - Tesla A2
+        # among them. Capturing just the base 4 hex digits folds all
+        # variants back onto one PCI id, same as the bare-form devices.
         for devid, body in re.findall(
-                r'<tr id="devid([0-9A-Fa-f]{4})"[^>]*>(.*?)</tr>', chunk, re.S | re.I):
+                r'<tr id="devid([0-9A-Fa-f]{4})(?:_[0-9A-Fa-f]{4}_[0-9A-Fa-f]{4})?"[^>]*>(.*?)</tr>',
+                chunk, re.S | re.I):
             cells = [html.unescape(re.sub(r"<[^>]+>", "", c)).strip()
                      for c in re.findall(r"<td[^>]*>(.*?)</td>", body, re.S | re.I)]
             name = cells[0] if cells else ""
             devid = devid.lower()
             if label == "current":
-                current.setdefault(devid, name)
+                # Folding subsystem-qualified rows onto one devid means a
+                # single page can now legitimately list more than one
+                # distinct product name for it (Tesla A2 and NVIDIA A16 are
+                # different boards, same GA107 chip, same PCI id - only the
+                # subsystem id told them apart). Keep every distinct name
+                # seen, in order, rather than the first: this page snapshot
+                # is the one place we can tell "different SKUs sharing an
+                # id" apart from "differently-worded name for one SKU"
+                # (the latter is a cross-branch spelling difference,
+                # handled separately in main()).
+                current.setdefault(devid, [])
+                if name and name not in current[devid]:
+                    current[devid].append(name)
             else:
                 legacy.setdefault(devid, (label, name))
     return current, legacy
@@ -167,10 +187,16 @@ def main():
 
     gpus = {}
     for b in PREF:
-        for devid, name in current[b].items():
+        for devid, names in current[b].items():
+            # Multiple distinct names on the same page = different SKUs
+            # sharing one PCI id (e.g. "Tesla A2" / "NVIDIA A16", GA107).
+            # Single name = the normal case.
+            name = " / ".join(names) if names else ""
             gpus.setdefault(devid, {"name": name, "branches": []})
             gpus[devid]["branches"].append(b)
-            # Newer releases carry the tidier "NVIDIA GeForce ..." spelling.
+            # Newer releases carry the tidier "NVIDIA GeForce ..." spelling
+            # - and, per the above, a longer combined name also wins when
+            # only one branch's page happened to list every SKU variant.
             if len(name) > len(gpus[devid]["name"]):
                 gpus[devid]["name"] = name
 

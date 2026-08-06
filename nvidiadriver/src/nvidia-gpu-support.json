@@ -61,6 +61,22 @@
       ],
       "cuda_max": "11.8"
     },
+    "10de:0fd2": {
+      "name": "NVIDIA GeForce GT 640M LE",
+      "arch": "Kepler",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "11.8"
+    },
+    "10de:0fe3": {
+      "name": "NVIDIA GeForce GT 745A",
+      "arch": "Kepler",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "11.8"
+    },
     "10de:0ff3": {
       "name": "Quadro K420",
       "arch": "Kepler",
@@ -286,7 +302,7 @@
       "cuda_max": "11.8"
     },
     "10de:1185": {
-      "name": "NVIDIA GeForce GTX 660",
+      "name": "NVIDIA GeForce GTX 660 / NVIDIA GeForce GTX 760",
       "arch": "Kepler",
       "branches": [
         "470"
@@ -310,7 +326,7 @@
       "cuda_max": "11.8"
     },
     "10de:1189": {
-      "name": "NVIDIA GeForce GTX 670",
+      "name": "NVIDIA GeForce GTX 670 / NVIDIA GeForce GTX 760 Ti OEM",
       "arch": "Kepler",
       "branches": [
         "470"
@@ -359,6 +375,14 @@
     },
     "10de:1195": {
       "name": "NVIDIA GeForce GTX 660",
+      "arch": "Kepler",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "11.8"
+    },
+    "10de:1199": {
+      "name": "NVIDIA GeForce GTX 760",
       "arch": "Kepler",
       "branches": [
         "470"
@@ -445,6 +469,14 @@
       ],
       "cuda_max": "11.8"
     },
+    "10de:11e3": {
+      "name": "NVIDIA GeForce GTX 760A",
+      "arch": "Kepler",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "11.8"
+    },
     "10de:11fa": {
       "name": "Quadro K4000",
       "arch": "Kepler",
@@ -525,8 +557,40 @@
       ],
       "cuda_max": "11.8"
     },
+    "10de:1290": {
+      "name": "NVIDIA GeForce 730A",
+      "arch": "Kepler",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "11.8"
+    },
+    "10de:1292": {
+      "name": "NVIDIA GeForce GT 740A",
+      "arch": "Kepler",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "11.8"
+    },
+    "10de:1295": {
+      "name": "NVIDIA GeForce 710A / NVIDIA GeForce 810A / NVIDIA GeForce 805A",
+      "arch": "Kepler",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "11.8"
+    },
+    "10de:1299": {
+      "name": "NVIDIA GeForce 920A / NVIDIA GeForce GT 730",
+      "arch": "Kepler",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "11.8"
+    },
     "10de:1340": {
-      "name": "NVIDIA GeForce 830M",
+      "name": "NVIDIA GeForce 830M / NVIDIA GeForce 830A",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -537,7 +601,7 @@
       "cuda_max": "12.9"
     },
     "10de:1341": {
-      "name": "NVIDIA GeForce 840M",
+      "name": "NVIDIA GeForce 840M / NVIDIA GeForce 840A",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -559,7 +623,7 @@
       "cuda_max": "12.9"
     },
     "10de:1346": {
-      "name": "NVIDIA GeForce 930M",
+      "name": "NVIDIA GeForce 930M / NVIDIA GeForce 930A",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -570,7 +634,7 @@
       "cuda_max": "12.9"
     },
     "10de:1347": {
-      "name": "NVIDIA GeForce 940M",
+      "name": "NVIDIA GeForce 940M / NVIDIA GeForce 940A",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -581,7 +645,7 @@
       "cuda_max": "12.9"
     },
     "10de:1348": {
-      "name": "NVIDIA GeForce 945M",
+      "name": "NVIDIA GeForce 945M / NVIDIA GeForce 945A",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -592,7 +656,7 @@
       "cuda_max": "12.9"
     },
     "10de:1349": {
-      "name": "NVIDIA GeForce 930M",
+      "name": "NVIDIA GeForce 930M / NVIDIA GeForce 930A",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -603,7 +667,7 @@
       "cuda_max": "12.9"
     },
     "10de:134b": {
-      "name": "NVIDIA GeForce 940MX",
+      "name": "NVIDIA GeForce 940MX / NVIDIA GeForce GPU",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -646,6 +710,17 @@
       ],
       "cuda_max": "12.9"
     },
+    "10de:137a": {
+      "name": "Quadro K620M / Quadro M500M",
+      "arch": "Maxwell",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "cuda_max": "12.9"
+    },
     "10de:137b": {
       "name": "Quadro M520",
       "arch": "Maxwell",
@@ -653,6 +728,14 @@
         "580",
         "550",
         "535",
+        "470"
+      ],
+      "cuda_max": "12.9"
+    },
+    "10de:137d": {
+      "name": "NVIDIA GeForce 940A",
+      "arch": "Maxwell",
+      "branches": [
         "470"
       ],
       "cuda_max": "12.9"
@@ -702,7 +785,7 @@
       "cuda_max": "12.9"
     },
     "10de:1391": {
-      "name": "NVIDIA GeForce GTX 850M",
+      "name": "NVIDIA GeForce GTX 850M / NVIDIA GeForce GTX 850A",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -713,7 +796,7 @@
       "cuda_max": "12.9"
     },
     "10de:1392": {
-      "name": "NVIDIA GeForce GTX 860M",
+      "name": "NVIDIA GeForce GTX 860M / NVIDIA GeForce GPU / NVIDIA GeForce GTX 750 Ti",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -757,7 +840,7 @@
       "cuda_max": "12.9"
     },
     "10de:139a": {
-      "name": "NVIDIA GeForce GTX 950M",
+      "name": "NVIDIA GeForce GTX 950M / NVIDIA GeForce GTX 950A",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -768,7 +851,7 @@
       "cuda_max": "12.9"
     },
     "10de:139b": {
-      "name": "NVIDIA GeForce GTX 960M",
+      "name": "NVIDIA GeForce GTX 960M / NVIDIA GeForce GTX 750 Ti / NVIDIA GeForce GTX 860M / NVIDIA GeForce GTX 960A / NVIDIA GeForce GTX 750Ti",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -944,7 +1027,7 @@
       "cuda_max": "12.9"
     },
     "10de:13d8": {
-      "name": "NVIDIA GeForce GTX 970M",
+      "name": "NVIDIA GeForce GTX 970M / NVIDIA GeForce GTX 960",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -1021,7 +1104,7 @@
       "cuda_max": "12.9"
     },
     "10de:13f8": {
-      "name": "Quadro M5000M",
+      "name": "Quadro M5000M / Quadro M5000 SE",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -1043,7 +1126,7 @@
       "cuda_max": "12.9"
     },
     "10de:13fa": {
-      "name": "Quadro M3000M",
+      "name": "Quadro M3000M / Quadro M3000 SE",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -1109,7 +1192,7 @@
       "cuda_max": "12.9"
     },
     "10de:1427": {
-      "name": "NVIDIA GeForce GTX 965M",
+      "name": "NVIDIA GeForce GTX 965M / NVIDIA GeForce GTX 950",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -1329,7 +1412,7 @@
       "cuda_max": "12.9"
     },
     "10de:17fd": {
-      "name": "Tesla M40",
+      "name": "Tesla M40 / Tesla M40 24GB",
       "arch": "Maxwell",
       "branches": [
         "580",
@@ -1351,7 +1434,7 @@
       "cuda_max": "12.9"
     },
     "10de:1b02": {
-      "name": "NVIDIA TITAN Xp",
+      "name": "NVIDIA TITAN Xp / NVIDIA TITAN Xp COLLECTORS EDITION",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1461,7 +1544,7 @@
       "cuda_max": "12.9"
     },
     "10de:1ba0": {
-      "name": "NVIDIA GeForce GTX 1080",
+      "name": "NVIDIA GeForce GTX 1080 / NVIDIA GeForce GTX 1080 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1472,7 +1555,7 @@
       "cuda_max": "12.9"
     },
     "10de:1ba1": {
-      "name": "NVIDIA GeForce GTX 1070",
+      "name": "NVIDIA GeForce GTX 1070 / NVIDIA GeForce GTX 1070 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1519,6 +1602,7 @@
       "name": "Tesla P4",
       "arch": "Pascal",
       "branches": [
+        "580",
         "470"
       ],
       "cuda_max": "12.9"
@@ -1535,7 +1619,7 @@
       "cuda_max": "12.9"
     },
     "10de:1bb5": {
-      "name": "Quadro P5200",
+      "name": "Quadro P5200 / Quadro P5200 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1557,7 +1641,7 @@
       "cuda_max": "12.9"
     },
     "10de:1bb7": {
-      "name": "Quadro P4000",
+      "name": "Quadro P4000 / Quadro P4000 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1579,7 +1663,7 @@
       "cuda_max": "12.9"
     },
     "10de:1bb9": {
-      "name": "Quadro P4200",
+      "name": "Quadro P4200 / Quadro P4200 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1590,7 +1674,7 @@
       "cuda_max": "12.9"
     },
     "10de:1bbb": {
-      "name": "Quadro P3200",
+      "name": "Quadro P3200 / Quadro P3200 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1612,7 +1696,7 @@
       "cuda_max": "12.9"
     },
     "10de:1be0": {
-      "name": "NVIDIA GeForce GTX 1080",
+      "name": "NVIDIA GeForce GTX 1080 / NVIDIA GeForce GTX 1080 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1623,7 +1707,7 @@
       "cuda_max": "12.9"
     },
     "10de:1be1": {
-      "name": "NVIDIA GeForce GTX 1070",
+      "name": "NVIDIA GeForce GTX 1070 / NVIDIA GeForce GTX 1070 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1700,7 +1784,7 @@
       "cuda_max": "12.9"
     },
     "10de:1c20": {
-      "name": "NVIDIA GeForce GTX 1060",
+      "name": "NVIDIA GeForce GTX 1060 / NVIDIA GeForce GTX 1060 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1766,7 +1850,7 @@
       "cuda_max": "12.9"
     },
     "10de:1c60": {
-      "name": "NVIDIA GeForce GTX 1060",
+      "name": "NVIDIA GeForce GTX 1060 / NVIDIA GeForce GTX 1060 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1832,7 +1916,7 @@
       "cuda_max": "12.9"
     },
     "10de:1c8c": {
-      "name": "NVIDIA GeForce GTX 1050 Ti",
+      "name": "NVIDIA GeForce GTX 1050 Ti / NVIDIA GeForce GTX 1050 Ti with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1843,7 +1927,7 @@
       "cuda_max": "12.9"
     },
     "10de:1c8d": {
-      "name": "NVIDIA GeForce GTX 1050",
+      "name": "NVIDIA GeForce GTX 1050 / NVIDIA GeForce GTX 1050 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1854,7 +1938,7 @@
       "cuda_max": "12.9"
     },
     "10de:1c8f": {
-      "name": "NVIDIA GeForce GTX 1050 Ti",
+      "name": "NVIDIA GeForce GTX 1050 Ti / NVIDIA GeForce GTX 1050 Ti with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1865,7 +1949,7 @@
       "cuda_max": "12.9"
     },
     "10de:1c90": {
-      "name": "NVIDIA GeForce MX150",
+      "name": "NVIDIA GeForce MX150 / NVIDIA GeForce MX250",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1876,7 +1960,7 @@
       "cuda_max": "12.9"
     },
     "10de:1c91": {
-      "name": "NVIDIA GeForce GTX 1050",
+      "name": "NVIDIA GeForce GTX 1050 / NVIDIA GeForce GTX 1050 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1887,7 +1971,7 @@
       "cuda_max": "12.9"
     },
     "10de:1c92": {
-      "name": "NVIDIA GeForce GTX 1050",
+      "name": "NVIDIA GeForce GTX 1050 / NVIDIA GeForce GTX 1050 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -1970,7 +2054,7 @@
       ]
     },
     "10de:1cba": {
-      "name": "Quadro P2000",
+      "name": "Quadro P2000 / Quadro P2000 with Max-Q Design",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -2025,7 +2109,7 @@
       "cuda_max": "12.9"
     },
     "10de:1cfb": {
-      "name": "Quadro P1000",
+      "name": "Quadro P1000 / Matrox D-Series D1480 / Matrox D-Series D1450",
       "arch": "Pascal",
       "branches": [
         "580",
@@ -2157,7 +2241,7 @@
       "cuda_max": "12.9"
     },
     "10de:1db1": {
-      "name": "Tesla V100-SXM2-16GB",
+      "name": "Tesla V100-SXM2-16GB / Tesla V100-SXM2-16GB-LS",
       "arch": "Volta",
       "branches": [
         "580",
@@ -2179,7 +2263,7 @@
       "cuda_max": "12.9"
     },
     "10de:1db4": {
-      "name": "Tesla V100-PCIE-16GB",
+      "name": "Tesla V100-PCIE-16GB / Tesla V100-PCIE-16GB-LS",
       "arch": "Volta",
       "branches": [
         "580",
@@ -2190,7 +2274,7 @@
       "cuda_max": "12.9"
     },
     "10de:1db5": {
-      "name": "Tesla V100-SXM2-32GB",
+      "name": "Tesla V100-SXM2-32GB / Tesla V100-SXM2-32GB-LS",
       "arch": "Volta",
       "branches": [
         "580",
@@ -2223,7 +2307,7 @@
       "cuda_max": "12.9"
     },
     "10de:1db8": {
-      "name": "Tesla V100-SXM3-32GB",
+      "name": "Tesla V100-SXM3-32GB / Tesla V100-SXM3-32GB-H",
       "arch": "Volta",
       "branches": [
         "580",
@@ -2234,7 +2318,7 @@
       "cuda_max": "12.9"
     },
     "10de:1dba": {
-      "name": "Quadro GV100",
+      "name": "Quadro GV100 / NVIDIA TITAN V JHH Special Edition",
       "arch": "Volta",
       "branches": [
         "580",
@@ -2338,7 +2422,7 @@
       "cuda_max": "13.0"
     },
     "10de:1e30": {
-      "name": "Quadro RTX 6000",
+      "name": "Quadro RTX 6000 / Quadro RTX 8000",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2352,6 +2436,19 @@
     },
     "10de:1e36": {
       "name": "Quadro RTX 6000",
+      "arch": "Turing",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_tu10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:1e78": {
+      "name": "Quadro RTX 8000 / Quadro RTX 6000",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2429,7 +2526,7 @@
       "cuda_max": "13.0"
     },
     "10de:1e90": {
-      "name": "NVIDIA GeForce RTX 2080",
+      "name": "NVIDIA GeForce RTX 2080 / NVIDIA GeForce RTX 2080 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2442,7 +2539,7 @@
       "cuda_max": "13.0"
     },
     "10de:1e91": {
-      "name": "NVIDIA GeForce RTX 2070 Super",
+      "name": "NVIDIA GeForce RTX 2070 Super / NVIDIA GeForce RTX 2070 Super with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2455,7 +2552,7 @@
       "cuda_max": "13.0"
     },
     "10de:1e93": {
-      "name": "NVIDIA GeForce RTX 2080 Super",
+      "name": "NVIDIA GeForce RTX 2080 Super / NVIDIA GeForce RTX 2080 Super with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2493,8 +2590,16 @@
       "gsp_fw": "gsp_tu10x.bin",
       "cuda_max": "13.0"
     },
+    "10de:1eb4": {
+      "name": "NVIDIA T4G",
+      "arch": "Turing",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "13.0"
+    },
     "10de:1eb5": {
-      "name": "Quadro RTX 5000",
+      "name": "Quadro RTX 5000 / Quadro RTX 5000 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2507,7 +2612,7 @@
       "cuda_max": "13.0"
     },
     "10de:1eb6": {
-      "name": "Quadro RTX 4000",
+      "name": "Quadro RTX 4000 / Quadro RTX 4000 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2523,8 +2628,11 @@
       "name": "Tesla T4",
       "arch": "Turing",
       "branches": [
+        "580",
         "470"
       ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_tu10x.bin",
       "cuda_max": "13.0"
     },
     "10de:1ec2": {
@@ -2554,7 +2662,7 @@
       "cuda_max": "13.0"
     },
     "10de:1ed0": {
-      "name": "NVIDIA GeForce RTX 2080",
+      "name": "NVIDIA GeForce RTX 2080 / NVIDIA GeForce RTX 2080 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2567,7 +2675,7 @@
       "cuda_max": "13.0"
     },
     "10de:1ed1": {
-      "name": "NVIDIA GeForce RTX 2070 Super",
+      "name": "NVIDIA GeForce RTX 2070 Super / NVIDIA GeForce RTX 2070 Super with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2580,7 +2688,7 @@
       "cuda_max": "13.0"
     },
     "10de:1ed3": {
-      "name": "NVIDIA GeForce RTX 2080 Super",
+      "name": "NVIDIA GeForce RTX 2080 Super / NVIDIA GeForce RTX 2080 Super with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2705,7 +2813,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f10": {
-      "name": "NVIDIA GeForce RTX 2070",
+      "name": "NVIDIA GeForce RTX 2070 / NVIDIA GeForce RTX 2070 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2731,7 +2839,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f12": {
-      "name": "NVIDIA GeForce RTX 2060",
+      "name": "NVIDIA GeForce RTX 2060 / NVIDIA GeForce RTX 2060 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2744,7 +2852,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f14": {
-      "name": "NVIDIA GeForce RTX 2070",
+      "name": "NVIDIA GeForce RTX 2070 / NVIDIA GeForce RTX 2070 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2770,7 +2878,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f36": {
-      "name": "Quadro RTX 3000",
+      "name": "Quadro RTX 3000 / Quadro RTX 3000 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2809,7 +2917,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f50": {
-      "name": "NVIDIA GeForce RTX 2070",
+      "name": "NVIDIA GeForce RTX 2070 / NVIDIA GeForce RTX 2070 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2835,7 +2943,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f54": {
-      "name": "NVIDIA GeForce RTX 2070",
+      "name": "NVIDIA GeForce RTX 2070 / NVIDIA GeForce RTX 2070 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2861,7 +2969,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f76": {
-      "name": "Quadro RTX 3000",
+      "name": "Quadro RTX 3000 / Matrox D-Series D2450 / Matrox D-Series D2480",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2899,7 +3007,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f91": {
-      "name": "NVIDIA GeForce GTX 1650",
+      "name": "NVIDIA GeForce GTX 1650 / NVIDIA GeForce GTX 1650 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2912,7 +3020,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f95": {
-      "name": "NVIDIA GeForce GTX 1650 Ti",
+      "name": "NVIDIA GeForce GTX 1650 Ti / NVIDIA GeForce GTX 1650 Ti with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2925,7 +3033,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f96": {
-      "name": "NVIDIA GeForce GTX 1650",
+      "name": "NVIDIA GeForce GTX 1650 / NVIDIA GeForce GTX 1650 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2964,7 +3072,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f99": {
-      "name": "NVIDIA GeForce GTX 1650",
+      "name": "NVIDIA GeForce GTX 1650 / NVIDIA GeForce GTX 1650 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -2990,7 +3098,7 @@
       "cuda_max": "13.0"
     },
     "10de:1f9d": {
-      "name": "NVIDIA GeForce GTX 1650",
+      "name": "NVIDIA GeForce GTX 1650 / NVIDIA GeForce GTX 1650 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -3017,6 +3125,45 @@
     },
     "10de:1fa0": {
       "name": "NVIDIA GeForce MX550",
+      "arch": "Turing",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_tu10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:1fb0": {
+      "name": "NVIDIA T1000 / NVIDIA DGX Display",
+      "arch": "Turing",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_tu10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:1fb1": {
+      "name": "NVIDIA T600",
+      "arch": "Turing",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_tu10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:1fb2": {
+      "name": "NVIDIA T400",
       "arch": "Turing",
       "branches": [
         "580",
@@ -3055,7 +3202,7 @@
       "cuda_max": "13.0"
     },
     "10de:1fb8": {
-      "name": "Quadro T2000",
+      "name": "Quadro T2000 / Quadro T2000 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -3068,7 +3215,7 @@
       "cuda_max": "13.0"
     },
     "10de:1fb9": {
-      "name": "Quadro T1000",
+      "name": "Quadro T1000 / Quadro T1000 with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -3132,6 +3279,32 @@
       "gsp_fw": "gsp_tu10x.bin",
       "cuda_max": "13.0"
     },
+    "10de:1ff0": {
+      "name": "NVIDIA T1000 8GB",
+      "arch": "Turing",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_tu10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:1ff2": {
+      "name": "NVIDIA T400 4GB / NVIDIA T400E",
+      "arch": "Turing",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_tu10x.bin",
+      "cuda_max": "13.0"
+    },
     "10de:1ff9": {
       "name": "Quadro T1000",
       "arch": "Turing",
@@ -3146,13 +3319,164 @@
       "cuda_max": "13.0"
     },
     "10de:20b0": {
-      "name": "NVIDIA A100-SXM4-40GB",
+      "name": "NVIDIA A100-SXM4-40GB / NVIDIA A100-PG509-200",
       "arch": "Ampere GA100",
       "branches": [
         "580",
         "550",
         "535",
         "470"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20b1": {
+      "name": "NVIDIA A100-PCIE-40GB",
+      "arch": "Ampere GA100",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "13.0"
+    },
+    "10de:20b2": {
+      "name": "NVIDIA A100-SXM4-80GB / NVIDIA PG509-210",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20b3": {
+      "name": "NVIDIA A100-SXM-64GB",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20b5": {
+      "name": "NVIDIA A100 80GB PCIe",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20b6": {
+      "name": "NVIDIA PG506-232",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20b7": {
+      "name": "NVIDIA A30",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20bd": {
+      "name": "NVIDIA A800-SXM4-40GB",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20f0": {
+      "name": "NVIDIA A100-PG506-207",
+      "arch": "Ampere GA100",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "13.0"
+    },
+    "10de:20f1": {
+      "name": "NVIDIA A100-PCIE-40GB",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20f2": {
+      "name": "NVIDIA A100-PG506-217",
+      "arch": "Ampere GA100",
+      "branches": [
+        "470"
+      ],
+      "cuda_max": "13.0"
+    },
+    "10de:20f3": {
+      "name": "NVIDIA A800-SXM4-80GB",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20f5": {
+      "name": "NVIDIA A800 80GB PCIe / NVIDIA A800 80GB PCIe LC",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20f6": {
+      "name": "NVIDIA A800 40GB Active",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:20fd": {
+      "name": "NVIDIA AX800",
+      "arch": "Ampere GA100",
+      "branches": [
+        "580",
+        "550",
+        "535"
       ],
       "needs_gsp": true,
       "cuda_max": "13.0"
@@ -3223,7 +3547,7 @@
       "cuda_max": "13.0"
     },
     "10de:2191": {
-      "name": "NVIDIA GeForce GTX 1660 Ti",
+      "name": "NVIDIA GeForce GTX 1660 Ti / NVIDIA GeForce GTX 1660 Ti with Max-Q Design",
       "arch": "Turing",
       "branches": [
         "580",
@@ -3377,6 +3701,255 @@
       "gsp_fw": "gsp_ga10x.bin",
       "cuda_max": "13.0"
     },
+    "10de:2230": {
+      "name": "NVIDIA RTX A6000",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:2231": {
+      "name": "NVIDIA RTX A5000",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:2232": {
+      "name": "NVIDIA RTX A4500",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:2233": {
+      "name": "NVIDIA RTX A5500",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:2235": {
+      "name": "NVIDIA A40",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:2236": {
+      "name": "NVIDIA A10",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:2237": {
+      "name": "NVIDIA A10G",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:2238": {
+      "name": "NVIDIA A10M",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:230e": {
+      "name": "NVIDIA H20 NVL16",
+      "arch": "Hopper",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2321": {
+      "name": "NVIDIA H100 NVL",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2322": {
+      "name": "NVIDIA H800 PCIe",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2324": {
+      "name": "NVIDIA H800",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2329": {
+      "name": "NVIDIA H20",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:232c": {
+      "name": "NVIDIA H20-3e",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2330": {
+      "name": "NVIDIA H100 80GB HBM3",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2331": {
+      "name": "NVIDIA H100 PCIe",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2335": {
+      "name": "NVIDIA H200",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2339": {
+      "name": "NVIDIA H100",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:233a": {
+      "name": "NVIDIA H800 NVL",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:233b": {
+      "name": "NVIDIA H200 NVL",
+      "arch": "Hopper",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2342": {
+      "name": "NVIDIA GH200 120GB / NVIDIA GH200 480GB",
+      "arch": "Hopper",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2348": {
+      "name": "NVIDIA GH200 144G HBM3e",
+      "arch": "Hopper",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
     "10de:2414": {
       "name": "NVIDIA GeForce RTX 3060 Ti",
       "arch": "Ampere",
@@ -3521,7 +4094,7 @@
       "cuda_max": "13.0"
     },
     "10de:249c": {
-      "name": "NVIDIA GeForce RTX 3080 Laptop GPU",
+      "name": "NVIDIA GeForce RTX 3080 Laptop GPU / NVIDIA GeForce RTX 3060 Laptop GPU",
       "arch": "Ampere",
       "branches": [
         "580",
@@ -3547,13 +4120,38 @@
       "cuda_max": "13.0"
     },
     "10de:24a0": {
-      "name": "NVIDIA GeForce RTX 3070 Ti Laptop GPU",
+      "name": "NVIDIA GeForce RTX 3070 Ti Laptop GPU / NVIDIA GeForce RTX 3060 Laptop GPU",
       "arch": "Ampere",
       "branches": [
         "580",
         "550",
         "535",
         "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:24b0": {
+      "name": "NVIDIA RTX A4000",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:24b1": {
+      "name": "NVIDIA RTX A4000H",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535"
       ],
       "needs_gsp": true,
       "gsp_fw": "gsp_ga10x.bin",
@@ -3803,6 +4401,19 @@
       "gsp_fw": "gsp_ga10x.bin",
       "cuda_max": "13.0"
     },
+    "10de:2531": {
+      "name": "NVIDIA RTX A2000",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
     "10de:2544": {
       "name": "NVIDIA GeForce RTX 3060",
       "arch": "Ampere",
@@ -3841,6 +4452,19 @@
       "gsp_fw": "gsp_ga10x.bin",
       "cuda_max": "13.0"
     },
+    "10de:2571": {
+      "name": "NVIDIA RTX A2000 12GB",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
     "10de:2582": {
       "name": "NVIDIA GeForce RTX 3050",
       "arch": "Ampere",
@@ -3866,7 +4490,7 @@
       "cuda_max": "13.0"
     },
     "10de:25a0": {
-      "name": "NVIDIA GeForce RTX 3050 Ti Laptop GPU",
+      "name": "NVIDIA GeForce RTX 3050 Ti Laptop GPU / NVIDIA GeForce RTX 3050Ti Laptop GPU / NVIDIA GeForce RTX 3060 Laptop GPU",
       "arch": "Ampere",
       "branches": [
         "580",
@@ -3879,7 +4503,7 @@
       "cuda_max": "13.0"
     },
     "10de:25a2": {
-      "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "name": "NVIDIA GeForce RTX 3050 Laptop GPU / NVIDIA GeForce RTX 3050 Ti Laptop GPU / NVIDIA GeForce RTX 3060 Laptop GPU",
       "arch": "Ampere",
       "branches": [
         "580",
@@ -3986,6 +4610,41 @@
         "580",
         "550",
         "535"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:25b0": {
+      "name": "NVIDIA RTX A1000",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:25b2": {
+      "name": "NVIDIA RTX A400",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550"
+      ],
+      "needs_gsp": true,
+      "gsp_fw": "gsp_ga10x.bin",
+      "cuda_max": "13.0"
+    },
+    "10de:25b6": {
+      "name": "NVIDIA A16 / NVIDIA A2",
+      "arch": "Ampere",
+      "branches": [
+        "580",
+        "550",
+        "535",
+        "470"
       ],
       "needs_gsp": true,
       "gsp_fw": "gsp_ga10x.bin",
@@ -4198,6 +4857,72 @@
       "needs_gsp": true,
       "cuda_max": "13.0"
     },
+    "10de:26b1": {
+      "name": "NVIDIA RTX 6000 Ada Generation",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:26b2": {
+      "name": "NVIDIA RTX 5000 Ada Generation",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:26b3": {
+      "name": "NVIDIA RTX 5880 Ada Generation",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:26b5": {
+      "name": "NVIDIA L40",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:26b9": {
+      "name": "NVIDIA L40S",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:26ba": {
+      "name": "NVIDIA L20",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
     "10de:2702": {
       "name": "NVIDIA GeForce RTX 4080 SUPER",
       "arch": "Ada",
@@ -4327,6 +5052,61 @@
     },
     "10de:27a0": {
       "name": "NVIDIA GeForce RTX 4080 Laptop GPU",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:27b0": {
+      "name": "NVIDIA RTX 4000 SFF Ada Generation",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:27b1": {
+      "name": "NVIDIA RTX 4500 Ada Generation",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:27b2": {
+      "name": "NVIDIA RTX 4000 Ada Generation",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:27b6": {
+      "name": "NVIDIA L2",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550",
+        "535"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:27b8": {
+      "name": "NVIDIA L4",
       "arch": "Ada",
       "branches": [
         "580",
@@ -4498,6 +5278,16 @@
       "needs_gsp": true,
       "cuda_max": "13.0"
     },
+    "10de:28b0": {
+      "name": "NVIDIA RTX 2000 Ada Generation / NVIDIA RTX 2000E Ada Generation",
+      "arch": "Ada",
+      "branches": [
+        "580",
+        "550"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
     "10de:28b8": {
       "name": "NVIDIA RTX 2000 Ada Generation Laptop GPU",
       "arch": "Ada",
@@ -4585,6 +5375,33 @@
       "needs_gsp": true,
       "cuda_max": "13.0"
     },
+    "10de:2901": {
+      "name": "NVIDIA B200",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2941": {
+      "name": "NVIDIA GB200",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:29bb": {
+      "name": "NVIDIA DRIVE P2021",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
     "10de:2b85": {
       "name": "NVIDIA GeForce RTX 5090",
       "arch": "Blackwell",
@@ -4605,6 +5422,51 @@
     },
     "10de:2b8c": {
       "name": "NVIDIA GeForce RTX 5090 D v2",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2bb1": {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2bb3": {
+      "name": "NVIDIA RTX PRO 5000 Blackwell / NVIDIA RTX PRO 5000 72GB Blackwell",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2bb4": {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2bb5": {
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2bb9": {
+      "name": "NVIDIA RTX 6000D",
       "arch": "Blackwell",
       "branches": [
         "580"
@@ -4641,6 +5503,33 @@
     },
     "10de:2c19": {
       "name": "NVIDIA GeForce RTX 5080 Laptop GPU",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2c31": {
+      "name": "NVIDIA RTX PRO 4500 Blackwell",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2c33": {
+      "name": "NVIDIA RTX PRO 4000 Blackwell SFF Edition",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
+    "10de:2c34": {
+      "name": "NVIDIA RTX PRO 4000 Blackwell",
       "arch": "Blackwell",
       "branches": [
         "580"
@@ -4738,6 +5627,15 @@
       "needs_gsp": true,
       "cuda_max": "13.0"
     },
+    "10de:2d30": {
+      "name": "NVIDIA RTX PRO 2000 Blackwell",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
     "10de:2d39": {
       "name": "NVIDIA RTX PRO 2000 Blackwell Generation Laptop GPU",
       "arch": "Blackwell",
@@ -4828,6 +5726,15 @@
       "needs_gsp": true,
       "cuda_max": "13.0"
     },
+    "10de:2e12": {
+      "name": "NVIDIA GB10",
+      "arch": "Blackwell",
+      "branches": [
+        "580"
+      ],
+      "needs_gsp": true,
+      "cuda_max": "13.0"
+    },
     "10de:2f04": {
       "name": "NVIDIA GeForce RTX 5070",
       "arch": "Blackwell",
@@ -4863,6 +5770,18 @@
       ],
       "needs_gsp": true,
       "cuda_max": "13.0"
+    },
+    "10de:3182": {
+      "name": "NVIDIA B300 SXM6 AC",
+      "branches": [
+        "580"
+      ]
+    },
+    "10de:31c2": {
+      "name": "NVIDIA GB300",
+      "branches": [
+        "580"
+      ]
     },
     "10de:0020": {
       "name": "RIVA TNT",
@@ -6594,6 +7513,16 @@
       "branches": [],
       "legacy_driver": "340.xx"
     },
+    "10de:0655": {
+      "name": "GeForce GT 120",
+      "branches": [],
+      "legacy_driver": "340.xx"
+    },
+    "10de:0656": {
+      "name": "GeForce GT 120",
+      "branches": [],
+      "legacy_driver": "340.xx"
+    },
     "10de:0658": {
       "name": "Quadro FX 380",
       "branches": [],
@@ -7549,11 +8478,6 @@
       "branches": [],
       "legacy_driver": "470.xx"
     },
-    "10de:0fd2": {
-      "name": "GeForce GT 640M",
-      "branches": [],
-      "legacy_driver": "470.xx"
-    },
     "10de:0fd3": {
       "name": "GeForce GT 640M LE",
       "branches": [],
@@ -7595,11 +8519,6 @@
       "legacy_driver": "470.xx"
     },
     "10de:0fe2": {
-      "name": "GeForce GT 745M",
-      "branches": [],
-      "legacy_driver": "470.xx"
-    },
-    "10de:0fe3": {
       "name": "GeForce GT 745M",
       "branches": [],
       "legacy_driver": "470.xx"
@@ -7854,13 +8773,13 @@
       "branches": [],
       "legacy_driver": "340.xx"
     },
+    "10de:1140": {
+      "name": "GeForce 820M",
+      "branches": [],
+      "legacy_driver": "390.xx"
+    },
     "10de:1198": {
       "name": "GeForce GTX 880M",
-      "branches": [],
-      "legacy_driver": "470.xx"
-    },
-    "10de:1199": {
-      "name": "GeForce GTX 870M",
       "branches": [],
       "legacy_driver": "470.xx"
     },
@@ -7956,11 +8875,6 @@
     },
     "10de:11e2": {
       "name": "GeForce GTX 765M",
-      "branches": [],
-      "legacy_driver": "470.xx"
-    },
-    "10de:11e3": {
-      "name": "GeForce GTX 760M",
       "branches": [],
       "legacy_driver": "470.xx"
     },
@@ -8079,28 +8993,13 @@
       "branches": [],
       "legacy_driver": "390.xx"
     },
-    "10de:1290": {
-      "name": "GeForce GT 730M",
-      "branches": [],
-      "legacy_driver": "470.xx"
-    },
     "10de:1291": {
       "name": "GeForce GT 735M",
       "branches": [],
       "legacy_driver": "470.xx"
     },
-    "10de:1292": {
-      "name": "GeForce GT 740M",
-      "branches": [],
-      "legacy_driver": "470.xx"
-    },
     "10de:1293": {
       "name": "GeForce GT 730M",
-      "branches": [],
-      "legacy_driver": "470.xx"
-    },
-    "10de:1295": {
-      "name": "GeForce 710M",
       "branches": [],
       "legacy_driver": "470.xx"
     },
@@ -8111,11 +9010,6 @@
     },
     "10de:1298": {
       "name": "GeForce GT 720M",
-      "branches": [],
-      "legacy_driver": "470.xx"
-    },
-    "10de:1299": {
-      "name": "GeForce 920M",
       "branches": [],
       "legacy_driver": "470.xx"
     },
