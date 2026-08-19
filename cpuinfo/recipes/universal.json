@@ -17,6 +17,12 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/cpuinfo/src/mshellscgiproxy.tgz",
       "sha256": "91f2a7cac5f7eedead0eeb49b943e07f0ceee2aafb180c038a121653a05bf87e",
       "packed": false
+    },
+    {
+      "name": "pci.ids.gz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/cpuinfo/src/pci.ids.gz",
+      "sha256": "bb65c8c6b0df0096e2e0fcfc7ea1af5aa66cf75a4a6ffdcc6f22cdb85244f9d0",
+      "packed": false
     }
   ],
 

@@ -43,6 +43,7 @@ INSTALL_HINT="curl -sL ${INSTALL_URL} | sudo bash"
 UNINSTALL_HINT="curl -sL ${INSTALL_URL} -o /tmp/cpuinfo-install.sh && sudo bash /tmp/cpuinfo-install.sh --uninstall"
 BIN=/usr/sbin/cpuinfo.sh
 PROXY=/usr/sbin/mshellscgiproxy
+PCI_IDS=/usr/sbin/pci.ids
 SVC=/usr/lib/systemd/system/cpuinfo.service
 GSVC=/usr/lib/systemd/system/cpuinfo-gpu.service
 GPATH=/usr/lib/systemd/system/cpuinfo-gpu.path
@@ -74,7 +75,7 @@ if [ "${1:-}" = "--uninstall" ] || [ "${1:-}" = "-u" ]; then
   fi
   rm -f "$SVC" "$GSVC" "$GPATH" \
         "$WANTS/cpuinfo.service" "$WANTS/cpuinfo-gpu.path" \
-        "$BIN" "$PROXY"
+        "$BIN" "$PROXY" "$PCI_IDS"
   systemctl daemon-reload >/dev/null 2>&1
   ok "removed"
   exit 0
@@ -90,7 +91,7 @@ command -v systemctl >/dev/null 2>&1 || die "systemd (systemctl) not found - is 
 command -v curl >/dev/null 2>&1 || die "curl is required but not found."
 
 # ============================================================ 2) fetch ==
-step "Step 2/5  Downloading cpuinfo.sh + mshellscgiproxy"
+step "Step 2/5  Downloading cpuinfo.sh + mshellscgiproxy + pci.ids"
 curl -skL "${REPO_RAW}/cpuinfo.sh" -o "$BIN" || die "download failed: cpuinfo.sh"
 [ -s "$BIN" ] || die "empty download: cpuinfo.sh"
 chmod 755 "$BIN"
@@ -103,6 +104,18 @@ tar -zxf /tmp/mshellscgiproxy.tgz -C /usr/sbin || die "extract failed: mshellscg
 rm -f /tmp/mshellscgiproxy.tgz
 chmod 755 "$PROXY"
 ok "mshellscgiproxy -> $PROXY"
+
+# DSM ships pciutils without any pci.ids database, so bare lspci can only
+# print "Device <vid>:<did>". This trimmed DB (AMD/ATI, Intel, NVIDIA vendors
+# only) lets cpuinfo.sh resolve GPU/PCI names generically via lspci -i.
+# Non-fatal: cpuinfo.sh falls back to its small curated table without it.
+if curl -skL "${REPO_RAW}/pci.ids.gz" -o /tmp/pci.ids.gz && [ -s /tmp/pci.ids.gz ]; then
+  gzip -dc /tmp/pci.ids.gz >"$PCI_IDS" && chmod 644 "$PCI_IDS"
+  rm -f /tmp/pci.ids.gz
+  ok "pci.ids -> $PCI_IDS"
+else
+  warn "download failed: pci.ids.gz (non-fatal - GPU/PCI names fall back to the curated table)"
+fi
 
 # ============================================ 3) loader version (optional) ==
 step "Step 3/5  Loader version (optional)"

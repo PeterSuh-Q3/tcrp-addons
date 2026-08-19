@@ -15,6 +15,18 @@ FILE_GZ="${FILE_JS}.gz"
 PROXY_BIN="/usr/sbin/mshellscgiproxy"
 PROXY_SOCK_NAME="synoscgi_ms"
 
+# DSM ships pciutils without a pci.ids database, so bare lspci can only print
+# "Device <vid>:<did>" for anything - most visibly AMD/Intel iGPUs and
+# discrete GPUs newer than whatever pci.ids snapshot (if any) happens to be on
+# the box. install.sh/standalone install.sh gunzip a trimmed (AMD/ATI, Intel,
+# NVIDIA vendors only) pci.ids next to this script; when present, every lspci
+# call below is pointed at it via -i so names resolve generically instead of
+# through a hand-maintained id table. LSPCI_I expands to nothing (plain
+# lspci) when the file is missing.
+PCI_IDS_FILE="/usr/sbin/pci.ids"
+LSPCI_I=""
+[ -f "${PCI_IDS_FILE}" ] && LSPCI_I="-i ${PCI_IDS_FILE}"
+
 # GPU info handed to mshellscgiproxy for DSM 7.4. 7.4 rewrote the Info Center
 # GPU section to render from the SYNO.Core.System response fields
 # support_gpu + gpu_info[] instead of the 7.3 client-side t.gpu object. We
@@ -65,10 +77,10 @@ restore_nginx() {
 }
 
 # _gpu_name_fallback resolves a GPU display name from PCI vendor:device IDs
-# when lspci's pci.ids database is missing/outdated and only prints the raw
-# "Device <vid>:<did>". Newer (2021+) Intel desktop iGPUs (Alder/Raptor Lake)
-# are the common victims. A curated table gives exact marketing names; anything
-# else falls back to a vendor-prefixed label so the result is never wrong.
+# for the rare case lspci -i PCI_IDS_FILE still didn't resolve one (bundled
+# pci.ids missing, or a device newer than that snapshot). A small curated
+# table covers known recent gaps; anything else falls back to a
+# vendor-prefixed label so the result is never wrong, just less specific.
 # Args: $1=vid (4 hex, no 0x), $2=did
 _gpu_name_fallback() {
   local vid="$1" did="$2" dev="" vendor=""
@@ -109,8 +121,9 @@ _gpu_name_fallback() {
 # used, always suffixed with "[vid:did]". Args: $1=vid $2=did (4 hex, no 0x)
 _pci_name() {
   local vid="$1" did="$2" dev="" vendor="" name=""
-  # Try lspci first (present + pci.ids populated → real marketing name).
-  name="$(lspci -d "${vid}:${did}" 2>/dev/null | head -1 | sed 's/^[0-9a-f:.]* [^:]*: //; s/ *(rev [0-9a-fA-F]*)//')"
+  # Try lspci first, pointed at the bundled pci.ids (LSPCI_I) when present so
+  # names resolve generically instead of through the curated table below.
+  name="$(lspci ${LSPCI_I} -d "${vid}:${did}" 2>/dev/null | head -1 | sed 's/^[0-9a-f:.]* [^:]*: //; s/ *(rev [0-9a-fA-F]*)//')"
   if [ -n "${name}" ] && ! printf '%s' "${name}" | grep -qiE '^Device '; then
     printf '%s [%s:%s]' "${name}" "${vid}" "${did}"; return
   fi
@@ -266,7 +279,7 @@ else
     case "${DRV}" in nvidia|nvidia-drm) continue ;; esac
     PCIDN="$(awk -F= '/PCI_SLOT_NAME/ {print $2}' "${CARDN}/device/uevent" 2>/dev/null)"
     # Strip the trailing " (rev NN)" revision suffix that lspci appends.
-    GNAME="$(lspci -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //" | sed "s/ *(rev [0-9a-fA-F]*)//")"
+    GNAME="$(lspci ${LSPCI_I} -s ${PCIDN:-"99:99.9"} 2>/dev/null | sed "s/.*: //" | sed "s/ *(rev [0-9a-fA-F]*)//")"
     # When pci.ids is missing/outdated lspci yields the raw "Device <ids>" (or
     # nothing); rebuild the name from the sysfs PCI vendor/device IDs.
     if [ -z "${GNAME}" ] || printf '%s' "${GNAME}" | grep -qiE '^Device '; then

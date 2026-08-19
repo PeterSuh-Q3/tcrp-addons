@@ -6,6 +6,17 @@ if [ "${1}" = "late" ]; then
   cp -vpf cpuinfo.sh /tmpRoot/usr/sbin/cpuinfo.sh
   chmod 755 /tmpRoot/usr/sbin/cpuinfo.sh
 
+  # Bundled pci.ids (AMD/ATI, Intel, NVIDIA vendors only) so lspci -i can
+  # resolve GPU/PCI names generically; DSM ships pciutils without any pci.ids
+  # database at all. cpuinfo.sh looks for the gunzipped file at this fixed
+  # path (PCI_IDS_FILE) and falls back to plain lspci when it's absent.
+  if [ -f pci.ids.gz ]; then
+    gzip -dc pci.ids.gz >/tmpRoot/usr/sbin/pci.ids
+    chmod 644 /tmpRoot/usr/sbin/pci.ids
+  else
+    echo "WARNING: pci.ids.gz not found; GPU/PCI names will fall back to the curated table."
+  fi
+
   shift
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
   DEST="/tmpRoot/usr/lib/systemd/system/cpuinfo.service"
