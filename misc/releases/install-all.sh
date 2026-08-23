@@ -220,6 +220,72 @@ fixnetwork() {
   fi  
 }
 
+# fixnetwork() 는 ramdisk 단계(patches) 에서 딱 한 번만 ifcfg-ethN 을 쓴다.
+# DSM 실부팅 후 자체 "eth0 DHCP Client" systemd 유닛이 다시 자기 설정을
+# 적용해 덮어써버리는 것이 실기에서 확인됐다(RR 도 동일 문제라 rr-misc.service
+# 로 부팅 후에도 재적용한다). 같은 방식을 "rr" 이름 없이 mshell 이름으로 이식한다.
+# 스크립트는 /usr/bin (RR 의 rr-misc.sh 와 동일 위치), 이 addon 이 late 단계에서
+# 만드는 다른 헬퍼(mshell-ntb-eth0.sh 등)는 계속 /usr/syno/lib/systemd/scripts 를
+# 쓰므로 - 경로 규칙이 서로 다른 두 그룹을 이름으로 명확히 구분한다.
+installMshellNetworkService() {
+  BIN="/tmpRoot/usr/bin/mshell-network.sh"
+  cat > "${BIN}" <<'NEOF'
+#!/bin/sh
+# MSHELL persistent static network reapply. Runs after DSM's own
+# rc-network.service (and its "eth0 DHCP Client" unit) has already run once -
+# re-applies the network.<MAC>=ip/mask/gw/dns cmdline token so DSM's own DHCP
+# client can't silently win the race on every boot.
+CMDFILE="/etc/sysconfig/mshell-network-cmdline.txt"
+
+if grep -q 'network\.' /proc/cmdline 2>/dev/null; then
+  grep -Eo 'network\.[0-9a-fA-F:]{12,17}=[^ ]*' /proc/cmdline > "${CMDFILE}"
+elif [ ! -s "${CMDFILE}" ]; then
+  exit 0
+fi
+
+while read -r I; do
+  [ -z "${I}" ] && continue
+  MACR="$(echo "${I}" | cut -d. -f2 | cut -d= -f1 | tr -d ':' | tr 'A-F' 'a-f')"
+  IPRS="$(echo "${I}" | cut -d= -f2)"
+  for F in /sys/class/net/eth*; do
+    [ ! -e "${F}" ] && continue
+    ETH="$(basename "${F}")"
+    MACX="$(cat "/sys/class/net/${ETH}/address" 2>/dev/null | tr -d ':' | tr 'A-F' 'a-f')"
+    if [ "${MACR}" = "${MACX}" ]; then
+      echo "mshell-network: setting IP for ${ETH} to ${IPRS}"
+      CFG="/etc/sysconfig/network-scripts/ifcfg-${ETH}"
+      /bin/set_key_value "${CFG}" "BOOTPROTO" "static"
+      /bin/set_key_value "${CFG}" "ONBOOT" "yes"
+      /bin/set_key_value "${CFG}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
+      /bin/set_key_value "${CFG}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
+      /bin/set_key_value "${CFG}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
+      /etc/rc.network restart "${ETH}" >/dev/null 2>&1
+      [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
+    fi
+  done
+done < "${CMDFILE}"
+NEOF
+  chmod +x "${BIN}"
+
+  SVC="/tmpRoot/usr/lib/systemd/system/mshell-network.service"
+  cat > "${SVC}" <<'SEOF'
+[Unit]
+Description=MSHELL static network reapply (network.<MAC>= cmdline)
+After=rc-network.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/mshell-network.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+SEOF
+  mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
+  ln -sf ../mshell-network.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/mshell-network.service
+  echo "mshell-network.service installed (persistent static-IP reapply after rc-network.service)"
+}
+
 if [ "${1}" = "patches" ]; then
     echo "Installing addon misc - ${1}"
 
@@ -228,7 +294,7 @@ if [ "${1}" = "patches" ]; then
         chmod +x /usr/sbin/i915ids
         fixintelgpu
     fi
-    
+
     fixnetwork
 
 elif [ "${1}" = "late" ]; then
@@ -367,9 +433,11 @@ LEOF
         echo "[single] installed mshell-lan fallback service (eth0 direct IP)"
     fi
 
+    installMshellNetworkService
+
     fixacpibutton
 
-    if [ -d /exts/all-modules ]; then    
+    if [ -d /exts/all-modules ]; then
         copyintelgpu
         case "${PLATFORM}" in
         denverton)
