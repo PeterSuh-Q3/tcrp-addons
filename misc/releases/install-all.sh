@@ -191,6 +191,19 @@ fixamdgpu() {
   return 0
 }
 
+# ifcfg-ethN 은 [section] 없는 flat KEY=VALUE 파일이라 set_section_key_value(FILE
+# SECTION KEY VALUE)로는 못 쓴다. 실제 DSM rootfs에는 /bin/set_key_value 자체가
+# 없어(4-인자로 불러도 조용히 무시됨, 실기에서 확인) 항상 값이 그대로 DHCP로 남았다.
+# 외부 바이너리 없이 sed/grep만으로 직접 갱신한다.
+set_ifcfg_kv() {
+  local file="$1" key="$2" value="$3"
+  if grep -q "^${key}=" "${file}" 2>/dev/null; then
+    sed -i "s|^${key}=.*|${key}=${value}|" "${file}"
+  else
+    echo "${key}=${value}" >> "${file}"
+  fi
+}
+
 fixnetwork() {
   # network
   if grep -q 'network.' /proc/cmdline; then
@@ -207,11 +220,11 @@ fixnetwork() {
         if [ "${MACR}" = "${MACX}" ]; then
           echo "Setting IP for ${ETH} to ${IPRS}"
           F="/etc/sysconfig/network-scripts/ifcfg-${ETH}"
-          /bin/set_key_value "${F}" "BOOTPROTO" "static"
-          /bin/set_key_value "${F}" "ONBOOT" "yes"
-          /bin/set_key_value "${F}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
-          /bin/set_key_value "${F}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
-          /bin/set_key_value "${F}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
+          set_ifcfg_kv "${F}" "BOOTPROTO" "static"
+          set_ifcfg_kv "${F}" "ONBOOT" "yes"
+          set_ifcfg_kv "${F}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
+          set_ifcfg_kv "${F}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
+          set_ifcfg_kv "${F}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
           /etc/rc.network restart ${ETH} >/dev/null 2>&1
           [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
         fi
@@ -236,6 +249,19 @@ installMshellNetworkService() {
 # client can't silently win the race on every boot.
 CMDFILE="/etc/sysconfig/mshell-network-cmdline.txt"
 
+# ifcfg-ethN 은 [section] 없는 flat KEY=VALUE 파일이라 set_section_key_value(FILE
+# SECTION KEY VALUE)로는 못 쓰고, 실제 DSM rootfs에는 /bin/set_key_value 자체가
+# 없어(4-인자로 불러도 조용히 무시됨, 실기에서 확인) 값이 그대로 DHCP로 남았다.
+# 외부 바이너리 없이 sed/grep만으로 직접 갱신한다.
+set_ifcfg_kv() {
+  key="$2"
+  if grep -q "^${key}=" "$1" 2>/dev/null; then
+    sed -i "s|^${key}=.*|${key}=$3|" "$1"
+  else
+    echo "${key}=$3" >> "$1"
+  fi
+}
+
 if grep -q 'network\.' /proc/cmdline 2>/dev/null; then
   grep -Eo 'network\.[0-9a-fA-F:]{12,17}=[^ ]*' /proc/cmdline > "${CMDFILE}"
 elif [ ! -s "${CMDFILE}" ]; then
@@ -253,11 +279,11 @@ while read -r I; do
     if [ "${MACR}" = "${MACX}" ]; then
       echo "mshell-network: setting IP for ${ETH} to ${IPRS}"
       CFG="/etc/sysconfig/network-scripts/ifcfg-${ETH}"
-      /bin/set_key_value "${CFG}" "BOOTPROTO" "static"
-      /bin/set_key_value "${CFG}" "ONBOOT" "yes"
-      /bin/set_key_value "${CFG}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
-      /bin/set_key_value "${CFG}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
-      /bin/set_key_value "${CFG}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
+      set_ifcfg_kv "${CFG}" "BOOTPROTO" "static"
+      set_ifcfg_kv "${CFG}" "ONBOOT" "yes"
+      set_ifcfg_kv "${CFG}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
+      set_ifcfg_kv "${CFG}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
+      set_ifcfg_kv "${CFG}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
       /etc/rc.network restart "${ETH}" >/dev/null 2>&1
       [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
     fi
