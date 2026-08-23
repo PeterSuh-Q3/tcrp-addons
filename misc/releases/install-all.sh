@@ -222,9 +222,8 @@ fixnetwork() {
 
 # fixnetwork() 는 ramdisk 단계(patches) 에서 딱 한 번만 ifcfg-ethN 을 쓴다.
 # DSM 실부팅 후 자체 "eth0 DHCP Client" systemd 유닛이 다시 자기 설정을
-# 적용해 덮어써버리는 것이 실기에서 확인됐다(RR 도 동일 문제라 rr-misc.service
-# 로 부팅 후에도 재적용한다). 같은 방식을 "rr" 이름 없이 mshell 이름으로 이식한다.
-# 스크립트는 /usr/bin (RR 의 rr-misc.sh 와 동일 위치), 이 addon 이 late 단계에서
+# 적용해 덮어써버리는 것이 실기에서 확인됐다 - 부팅 후에도 재적용하는 지속형
+# 서비스가 별도로 필요하다. 스크립트는 /usr/bin, 이 addon 이 late 단계에서
 # 만드는 다른 헬퍼(mshell-ntb-eth0.sh 등)는 계속 /usr/syno/lib/systemd/scripts 를
 # 쓰므로 - 경로 규칙이 서로 다른 두 그룹을 이름으로 명확히 구분한다.
 installMshellNetworkService() {
