@@ -195,12 +195,15 @@ fixnetwork() {
   # network
   if grep -q 'network.' /proc/cmdline; then
     for I in $(grep -Eo 'network.[0-9a-fA-F:]{12,17}=[^ ]*' /proc/cmdline); do
-      MACR="$(echo "${I}" | cut -d. -f2 | cut -d= -f1 | sed 's/://g; s/.*/\L&/')"
+      # sed의 \L(소문자 변환)은 GNU 확장이라 이 ramdisk의 busybox/비-GNU sed에서는
+      # 동작하지 않고 리터럴 "L"만 덧붙는다 - cmdline의 MAC(대문자)과 /sys의 MAC
+      # (소문자)이 영원히 불일치해 이 매칭이 조용히 실패했다. tr로 교체.
+      MACR="$(echo "${I}" | cut -d. -f2 | cut -d= -f1 | tr -d ':' | tr 'A-F' 'a-f')"
       IPRS="$(echo "${I}" | cut -d= -f2)"
       for F in /sys/class/net/eth*; do
         [ ! -e "${F}" ] && continue
         ETH="$(basename "${F}")"
-        MACX=$(cat "/sys/class/net/${ETH}/address" 2>/dev/null | sed 's/://g; s/.*/\L&/')
+        MACX=$(cat "/sys/class/net/${ETH}/address" 2>/dev/null | tr -d ':' | tr 'A-F' 'a-f')
         if [ "${MACR}" = "${MACX}" ]; then
           echo "Setting IP for ${ETH} to ${IPRS}"
           F="/etc/sysconfig/network-scripts/ifcfg-${ETH}"
