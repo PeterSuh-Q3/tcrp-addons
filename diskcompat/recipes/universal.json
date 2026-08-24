@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/diskcompat/src/install.sh",
+      "sha256": "6e178005a56d1a20eda197b999bb20a5b1bbafabdbe1df89d82b7983bd23f130",
+      "packed": false
+    },
+    {
+      "name": "diskcompat.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/diskcompat/src/diskcompat.sh",
+      "sha256": "bc843c38411462017a92e2b8d62df9bafc85bcf83a43e2a3fdbf93641301b609",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
