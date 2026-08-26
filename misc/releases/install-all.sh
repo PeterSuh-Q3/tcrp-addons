@@ -211,10 +211,15 @@ set_ifcfg_kv() {
 # 못 나가 .pat 자동 다운로드가 실패 - 45.14 실기에서 재현/확인). rc.network 의
 # 자체 파싱에만 기대지 않고 라우트가 실제로 걸렸는지 확인한 뒤, 없으면 직접
 # ip route add 로 보강한다.
+# 주의: 이 busybox ip 는 "ip route show default" 의 default 필터 인자를
+# 무시하고 전체 라우팅 테이블을 그대로 덤프한다 - 서브넷 라우트만 있어도
+# grep -q . 가 항상 참이 되어 매번 조용히 건너뛰는 버그가 실기에서 확인됐다
+# (fixnetwork 실행 로그는 찍히는데 default 라우트가 끝내 안 걸림). 전체
+# 테이블을 받아 "default"로 시작하는 줄이 실제로 있는지 직접 확인한다.
 ensure_default_route() {
   local eth="$1" gw="$2"
   [ -n "${gw}" ] || return 0
-  ip route show default 2>/dev/null | grep -q . && return 0
+  ip route show 2>/dev/null | grep -q '^default' && return 0
   ip route add default via "${gw}" dev "${eth}" 2>/dev/null \
     || route add default gw "${gw}" dev "${eth}" 2>/dev/null
 }
@@ -280,10 +285,12 @@ set_ifcfg_kv() {
 
 # rc.network restart 가 ifcfg-ethN 의 GATEWAY= 를 읽고도 커널 라우팅 테이블에
 # 기본 라우트를 안 거는 경우가 실기(주니어 설치 환경)에서 확인됐다 - 직접 보강.
+# busybox ip 는 "ip route show default"의 default 필터를 무시하고 전체 테이블을
+# 그대로 덤프하므로(실기 확인), 전체를 받아 "default"로 시작하는 줄을 직접 찾는다.
 ensure_default_route() {
   eth="$1" gw="$2"
   [ -n "${gw}" ] || return 0
-  ip route show default 2>/dev/null | grep -q . && return 0
+  ip route show 2>/dev/null | grep -q '^default' && return 0
   ip route add default via "${gw}" dev "${eth}" 2>/dev/null \
     || route add default gw "${gw}" dev "${eth}" 2>/dev/null
 }
