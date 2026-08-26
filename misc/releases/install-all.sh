@@ -204,6 +204,21 @@ set_ifcfg_kv() {
   fi
 }
 
+# /etc/rc.network restart 가 ifcfg-ethN 의 GATEWAY= 를 읽어 기본 라우트를
+# 걸어주는 것에 의존했으나, 주니어(설치) 환경에서 실기로 확인한 결과 이 restart
+# 뒤에도 커널 라우팅 테이블에 default 라우트가 전혀 안 걸리는 경우가 있었다
+# (IP/게이트웨이 값 자체는 ifcfg-ethN 에 정확히 들어가 있었는데도 서브넷 밖으로
+# 못 나가 .pat 자동 다운로드가 실패 - 45.14 실기에서 재현/확인). rc.network 의
+# 자체 파싱에만 기대지 않고 라우트가 실제로 걸렸는지 확인한 뒤, 없으면 직접
+# ip route add 로 보강한다.
+ensure_default_route() {
+  local eth="$1" gw="$2"
+  [ -n "${gw}" ] || return 0
+  ip route show default 2>/dev/null | grep -q . && return 0
+  ip route add default via "${gw}" dev "${eth}" 2>/dev/null \
+    || route add default gw "${gw}" dev "${eth}" 2>/dev/null
+}
+
 fixnetwork() {
   # network
   if grep -q 'network.' /proc/cmdline; then
@@ -226,6 +241,7 @@ fixnetwork() {
           set_ifcfg_kv "${F}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
           set_ifcfg_kv "${F}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
           /etc/rc.network restart ${ETH} >/dev/null 2>&1
+          ensure_default_route "${ETH}" "$(echo "${IPRS}" | cut -d/ -f3)"
           [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
         fi
       done
@@ -262,6 +278,16 @@ set_ifcfg_kv() {
   fi
 }
 
+# rc.network restart 가 ifcfg-ethN 의 GATEWAY= 를 읽고도 커널 라우팅 테이블에
+# 기본 라우트를 안 거는 경우가 실기(주니어 설치 환경)에서 확인됐다 - 직접 보강.
+ensure_default_route() {
+  eth="$1" gw="$2"
+  [ -n "${gw}" ] || return 0
+  ip route show default 2>/dev/null | grep -q . && return 0
+  ip route add default via "${gw}" dev "${eth}" 2>/dev/null \
+    || route add default gw "${gw}" dev "${eth}" 2>/dev/null
+}
+
 if grep -q 'network\.' /proc/cmdline 2>/dev/null; then
   grep -Eo 'network\.[0-9a-fA-F:]{12,17}=[^ ]*' /proc/cmdline > "${CMDFILE}"
 elif [ ! -s "${CMDFILE}" ]; then
@@ -285,6 +311,7 @@ while read -r I; do
       set_ifcfg_kv "${CFG}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
       set_ifcfg_kv "${CFG}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
       /etc/rc.network restart "${ETH}" >/dev/null 2>&1
+      ensure_default_route "${ETH}" "$(echo "${IPRS}" | cut -d/ -f3)"
       [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
     fi
   done
