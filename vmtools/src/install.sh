@@ -20,6 +20,19 @@ if [ "${1}" = "late" ]; then
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
   mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
 
+  # 이름을 분리하기 전(vmtools.service 하나로 VMware/QEMU를 겸용) 빌드로 이미
+  # 설치된 시스템 위에, DSM을 새로 설치하지 않고 addon만 재빌드해서 덮어씌우면
+  # 예전 유닛 파일이 지워지지 않고 그대로 남는다 - mev= 판정이 바뀌지 않는 한
+  # 항상 같은 이름이 재생성될 뿐이라 못 느꼈지만, 이번 분리로 새 이름
+  # (mshell-qemu-guest-agent.service)이 생겨도 예전 vmtools.service 가 같은
+  # /dev/virtio-ports/org.qemu.guest_agent.0 를 놓고 계속 경쟁하며 크래시
+  # 루프를 도는 것이 실기에서 확인됐다(2026-08-27). 아래에서 두 이름 모두
+  # 무조건 먼저 지우고, 이번 mev= 에 맞는 쪽만 다시 만든다.
+  rm -f /tmpRoot/usr/lib/systemd/system/vmtools.service
+  rm -f /tmpRoot/usr/lib/systemd/system/mshell-qemu-guest-agent.service
+  rm -f /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/vmtools.service
+  rm -f /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/mshell-qemu-guest-agent.service
+
   # VMware Tools 와 QEMU guest agent 는 서로 다른 하이퍼바이저를 위한 완전히
   # 별개의 데몬인데, 예전엔 둘 다 "vmtools.service"라는 같은 이름으로 만들어져
   # 있어서 systemctl status/journalctl로는 지금 이게 어느 쪽인지 유닛 내용을
