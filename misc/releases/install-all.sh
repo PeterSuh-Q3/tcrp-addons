@@ -295,21 +295,61 @@ ensure_default_route() {
     || route add default gw "${gw}" dev "${eth}" 2>/dev/null
 }
 
+# 이 서비스가 static을 적용한 직후에도, DSM 자체의 "eth0 DHCP Client"
+# (dhclient@ethN.service)가 나중에(부팅 후 ~1분 내, 실기 확인) rc.network 등
+# 다른 경로로 다시 start되면서 ifcfg-ethN을 도로 dhcp로 되돌리는 것이 실기에서
+# 확인됐다(45.152, ifcfg-eth0 mtime이 mshell-network 실행 71초 뒤 dhcp로 재작성).
+# 매번 쫓아가며 재적용하는 대신, static이 걸린 인터페이스의 DHCP 클라이언트
+# 유닛 자체를 마스킹해 다시는 못 뜨게 막는다 - mask는 /dev/null 심볼릭 링크라
+# 이후 어디서 start를 걸어도 조용히 실패할 뿐 아무 것도 실행되지 않는다.
+mask_dhcp_client() {
+  eth="$1"
+  command -v systemctl >/dev/null 2>&1 || return 0
+  # 이 DSM systemctl은 --now 플래그를 지원하지 않는다(실기 확인: "unrecognized
+  # option '--now'") - mask와 stop을 따로 호출한다.
+  systemctl mask \
+    "dhclient@${eth}.service" \
+    "dhclient6@${eth}-client.service" \
+    "dhclient6@${eth}-info.service" \
+    "dhclient6@${eth}-pd.service" \
+    >/dev/null 2>&1
+  systemctl stop "dhclient@${eth}.service" >/dev/null 2>&1
+  systemctl stop "dhclient6@${eth}-client.service" >/dev/null 2>&1
+  systemctl stop "dhclient6@${eth}-info.service" >/dev/null 2>&1
+  systemctl stop "dhclient6@${eth}-pd.service" >/dev/null 2>&1
+}
+
+# 반대로 static 설정이 없는(또는 DHCP로 되돌린) 인터페이스는 위 마스킹이
+# 예전 static 설정에서 걸린 채 남아있을 수 있으므로 항상 마스크 해제해 둔다 -
+# 그래야 DHCP 사용으로 전환한 다음 부팅부터 그 인터페이스가 다시 정상 동작한다.
+unmask_dhcp_client() {
+  eth="$1"
+  command -v systemctl >/dev/null 2>&1 || return 0
+  systemctl unmask \
+    "dhclient@${eth}.service" \
+    "dhclient6@${eth}-client.service" \
+    "dhclient6@${eth}-info.service" \
+    "dhclient6@${eth}-pd.service" \
+    >/dev/null 2>&1
+}
+
 if grep -q 'network\.' /proc/cmdline 2>/dev/null; then
   grep -Eo 'network\.[0-9a-fA-F:]{12,17}=[^ ]*' /proc/cmdline > "${CMDFILE}"
 elif [ ! -s "${CMDFILE}" ]; then
   exit 0
 fi
 
-while read -r I; do
-  [ -z "${I}" ] && continue
-  MACR="$(echo "${I}" | cut -d. -f2 | cut -d= -f1 | tr -d ':' | tr 'A-F' 'a-f')"
-  IPRS="$(echo "${I}" | cut -d= -f2)"
-  for F in /sys/class/net/eth*; do
-    [ ! -e "${F}" ] && continue
-    ETH="$(basename "${F}")"
-    MACX="$(cat "/sys/class/net/${ETH}/address" 2>/dev/null | tr -d ':' | tr 'A-F' 'a-f')"
+for F in /sys/class/net/eth*; do
+  [ -e "${F}" ] || continue
+  ETH="$(basename "${F}")"
+  MACX="$(cat "/sys/class/net/${ETH}/address" 2>/dev/null | tr -d ':' | tr 'A-F' 'a-f')"
+  matched="false"
+  while read -r I; do
+    [ -z "${I}" ] && continue
+    MACR="$(echo "${I}" | cut -d. -f2 | cut -d= -f1 | tr -d ':' | tr 'A-F' 'a-f')"
+    IPRS="$(echo "${I}" | cut -d= -f2)"
     if [ "${MACR}" = "${MACX}" ]; then
+      matched="true"
       echo "mshell-network: setting IP for ${ETH} to ${IPRS}"
       CFG="/etc/sysconfig/network-scripts/ifcfg-${ETH}"
       set_ifcfg_kv "${CFG}" "BOOTPROTO" "static"
@@ -317,12 +357,14 @@ while read -r I; do
       set_ifcfg_kv "${CFG}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
       set_ifcfg_kv "${CFG}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
       set_ifcfg_kv "${CFG}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
+      mask_dhcp_client "${ETH}"
       /etc/rc.network restart "${ETH}" >/dev/null 2>&1
       ensure_default_route "${ETH}" "$(echo "${IPRS}" | cut -d/ -f3)"
       [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
     fi
-  done
-done < "${CMDFILE}"
+  done < "${CMDFILE}"
+  [ "${matched}" = "false" ] && unmask_dhcp_client "${ETH}"
+done
 NEOF
   chmod +x "${BIN}"
 
