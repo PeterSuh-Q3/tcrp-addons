@@ -365,6 +365,15 @@ for F in /sys/class/net/eth*; do
   done < "${CMDFILE}"
   [ "${matched}" = "false" ] && unmask_dhcp_client "${ETH}"
 done
+
+# 마지막 명령의 종료코드를 스크립트 자체의 종료코드로 그대로 흘려보내면, glob에서
+# 마지막으로 처리된 eth*가 하필 static NIC(matched=true)일 때 위 "[ true = false ] &&"가
+# 거짓이라 exit 1이 되어 이 서비스가 정상 적용했음에도 systemd에는 failed로 찍히는
+# 문제가 있었다(실기 확인: 멀티 NIC 2포트 모두 static으로 설정하니 마지막 순번 NIC이
+# 항상 static이 되어 100% 재현됨 - 단일 NIC 시절엔 미설정 NIC이 보통 마지막이라
+# unmask_dhcp_client의 종료코드로 가려져 드러나지 않았다). 실제 적용 결과와 무관하게
+# 항상 성공으로 보고한다.
+exit 0
 NEOF
   chmod +x "${BIN}"
 
