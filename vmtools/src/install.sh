@@ -16,12 +16,19 @@ if [ "${1}" = "late" ]; then
   ln -sf /usr/vmtools/share/open-vm-tools /tmpRoot/usr/vmtools/share/open-vm-tools
 
   VMTOOLS_PATH="/usr/vmtools"
-  VMTOOLS_PID="/var/run/vmtools.pid"
 
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
-  DEST="/tmpRoot/usr/lib/systemd/system/vmtools.service"
+  mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
 
+  # VMware Tools 와 QEMU guest agent 는 서로 다른 하이퍼바이저를 위한 완전히
+  # 별개의 데몬인데, 예전엔 둘 다 "vmtools.service"라는 같은 이름으로 만들어져
+  # 있어서 systemctl status/journalctl로는 지금 이게 어느 쪽인지 유닛 내용을
+  # 열어보기 전엔 알 수 없었다(진단할 때 실제로 혼란을 유발함, 2026-08-27).
+  # 유닛 이름 자체를 분리해 어느 쪽이 켜져 있는지 이름만 보고 바로 알 수 있게
+  # 한다. mev=(빌드 시점의 /proc/cmdline)에 맞는 쪽만 만들고 enable한다.
   if grep -Eq 'mev=vmware' /proc/cmdline; then
+    VMTOOLS_PID="/var/run/vmtools.pid"
+    DEST="/tmpRoot/usr/lib/systemd/system/vmtools.service"
     VMWARE_CONF="${VMTOOLS_PATH}/etc/vmware-tools/tools.conf"
     COMMON_PATH="${VMTOOLS_PATH}/lib/open-vm-tools/plugins"
     PLUGINS_PATH="${COMMON_PATH}/vmsvc"
@@ -47,7 +54,7 @@ if [ "${1}" = "late" ]; then
 
     {
       echo "[Unit]"
-      echo "Description=mshell addon vmtools daemon"
+      echo "Description=mshell addon VMware Tools daemon"
       echo "IgnoreOnIsolate=true"
       echo "After=multi-user.target"
       echo
@@ -64,21 +71,26 @@ if [ "${1}" = "late" ]; then
       echo "[Install]"
       echo "WantedBy=multi-user.target"
     } >"${DEST}"
+
+    ln -sf /usr/lib/systemd/system/vmtools.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/vmtools.service
+
   elif grep -Eq 'mev=kvm|mev=qemu' /proc/cmdline; then
+    QGA_PID="/var/run/mshell-qemu-guest-agent.pid"
+    DEST="/tmpRoot/usr/lib/systemd/system/mshell-qemu-guest-agent.service"
     GUEST_AGENT="/dev/virtio-ports/org.qemu.guest_agent.0"
     {
       echo "[Unit]"
-      echo "Description=mshell addon qemu-guest-agent daemon"
+      echo "Description=mshell addon QEMU guest agent daemon"
       echo "IgnoreOnIsolate=true"
       echo "After=multi-user.target"
       echo "ConditionPathExists=${GUEST_AGENT}"
       echo
       echo "[Service]"
       echo "Type=forking"
-      echo "PIDFile=${VMTOOLS_PID}"
+      echo "PIDFile=${QGA_PID}"
       echo "Environment=\"PATH=${VMTOOLS_PATH}/bin:${VMTOOLS_PATH}/sbin:\$PATH\""
       echo "Environment=\"LD_LIBRARY_PATH=${VMTOOLS_PATH}/lib:\$LD_LIBRARY_PATH\""
-      echo "ExecStart=${VMTOOLS_PATH}/bin/qemu-ga -m virtio-serial -p ${GUEST_AGENT} -t /var/run/ -d -f ${VMTOOLS_PID}"
+      echo "ExecStart=${VMTOOLS_PATH}/bin/qemu-ga -m virtio-serial -p ${GUEST_AGENT} -t /var/run/ -d -f ${QGA_PID}"
       echo "ExecReload=/bin/kill -HUP \$MAINPID"
       echo "Restart=always"
       echo "RestartSec=10"
@@ -86,29 +98,10 @@ if [ "${1}" = "late" ]; then
       echo "[Install]"
       echo "WantedBy=multi-user.target"
     } >"${DEST}"
+
+    ln -sf /usr/lib/systemd/system/mshell-qemu-guest-agent.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/mshell-qemu-guest-agent.service
+
   else
-    {
-      echo "[Unit]"
-      echo "Description=mshell addon vmtools daemon"
-      echo "IgnoreOnIsolate=true"
-      echo "After=multi-user.target"
-      echo
-      echo "[Service]"
-      echo "Type=oneshot"
-      # echo "Type=forking"
-      # echo "PIDFile=${VMTOOLS_PID}"
-      echo "Environment=\"PATH=${VMTOOLS_PATH}/bin:${VMTOOLS_PATH}/sbin:\$PATH\""
-      echo "Environment=\"LD_LIBRARY_PATH=${VMTOOLS_PATH}/lib:\$LD_LIBRARY_PATH\""
-      echo "ExecStart=-echo Unknown mev"
-      # echo "ExecReload=/bin/kill -HUP \$MAINPID"
-      # echo "Restart=always"
-      # echo "RestartSec=10"
-      echo
-      echo "[Install]"
-      echo "WantedBy=multi-user.target"
-    } >"${DEST}"
-    exit 0
+    echo "vmtools: unknown mev, no VMware Tools / QEMU guest agent service installed"
   fi
-  mkdir -p /tmpRoot/usr/lib/systemd/system/multi-user.target.wants
-  ln -sf /usr/lib/systemd/system/vmtools.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/vmtools.service
 fi
