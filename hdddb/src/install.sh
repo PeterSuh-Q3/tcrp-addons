@@ -11,6 +11,23 @@ if [ "${1}" = "late" ]; then
   cp -f hdddb.sh /tmpRoot/usr/sbin/hdddb.sh
   chmod +x /tmpRoot/usr/sbin/hdddb.sh
 
+  # systemd loads /etc/systemd/system/<unit> in preference to
+  # /usr/lib/systemd/system/<unit> of the same name. Some older
+  # loaders (RR/ARC/early MSHELL builds) dropped hdddb.service
+  # directly into /etc/systemd/system instead of /usr/lib/systemd/system.
+  # That leftover file survives every later DSM update and model
+  # migration untouched (real-hardware case: DS425+ -> DS925+ migration
+  # carried an /etc/systemd/system/hdddb.service dated 2025-02-15 forward
+  # unchanged), and permanently shadows whatever this script installs
+  # below no matter how many times the addon/loader is rebuilt - the
+  # box kept running the old hardcoded "-nfre" instead of the current
+  # "-nrwpeSI --autoupdate=0". Remove any such override before writing
+  # our own copy, so a fresh install/migration self-heals this.
+  if [ -f "/tmpRoot/etc/systemd/system/hdddb.service" ]; then
+    echo "Removing stale /etc/systemd/system/hdddb.service override from an earlier loader"
+    rm -f "/tmpRoot/etc/systemd/system/hdddb.service"
+  fi
+
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
   DEST="/tmpRoot/usr/lib/systemd/system/hdddb.service"
   {
