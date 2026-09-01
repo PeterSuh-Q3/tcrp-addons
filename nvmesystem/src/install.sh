@@ -57,6 +57,17 @@ elif [ "${1}" = "late" ]; then
 
   [ ! -f "/tmpRoot/usr/bin/gzip" ] && cp -vpf /usr/bin/gzip /tmpRoot/usr/bin/gzip
 
+  # systemd loads /etc/systemd/system/<unit> in preference to
+  # /usr/lib/systemd/system/<unit> of the same name. This addon lived
+  # in /etc/systemd/system until 2025-01-12; an old install can still
+  # have a leftover copy there that permanently shadows the current
+  # /usr/lib/systemd/system unit below (confirmed alongside the same
+  # issue in the hdddb addon). Remove it before writing our own copy.
+  if [ -f "/tmpRoot/etc/systemd/system/nvmesystem.service" ]; then
+    echo "Removing stale /etc/systemd/system/nvmesystem.service override from an earlier loader"
+    rm -f "/tmpRoot/etc/systemd/system/nvmesystem.service"
+  fi
+
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
   DEST="/tmpRoot/usr/lib/systemd/system/nvmesystem.service"
   {

@@ -10,6 +10,17 @@ if [ "${1}" = "late" ]; then
   chmod 755 /tmpRoot/usr/sbin/unscaler.sh
   chmod 755 /tmpRoot/usr/sbin/rescaler.sh
 
+  # systemd loads /etc/systemd/system/<unit> in preference to
+  # /usr/lib/systemd/system/<unit> of the same name. This addon lived
+  # in /etc/systemd/system until 2025-01-12; an old install can still
+  # have a leftover copy there that permanently shadows the current
+  # /usr/lib/systemd/system unit below (confirmed alongside the same
+  # issue in the hdddb addon). Remove it before writing our own copy.
+  if [ -f "/tmpRoot/etc/systemd/system/cpufreq-userspace-scaler.service" ]; then
+    echo "Removing stale /etc/systemd/system/cpufreq-userspace-scaler.service override from an earlier loader"
+    rm -f "/tmpRoot/etc/systemd/system/cpufreq-userspace-scaler.service"
+  fi
+
   cat > /tmpRoot/usr/lib/systemd/system/cpufreq-userspace-scaler.service <<'EOF'
 [Unit]
 Description=ACPI cpufreq userspace scaler

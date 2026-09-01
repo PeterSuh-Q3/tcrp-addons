@@ -7,6 +7,21 @@ if [ "${1}" = "late" ]; then
   cp -vf check_udma_crc.sh /tmpRoot/usr/sbin/check_udma_crc.sh
   chmod 755 /tmpRoot/usr/sbin/check_udma_crc.sh
 
+  # systemd loads /etc/systemd/system/<unit> in preference to
+  # /usr/lib/systemd/system/<unit> of the same name. This addon lived
+  # in /etc/systemd/system until 2025-09-02; an old install can still
+  # have a leftover copy there that permanently shadows the current
+  # /usr/lib/systemd/system unit below (confirmed alongside the same
+  # issue in the hdddb addon). Remove it before writing our own copy.
+  if [ -f "/tmpRoot/etc/systemd/system/udma-crc-check.service" ]; then
+    echo "Removing stale /etc/systemd/system/udma-crc-check.service override from an earlier loader"
+    rm -f "/tmpRoot/etc/systemd/system/udma-crc-check.service"
+  fi
+  if [ -f "/tmpRoot/etc/systemd/system/udma-crc-check.timer" ]; then
+    echo "Removing stale /etc/systemd/system/udma-crc-check.timer override from an earlier loader"
+    rm -f "/tmpRoot/etc/systemd/system/udma-crc-check.timer"
+  fi
+
   cp -vf udma-crc-check.service /tmpRoot/usr/lib/systemd/system/udma-crc-check.service
   cp -vf udma-crc-check.timer /tmpRoot/usr/lib/systemd/system/udma-crc-check.timer
   cp -vf udma-check.env /tmpRoot/etc/udma-check.env
