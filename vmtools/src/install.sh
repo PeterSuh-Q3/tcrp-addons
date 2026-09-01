@@ -97,6 +97,11 @@ if [ "${1}" = "late" ]; then
       echo "IgnoreOnIsolate=true"
       echo "After=multi-user.target"
       echo "ConditionPathExists=${GUEST_AGENT}"
+      # SynoCommunity QEMU Guest Agent (SPK id: qemu-ga) owns the same
+      # virtio serial port.  When that package is installed, skip this addon
+      # unit cleanly rather than starting a second qemu-ga daemon that races
+      # for /dev/virtio-ports/org.qemu.guest_agent.0.
+      echo "ConditionPathExists=!/var/packages/qemu-ga/target/bin/qemu-ga"
       echo
       echo "[Service]"
       echo "Type=forking"
