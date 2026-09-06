@@ -333,9 +333,68 @@ unmask_dhcp_client() {
     >/dev/null 2>&1
 }
 
-if grep -q 'network\.' /proc/cmdline 2>/dev/null; then
-  grep -Eo 'network\.[0-9a-fA-F:]{12,17}=[^ ]*' /proc/cmdline > "${CMDFILE}"
-elif [ ! -s "${CMDFILE}" ]; then
+# Restore only interfaces that MSHELL itself previously configured.  The
+# CMDFILE is the ownership record: it lets a DHCP transition undo MSHELL
+# static settings without changing a static configuration made in DSM by the
+# user for an unrelated interface.
+restore_dhcp_network() {
+  owned_file="${1:-${CMDFILE}}"
+  active_file="${2:-}"
+  [ -s "${owned_file}" ] || return 0
+
+  for F in /sys/class/net/eth*; do
+    [ -e "${F}" ] || continue
+    ETH="$(basename "${F}")"
+    MACX="$(cat "/sys/class/net/${ETH}/address" 2>/dev/null | tr -d ':' | tr 'A-F' 'a-f')"
+    owned="false"
+    still_static="false"
+    while read -r I; do
+      [ -z "${I}" ] && continue
+      MACR="$(echo "${I}" | cut -d. -f2 | cut -d= -f1 | tr -d ':' | tr 'A-F' 'a-f')"
+      [ "${MACR}" = "${MACX}" ] && owned="true"
+    done < "${owned_file}"
+
+    # A partial DHCP transition retains tokens for the NICs that are still
+    # static.  Restore only former MSHELL-owned NICs that disappeared from
+    # the new cmdline; this permits static and DHCP ports to coexist.
+    if [ -n "${active_file}" ] && [ -s "${active_file}" ]; then
+      while read -r I; do
+        [ -z "${I}" ] && continue
+        MACR="$(echo "${I}" | cut -d. -f2 | cut -d= -f1 | tr -d ':' | tr 'A-F' 'a-f')"
+        [ "${MACR}" = "${MACX}" ] && still_static="true"
+      done < "${active_file}"
+    fi
+
+    [ "${owned}" = "true" ] && [ "${still_static}" != "true" ] || continue
+    echo "mshell-network: restoring DHCP for ${ETH}"
+    CFG="/etc/sysconfig/network-scripts/ifcfg-${ETH}"
+    set_ifcfg_kv "${CFG}" "BOOTPROTO" "dhcp"
+    set_ifcfg_kv "${CFG}" "ONBOOT" "yes"
+    # These are the exact static keys written by MSHELL.  Do not remove
+    # unrelated user-managed options from the DSM ifcfg file.
+    sed -i '/^IPADDR=/d; /^NETMASK=/d; /^GATEWAY=/d' "${CFG}" 2>/dev/null
+    unmask_dhcp_client "${ETH}"
+    /etc/rc.network restart "${ETH}" >/dev/null 2>&1
+  done
+
+}
+
+# network.<MAC> is a one-boot declaration from FRIEND.  It must never fall
+# back to a previous boot's cache: when the current cmdline has no token,
+# user_config.json has transitioned the loader to DHCP and the owned DSM
+# settings must be restored accordingly.
+CMDTOKENS="$(grep -Eo 'network\.[0-9a-fA-F:]{12,17}=[^ ]*' /proc/cmdline 2>/dev/null)"
+if [ -n "${CMDTOKENS}" ]; then
+  # Preserve the preceding ownership list long enough to identify a NIC that
+  # was changed from static to DHCP while another NIC remains static.
+  OLDCMDFILE="${CMDFILE}.previous.$$"
+  [ -s "${CMDFILE}" ] && cp "${CMDFILE}" "${OLDCMDFILE}"
+  printf '%s\n' "${CMDTOKENS}" > "${CMDFILE}"
+  restore_dhcp_network "${OLDCMDFILE}" "${CMDFILE}"
+  rm -f "${OLDCMDFILE}"
+else
+  restore_dhcp_network
+  rm -f "${CMDFILE}"
   exit 0
 fi
 
