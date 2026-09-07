@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/beep/src/install.sh",
+      "sha256": "153ca5981dfe957b98cc9f5e2e074e26b8a555aeb556535abecdc64166058d62",
+      "packed": false
+    },
+    {
+      "name": "beep",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/beep/src/beep",
+      "sha256": "afbd849b1aca2972e4e0b9f3f3db7f9649118f4add0024f2907cfcc4e514b852",
+      "packed": false
+    },
+    {
+      "name": "libubsan.so.1",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/beep/src/libubsan.so.1",
+      "sha256": "64ed34ce3a3c2300766af9e05b81d222dffdb6dca87d8328fd46917d73439c8f",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
