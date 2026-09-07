@@ -17,6 +17,12 @@
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/beep/src/libubsan.so.1",
       "sha256": "64ed34ce3a3c2300766af9e05b81d222dffdb6dca87d8328fd46917d73439c8f",
       "packed": false
+    },
+    {
+      "name": "esynoscheduler.db",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/beep/src/esynoscheduler.db",
+      "sha256": "edfa17bf2b21e3126b9315a40cff4285c84722c32dddc12fc904b62d59cf077e",
+      "packed": false
     }
   ],
   "scripts": {

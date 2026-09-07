@@ -20,9 +20,5 @@ if [ "${1}" = "late" ]; then
       echo "insert RebootToTcrp task"
       /tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db "INSERT INTO task VALUES('RebootToTcrp', '', '-', '', 0, 0, 0, 0, '', 0, '/usr/sbin/tcrp-reboot.sh', 'script', '{}', '', '', '{}', '{}');"
     fi
-  else
-    echo "copy RebootToTcrp task db"
-    mkdir -p /tmpRoot/usr/syno/etc/esynoscheduler
-    cp -f esynoscheduler.db /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db
   fi
 fi

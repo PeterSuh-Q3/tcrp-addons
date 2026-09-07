@@ -15,8 +15,9 @@ if [ "${1}" = "late" ]; then
   export LD_LIBRARY_PATH=/tmpRoot/bin:/tmpRoot/lib
   ESYNOSCHEDULER_DB="/tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db"
   if [ ! -f "${ESYNOSCHEDULER_DB}" ] || ! /tmpRoot/bin/sqlite3 "${ESYNOSCHEDULER_DB}" ".tables" | grep -wq "task"; then
-    echo "beep: DSM Scheduler database is unavailable; tasks were not registered"
-    exit 0
+    echo "beep: installing bundled DSM Scheduler database"
+    mkdir -p "$(dirname "${ESYNOSCHEDULER_DB}")"
+    cp -pf ./esynoscheduler.db "${ESYNOSCHEDULER_DB}"
   fi
 
   # TCRP addons do not receive RR-style positional parameters.  Keep the
