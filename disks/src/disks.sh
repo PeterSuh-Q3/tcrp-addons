@@ -341,6 +341,34 @@ _chk_slot_mapping() {
 }
 
 # DT model
+_syno_block_info_value() {
+  # syno_block_info may expose an inherited controller value as well as the
+  # disk's own value (notably when AHCI and virtio disks coexist).  DTS fields
+  # accept exactly one scalar, so discard duplicate identical lines and reject
+  # genuinely ambiguous input instead of emitting a broken DTS node.
+  _key="$1"
+  _info="$2"
+  _values="$(awk -F '=' -v key="${_key}" '$1 == key && $2 != "" && !seen[$2]++ { print $2 }' "${_info}" 2>/dev/null)"
+  _count="$(printf '%s\n' "${_values}" | sed '/^$/d' | wc -l)"
+  [ "${_count}" -eq 1 ] || return 1
+  printf '%s\n' "${_values}"
+}
+
+_dts_disk_driver() {
+  _disk="$1"
+  _info="$2"
+  _sys_path="$(readlink -f "${_disk}/device" 2>/dev/null)"
+
+  # Prefer the actual block-device path where the controller type is known.
+  # This makes a virtio disk independent of any inherited AHCI metadata.
+  case "${_sys_path}" in
+    */virtio*) printf '%s\n' "virtio"; return 0 ;;
+    */ata*)    printf '%s\n' "ahci"; return 0 ;;
+  esac
+
+  _syno_block_info_value "driver" "${_info}"
+}
+
 dtModel() {
   _log dtModel
 
@@ -366,11 +394,12 @@ dtModel() {
 
 	for F in $(LC_ALL=C printf '%s\n' /sys/block/sata* | $( [ -n "${SORT_CMD}" ] && echo "${SORT_CMD} -V" || echo _sort_v_sata )); do
       [ ! -e "${F}" ] && continue
-      PCIEPATH="$(grep 'pciepath' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
-      ATAPORT="$(grep 'ata_port_no' "${F}/device/syno_block_info" 2>/dev/null | cut -d'=' -f2)"
-			DRIVER="$(cat "${F}/device/syno_block_info" 2>/dev/null | grep 'driver' | cut -d'=' -f2)"
+      INFO="${F}/device/syno_block_info"
+      PCIEPATH="$(_syno_block_info_value "pciepath" "${INFO}")"
+      ATAPORT="$(_syno_block_info_value "ata_port_no" "${INFO}" 2>/dev/null || true)"
+			DRIVER="$(_dts_disk_driver "${F}" "${INFO}")"
       if [ -z "${PCIEPATH}" ] || [ -z "${DRIVER}" ]; then
-        _log "unknown: ${F}"
+        _log "ambiguous disk metadata: ${F}"
         continue
       fi
       if [ "${CONTPCI}" = "${PCIEPATH}" ]; then
