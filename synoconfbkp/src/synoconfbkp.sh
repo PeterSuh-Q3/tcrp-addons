@@ -14,7 +14,7 @@
 NUM="${1:-7}"
 PRE="${2:-bkp}"
 
-SCBKPATH="/usr/mshell/scbk"
+SCBKPATH="/volume1/mshell/scbk"
 FILENAME="${PRE}_$(date +%Y%m%d%H%M%S).dss"
 mkdir -p "${SCBKPATH}"
 rm -f ${SCBKPATH}/*.dss
