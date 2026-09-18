@@ -107,6 +107,33 @@ func cpuTempC() int {
 	return 0
 }
 
+func acpiTempC() int {
+    hwmons, _ := filepath.Glob("/sys/class/hwmon/hwmon*")
+
+    for _, h := range hwmons {
+        b, err := os.ReadFile(h + "/name")
+        if err != nil {
+            continue
+        }
+
+        if strings.TrimSpace(string(b)) != "acpitz" {
+            continue
+        }
+
+        temp, err := os.ReadFile(h + "/temp1_input")
+        if err != nil {
+            continue
+        }
+
+        v, err := strconv.Atoi(strings.TrimSpace(string(temp)))
+        if err == nil && v > 0 {
+            return v / 1000
+        }
+    }
+
+    return 0
+}
+
 // packageTempC returns the CPU package temperature (coretemp "Package id N"),
 // which for an Intel integrated GPU is also the iGPU die temperature (the iGPU
 // shares the CPU die and exposes no separate i915 hwmon sensor). Falls back to
@@ -302,6 +329,10 @@ func patchJSON(body []byte) []byte {
 		if t := cpuTempC(); t > 0 {
 			body = injectField(body, "firmware_ver", "sys_temp",
 				fmt.Sprintf(`,"sys_temp":%d`, t))
+		}
+		if t := acpiTempC(); t > 0 {
+		    body = injectField(body, "firmware_ver", "acpi_temp",
+		        fmt.Sprintf(`,"acpi_temp":%d`, t))
 		}
 		if fans := fanSpeeds(); len(fans) > 0 {
 			parts := make([]string, len(fans))
