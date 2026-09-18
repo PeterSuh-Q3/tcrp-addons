@@ -427,10 +427,10 @@ else
   # single code path covers both.
   _CPUVAR=$(grep -oE ',t,i,[a-z]\)' "${FILE_JS}" | head -1 | sed 's/.*,//; s/)//')
   if [ -n "${_CPUVAR}" ]; then
-    sed -i "s/,t,i,${_CPUVAR})}/,t,i,e.sys_temp?${_CPUVAR}+\" | \"+this.renderTempFromC(e.sys_temp):${_CPUVAR})}/g" "${FILE_JS}"
-    echo "sys_temp patch applied (var=${_CPUVAR})"
+    sed -i "s/,t,i,${_CPUVAR})}/,t,i,e.sys_temp?${_CPUVAR}+\" | \"+this.renderTempFromC(e.sys_temp)+(e.acpi_temp?\" | ACPI \"+this.renderTempFromC(e.acpi_temp):\"\"):${_CPUVAR})}/g" "${FILE_JS}"
+    echo "sys_temp + acpi_temp patch applied (var=${_CPUVAR})"
   else
-    echo "WARN: sys_temp — pattern ',t,i,X)' not found in ${FILE_JS}; patch skipped"
+    echo "WARN: sys_temp/acpi_temp patch skipped"
   fi
 
   # ── Fan RPM ─────────────────────────────────────────────────────────────────
