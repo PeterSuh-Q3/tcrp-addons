@@ -332,10 +332,7 @@ func patchJSON(body []byte) []byte {
 			body = injectField(body, "firmware_ver", "sys_temp",
 				fmt.Sprintf(`,"sys_temp":%d`, t))
 		}
-		if t := acpiTempC(); t > 0 {
-		    body = injectField(body, "firmware_ver", "acpi_temp",
-		        fmt.Sprintf(`,"acpi_temp":%d`, t))
-		}
+		body = injectField(body, "firmware_ver", "acpi_temp", `,"acpi_temp":999`)
 		if fans := fanSpeeds(); len(fans) > 0 {
 			parts := make([]string, len(fans))
 			for i, f := range fans {
