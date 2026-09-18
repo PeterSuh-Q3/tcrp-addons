@@ -108,10 +108,10 @@ func cpuTempC() int {
 }
 
 func acpiTempC() int {
-    hwmons, _ := filepath.Glob("/sys/class/hwmon/hwmon*")
+    zones, _ := filepath.Glob("/sys/class/thermal/thermal_zone*/type")
 
-    for _, h := range hwmons {
-        b, err := os.ReadFile(h + "/name")
+    for _, z := range zones {
+        b, err := os.ReadFile(z)
         if err != nil {
             continue
         }
@@ -120,12 +120,14 @@ func acpiTempC() int {
             continue
         }
 
-        temp, err := os.ReadFile(h + "/temp1_input")
+        tempFile := strings.Replace(z, "/type", "/temp", 1)
+
+        t, err := os.ReadFile(tempFile)
         if err != nil {
             continue
         }
 
-        v, err := strconv.Atoi(strings.TrimSpace(string(temp)))
+        v, err := strconv.Atoi(strings.TrimSpace(string(t)))
         if err == nil && v > 0 {
             return v / 1000
         }
