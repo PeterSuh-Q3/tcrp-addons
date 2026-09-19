@@ -433,6 +433,13 @@ else
     echo "WARN: sys_temp/acpi_temp patch skipped"
   fi
 
+  # DSM 7.4 passes a reduced object to getSysTemperature().  Preserve the
+  # separately injected ACPI reading there; otherwise the renderer above
+  # never receives e.acpi_temp even though it exists in the API response.
+  sed -i \
+    's/{sys_temp:t\.sys_temp,sys_tempwarn:t\.sys_tempwarn}/{sys_temp:t.sys_temp,sys_tempwarn:t.sys_tempwarn,acpi_temp:t.acpi_temp}/g; s/{sys_temp:u\.sys_temp,sys_tempwarn:u\.sys_tempwarn}/{sys_temp:u.sys_temp,sys_tempwarn:u.sys_tempwarn,acpi_temp:u.acpi_temp}/g; s/{sys_temp:p\.sys_temp,sys_tempwarn:p\.sys_tempwarn}/{sys_temp:p.sys_temp,sys_tempwarn:p.sys_tempwarn,acpi_temp:p.acpi_temp}/g' \
+    "${FILE_JS}"
+
   # ── Fan RPM ─────────────────────────────────────────────────────────────────
   # Same minification variation as CPU temp ('n' or 's'). Write the sed script
   # to a temp file to avoid backtick/dollar-sign escaping in the shell.

@@ -12,20 +12,22 @@
 //	Response: HTTP-style headers \r\n\r\n body
 //
 // Behavior:
+//
 //   - Request leg (client → upstream) is forwarded byte-for-byte.
+//
 //   - Response leg (upstream → client) is buffered up to maxBufferedBytes.
 //     When the buffered body contains a `"firmware_ver"` field we treat it
 //     as a SYNO.Core.System.info payload and inject:
 //
 //     In SYNO.Core.System.info (matched by "firmware_ver"):
-//       firmware_ver : appended with " / <bootloader version>"
-//       sys_temp     : first non-zero hwmon temp*_input value (°C)
-//       fan_list     : every non-zero hwmon fan*_input value (RPM)
+//     firmware_ver : appended with " / <bootloader version>"
+//     sys_temp     : first non-zero hwmon temp*_input value (°C)
+//     fan_list     : every non-zero hwmon fan*_input value (RPM)
 //
 //     In SYNO.Core.System.GpuInfo.list (matched by "support_gpu"), which is
 //     where DSM 7.4's Info Center reads the GPU section from:
-//       support_gpu  : flipped false -> true when a gpu_info array exists
-//       gpu_info     : GPU array from /run/mshell_gpu_info.json (see gpuInfoFile)
+//     support_gpu  : flipped false -> true when a gpu_info array exists
+//     gpu_info     : GPU array from /run/mshell_gpu_info.json (see gpuInfoFile)
 //
 //     Content-Length is rewritten when present. Responses larger than the
 //     buffer cap stream through unmodified.
@@ -50,7 +52,7 @@ import (
 )
 
 const (
-	versionFile  = "/usr/mshell/VERSION"
+	versionFile = "/usr/mshell/VERSION"
 
 	// gpuInfoFile holds the SYNO.Core.System "gpu_info" array (a JSON array
 	// of GPU objects) precomputed by cpuinfo.sh, which resolves the adapter
@@ -108,32 +110,32 @@ func cpuTempC() int {
 }
 
 func acpiTempC() int {
-    zones, _ := filepath.Glob("/sys/class/thermal/thermal_zone*/type")
+	zones, _ := filepath.Glob("/sys/class/thermal/thermal_zone*/type")
 
-    for _, z := range zones {
-        b, err := os.ReadFile(z)
-        if err != nil {
-            continue
-        }
+	for _, z := range zones {
+		b, err := os.ReadFile(z)
+		if err != nil {
+			continue
+		}
 
-        if strings.TrimSpace(string(b)) != "acpitz" {
-            continue
-        }
+		if strings.TrimSpace(string(b)) != "acpitz" {
+			continue
+		}
 
-        tempFile := strings.Replace(z, "/type", "/temp", 1)
+		tempFile := strings.Replace(z, "/type", "/temp", 1)
 
-        t, err := os.ReadFile(tempFile)
-        if err != nil {
-            continue
-        }
+		t, err := os.ReadFile(tempFile)
+		if err != nil {
+			continue
+		}
 
-        v, err := strconv.Atoi(strings.TrimSpace(string(t)))
-        if err == nil && v > 0 {
-            return v / 1000
-        }
-    }
+		v, err := strconv.Atoi(strings.TrimSpace(string(t)))
+		if err == nil && v > 0 {
+			return v / 1000
+		}
+	}
 
-    return 0
+	return 0
 }
 
 // packageTempC returns the CPU package temperature (coretemp "Package id N"),
@@ -332,7 +334,13 @@ func patchJSON(body []byte) []byte {
 			body = injectField(body, "firmware_ver", "sys_temp",
 				fmt.Sprintf(`,"sys_temp":%d`, t))
 		}
-		body = injectField(body, "firmware_ver", "acpi_temp", `,"acpi_temp":999`)
+		// DSM's own sys_temp is supplied through synobios and is not a
+		// reliable ACPI reading on every platform.  Expose ACPI separately,
+		// but only when the kernel actually publishes an acpitz zone.
+		if t := acpiTempC(); t > 0 {
+			body = injectField(body, "firmware_ver", "acpi_temp",
+				fmt.Sprintf(`,"acpi_temp":%d`, t))
+		}
 		if fans := fanSpeeds(); len(fans) > 0 {
 			parts := make([]string, len(fans))
 			for i, f := range fans {
