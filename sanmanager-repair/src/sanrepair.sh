@@ -20,6 +20,6 @@ if [ $(synopkg status ScsiTarget | grep error | wc -l) -gt 0 ]; then
 fi
 
 if [ -d /config/target ]; then
-    mkdir /config/target/iscsi
-    mkdir /config/target/loopback
+    mkdir -p /config/target/iscsi
+    mkdir -p /config/target/loopback
 fi
