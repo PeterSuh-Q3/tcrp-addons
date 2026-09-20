@@ -7,6 +7,10 @@ tasks for boot and shutdown. A motherboard buzzer and the `pcspeaker` and
 The RR `-m` melodies are the fixed default: Mario at startup and Axel F at
 shutdown. TCRP addons do not receive RR-style positional parameters.
 
+Existing scheduler entries are preserved on later boots. This lets MSHELL
+Manager enable or disable both melodies without the addon resetting that
+choice to enabled.
+
 `pcspeaker.ko` and `pcspkr.ko` are not duplicated by this addon. They are
 loaded during the modules phase by `etc-modules-load`.
 
@@ -18,6 +22,9 @@ loaded during the modules phase by `etc-modules-load`.
 
 RR의 `-m` 멜로디를 기본값으로 고정했습니다. 부팅 시 Mario, 종료 시 Axel F를
 재생하며 TCRP 애드온은 RR 방식의 위치 인수를 받지 않습니다.
+
+이후 부팅에서는 기존 스케줄러 작업의 상태를 보존합니다. 따라서 MSHELL
+Manager에서 두 멜로디를 비활성화해도 Addon이 다시 활성 상태로 덮어쓰지 않습니다.
 
 이 애드온은 `pcspeaker.ko`, `pcspkr.ko`를 중복 포함하지 않습니다.
 두 모듈은 `etc-modules-load`가 modules 단계에서 적재합니다.

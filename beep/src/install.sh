@@ -25,11 +25,13 @@ if [ "${1}" = "late" ]; then
   BOOT_BEEP="/usr/bin/beep -f 130 -l 100 -n -f 262 -l 100 -n -f 330 -l 100 -n -f 392 -l 100 -n -f 523 -l 100 -n -f 660 -l 100 -n -f 784 -l 300 -n -f 660 -l 300 -n -f 146 -l 100 -n -f 262 -l 100 -n -f 311 -l 100 -n -f 415 -l 100 -n -f 523 -l 100 -n -f 622 -l 100 -n -f 831 -l 300 -n -f 622 -l 300 -n -f 155 -l 100 -n -f 294 -l 100 -n -f 349 -l 100 -n -f 466 -l 100 -n -f 588 -l 100 -n -f 699 -l 100 -n -f 933 -l 300 -n -f 933 -l 100 -n -f 933 -l 100 -n -f 933 -l 100 -n -f 1047 -l 400"
   SHUTDOWN_BEEP="/usr/bin/beep -f 659 -l 460 -n -f 784 -l 340 -n -f 659 -l 230 -n -f 659 -l 110 -n -f 880 -l 230 -n -f 659 -l 230 -n -f 587 -l 230 -n -f 659 -l 460 -n -f 988 -l 340 -n -f 659 -l 230 -n -f 659 -l 110 -n -f 1047 -l 230 -n -f 988 -l 230 -n -f 784 -l 230 -n -f 659 -l 230 -n -f 988 -l 230 -n -f 1318 -l 230 -n -f 659 -l 110 -n -f 587 -l 230 -n -f 587 -l 110 -n -f 494 -l 230 -n -f 740 -l 230 -n -f 659 -l 460"
 
+  # Register defaults only when a task is missing.  Do not delete/reinsert
+  # existing rows: MSHELL Manager stores the user's enabled/disabled choice
+  # in this persistent DSM scheduler DB, and this addon is executed again on
+  # every boot.
   /tmpRoot/bin/sqlite3 "${ESYNOSCHEDULER_DB}" <<EOF
-DELETE FROM task WHERE task_name LIKE 'BeepOnBootup';
-INSERT INTO task VALUES('BeepOnBootup', '', 'bootup', '', 1, 0, 0, 0, '', 0, '${BOOT_BEEP}', 'script', '{}', '', '', '{}', '{}');
-DELETE FROM task WHERE task_name LIKE 'BeepOnShutdown';
-INSERT INTO task VALUES('BeepOnShutdown', '', 'shutdown', '', 1, 0, 0, 0, '', 0, '${SHUTDOWN_BEEP}', 'script', '{}', '', '', '{}', '{}');
+INSERT OR IGNORE INTO task VALUES('BeepOnBootup', '', 'bootup', '', 1, 0, 0, 0, '', 0, '${BOOT_BEEP}', 'script', '{}', '', '', '{}', '{}');
+INSERT OR IGNORE INTO task VALUES('BeepOnShutdown', '', 'shutdown', '', 1, 0, 0, 0, '', 0, '${SHUTDOWN_BEEP}', 'script', '{}', '', '', '{}', '{}');
 EOF
-  echo "beep: DSM boot and shutdown tasks registered"
+  echo "beep: DSM boot and shutdown tasks ensured (existing enabled state preserved)"
 fi
