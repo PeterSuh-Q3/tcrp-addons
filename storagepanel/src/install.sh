@@ -80,18 +80,6 @@ NEW="driveShape:\"Mdot2-shape\",major:\"row\",rowDir:\"UD\",colDir:\"LR\",driveS
 sed -i "s/\"${_UNIQUE}\",//g; s/,\"${_UNIQUE}\"//g; s/${HDD_BAY}:\[\"/${HDD_BAY}:\[\"${_UNIQUE}\",\"/g; s/M2X1:\[\"/M2X1:\[\"${_UNIQUE}\",\"/g; s/${OLD}/${NEW}/g" "${FILE_JS}"
 gzip -c "${FILE_JS}" >"${FILE_GZ}"
 
-  echo "Installing manual schedule for storagepanel"
-  cp -v ./storagepanel.sh /tmpRoot/usr/sbin/storagepanel.sh
-  chmod +x /tmpRoot/usr/sbin/storagepanel.sh
-  if [ -f /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db ]; then
-    if [ $(/tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db "select count(*) as cnt from task a where task_name = 'Change Storage Panel';") -gt "0" ]; then
-      echo "A Change Storage Panel task already exists at task_name. skipped!!!"
-    else
-      echo "insert Change Storage Panel task"
-      /tmpRoot/bin/sqlite3 /tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db "INSERT INTO task VALUES('Change Storage Panel', '', '-', '', 0, 0, 0, 0, '', 0, '/usr/sbin/storagepanel.sh RACK_60_Bay 1X2 # RACK_0_Bay RACK_2_Bay RACK_4_Bay RACK_8_Bay RACK_10_Bay RACK_12_Bay RACK_12_Bay_2 RACK_16_Bay RACK_20_Bay RACK_24_Bay RACK_60_Bay TOWER_1_Bay TOWER_2_Bay TOWER_4_Bay TOWER_4_Bay_J TOWER_4_Bay_S TOWER_5_Bay TOWER_6_Bay TOWER_8_Bay TOWER_12_Bay', 'script', '{}', '', '', '{}', '{}');"
-    fi
-  fi
-  
   exit 0
 
 fi
