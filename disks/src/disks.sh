@@ -379,8 +379,6 @@ dtModel() {
     {
       echo "/dts-v1/;"
       echo "/ {"
-      echo "    #address-cells = <1>;"
-      echo "    #size-cells = <1>;"      
       echo "    compatible = \"Synology\";"
       echo "    model = \"\";"
       echo "    version = <0x01>;"
