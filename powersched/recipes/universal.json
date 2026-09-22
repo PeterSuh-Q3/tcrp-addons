@@ -11,7 +11,7 @@
     {
       "name": "install-powersched.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/powersched/src/install-powersched.sh",
-      "sha256": "0a89f97e4a89345a7897ab3dd0776c49bdef9d1ef3236395d265635efea9a1e5",
+      "sha256": "59bd4a26acf993d16299727a201e4e16cc5dba234c5aa1b650761a703355a28a",
       "packed": false
     },
     {

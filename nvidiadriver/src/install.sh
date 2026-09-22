@@ -1,5 +1,15 @@
 #!/bin/sh
 #
+#
+# Copyright (C) 2026-2026 PeterSuh-Q3
+# https://github.com/PeterSuh-Q3
+#
+# This installer script is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
+#
 # nvidiadriver - inject a no-auth NVIDIA driver (2-layer package) into DSM.
 #
 # TWO explicitly-separated redpill phases (see the case dispatcher at the end):

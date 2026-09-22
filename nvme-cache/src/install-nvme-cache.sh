@@ -1,5 +1,15 @@
 #!/usr/bin/env ash
 
+#
+# Copyright (C) 2023-2026 PeterSuh-Q3
+# https://github.com/PeterSuh-Q3
+#
+# This installer script is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
+#
 MODELS="DS918+ RS1619xs+ DS419+ DS1019+ DS719+ DS1621xs+"
 MODEL=$(cat /proc/sys/kernel/syno_hw_version)
 tmpRoot="/tmpRoot"

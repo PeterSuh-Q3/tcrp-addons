@@ -1,5 +1,15 @@
 #!/usr/bin/env ash
 
+#
+# Copyright (C) 2025-2026 PeterSuh-Q3
+# https://github.com/PeterSuh-Q3
+#
+# This installer script is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
+#
 model=$(uname -a | awk '{print $NF}' | cut -d '_' -f3)
 echo model "${model}" >&2  # debug
 

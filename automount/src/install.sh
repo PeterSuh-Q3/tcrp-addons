@@ -1,5 +1,15 @@
 #!/bin/sh
 
+#
+# Copyright (C) 2023-2026 PeterSuh-Q3
+# https://github.com/PeterSuh-Q3
+#
+# This installer script is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
+#
 set -e
 # 2024.03.13
 # Changed to handle only loader partition injection function on HDD,

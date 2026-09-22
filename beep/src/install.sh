@@ -1,5 +1,15 @@
 #!/usr/bin/env sh
 
+#
+# Copyright (C) 2026-2026 PeterSuh-Q3
+# https://github.com/PeterSuh-Q3
+#
+# This installer script is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
+#
 # Install the standalone beep utility and create DSM Scheduler entries for
 # boot and shutdown.  pcspeaker.ko and pcspkr.ko are intentionally not copied
 # here: they are supplied by all-modules and loaded by etc-modules-load.

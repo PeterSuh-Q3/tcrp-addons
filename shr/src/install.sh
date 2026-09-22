@@ -1,5 +1,15 @@
 #!/bin/bash
 
+#
+# Copyright (C) 2023-2026 PeterSuh-Q3
+# https://github.com/PeterSuh-Q3
+#
+# This installer script is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
+#
 modify_synoinfo() {
 # add supportraidgroup="no" , support_syno_hybrid_raid="yes" to /etc/synoinfo.conf for avtive SHR 2023.07.10
   if [ -f /tmpRoot/etc/synoinfo.conf ]; then

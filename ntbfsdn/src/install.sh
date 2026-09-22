@@ -1,5 +1,15 @@
 #!/usr/bin/env ash
 #
+#
+# Copyright (C) 2026-2026 PeterSuh-Q3
+# https://github.com/PeterSuh-Q3
+#
+# This installer script is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
+#
 # ntbfsdn - epyc7003ntb (PAS7700 / FS3420) FSDN single-loader install helper.
 #
 # PAS7700 is a dual-controller (FSDN) Enterprise model. Its DSM installer
