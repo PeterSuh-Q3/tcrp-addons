@@ -5,6 +5,16 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
+# Copyright (C) 2025-2026 PeterSuh-Q3
+#
+# https://github.com/PeterSuh-Q3
+#
+# The additional code authored by PeterSuh-Q3 is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
+#
 
 KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
 ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
