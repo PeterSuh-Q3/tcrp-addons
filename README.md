@@ -14,7 +14,7 @@ PeterSuh-Q3 from 2022 through 2026.
 
 Original code and modifications for which PeterSuh-Q3 owns or controls
 the copyright are provided under the
-[PeterSuh-Q3 Non-Commercial Source-Available License](./LICENSES/PeterSuh-Q3-Non-Commercial-1.0.txt).
+[PeterSuh-Q3 Non-Commercial Source-Available License](./LICENSES).
 
 Third-party components remain subject to their original copyright notices
 and applicable licenses.
