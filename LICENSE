@@ -75,27 +75,36 @@ d. distribute the Software or a Modified Version for Non-Commercial Use.
 
 This permission does not include Commercial Use.
 
-3. Commercial Use Requires Permission
+3. Commercial Use Prohibited
 
-You must obtain prior written permission from PeterSuh-Q3 before
-engaging in any Commercial Use.
+Commercial Use of the Covered Software is strictly prohibited.
 
-A separate commercial license may be granted at the sole discretion of
-the copyright holder. No commercial license is granted by merely
-downloading, accessing, copying, modifying, or contributing to the
-Software.
+No permission is granted under this License to:
 
-Requests for commercial licensing should identify:
+a. sell, license, lease, rent, or otherwise transfer the Covered Software
+   or a Modified Version for compensation;
 
-a. the person or organization requesting the license;
+b. distribute a paid or preconfigured installation image;
 
-b. the Software and version to be used;
+c. provide paid installation, deployment, configuration, consulting,
+   maintenance, support, hosting, or managed services based on the
+   Covered Software;
 
-c. the intended product, service, or distribution method;
+d. bundle the Covered Software with a commercial product or service;
 
-d. the countries or markets involved; and
+e. use the Covered Software in a commercial NAS, storage, hosting,
+   backup, media-server, or similar service; or
 
-e. whether the Software will be modified or combined with other works.
+f. use the Covered Software to obtain commercial revenue or commercial
+   advantage.
+
+PeterSuh-Q3 does not offer or grant a commercial license under this
+License.
+
+This restriction applies only to original code and modifications for
+which PeterSuh-Q3 owns or controls the applicable copyright. It does not
+restrict rights granted by an applicable third-party license, including
+the MIT License or the GNU General Public License.
 
 4. Attribution and Notices
 
