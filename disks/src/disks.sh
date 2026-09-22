@@ -5,6 +5,15 @@
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
 #
+# Additional modifications and installer logic:
+# Copyright (C) 2025-2026 PeterSuh-Q3
+# https://github.com/PeterSuh-Q3
+#
+# The additional code authored by PeterSuh-Q3 is licensed under the
+# PeterSuh-Q3 Non-Commercial Source-Available License.
+#
+# The kernel module installed by this script is a separate component
+# distributed under its applicable GPL-compatible license.
 
 set_key_value() {
     local file="$1"
