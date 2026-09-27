@@ -21,7 +21,7 @@
 //
 //     In SYNO.Core.System.info (matched by "firmware_ver"):
 //     firmware_ver : appended with " / <bootloader version>"
-//     sys_temp     : first non-zero hwmon temp*_input value (°C)
+//     sys_temp     : CPU package/die temperature from coretemp or k10temp (°C)
 //     fan_list     : every non-zero hwmon fan*_input value (RPM)
 //
 //     In SYNO.Core.System.GpuInfo.list (matched by "support_gpu"), which is
@@ -95,16 +95,74 @@ func bootloaderVer() string {
 }
 
 func cpuTempC() int {
-	matches, _ := filepath.Glob("/sys/class/hwmon/hwmon*/temp*_input")
-	for _, m := range matches {
-		b, err := os.ReadFile(m)
-		if err != nil {
+	return cpuTempCFrom("/sys/class/hwmon")
+}
+
+func hwmonDevices(root string) []string {
+	devices, _ := filepath.Glob(filepath.Join(root, "hwmon*"))
+	return devices
+}
+
+func hwmonName(device string) string {
+	b, _ := os.ReadFile(filepath.Join(device, "name"))
+	return strings.TrimSpace(string(b))
+}
+
+func hwmonTempC(input string) int {
+	b, err := os.ReadFile(input)
+	if err != nil {
+		return 0
+	}
+	v, err := strconv.Atoi(strings.TrimSpace(string(b)))
+	if err != nil || v <= 0 {
+		return 0
+	}
+	return v / 1000
+}
+
+func labeledTempC(device, label string) int {
+	labels, _ := filepath.Glob(filepath.Join(device, "temp*_label"))
+	for _, lp := range labels {
+		b, err := os.ReadFile(lp)
+		if err == nil && strings.TrimSpace(string(b)) == label {
+			return hwmonTempC(strings.TrimSuffix(lp, "_label") + "_input")
+		}
+	}
+	return 0
+}
+
+func coretempPackageTempCFrom(root string) (int, bool) {
+	found := false
+	for _, device := range hwmonDevices(root) {
+		if hwmonName(device) != "coretemp" {
 			continue
 		}
-		v, err := strconv.Atoi(strings.TrimSpace(string(b)))
-		if err == nil && v > 0 {
-			return v / 1000
+		found = true
+		if t := labeledTempC(device, "Physical id 0"); t > 0 {
+			return t, true
 		}
+	}
+	return 0, found
+}
+
+func cpuTempCFrom(root string) int {
+	// Never substitute an unrelated hwmon channel for a missing Intel package sensor.
+	if t, found := coretempPackageTempCFrom(root); found {
+		return t
+	}
+	for _, device := range hwmonDevices(root) {
+		if hwmonName(device) != "k10temp" {
+			continue
+		}
+		// Tdie is the physical die reading when available; older k10temp
+		// drivers expose only temp1_input (Tctl).
+		if t := labeledTempC(device, "Tdie"); t > 0 {
+			return t
+		}
+		if t := labeledTempC(device, "Tctl"); t > 0 {
+			return t
+		}
+		return hwmonTempC(filepath.Join(device, "temp1_input"))
 	}
 	return 0
 }
@@ -138,30 +196,11 @@ func acpiTempC() int {
 	return 0
 }
 
-// packageTempC returns the CPU package temperature (coretemp "Package id N"),
-// which for an Intel integrated GPU is also the iGPU die temperature (the iGPU
-// shares the CPU die and exposes no separate i915 hwmon sensor). Falls back to
-// cpuTempC() when no coretemp package label is present.
+// packageTempC returns coretemp's "Physical id 0" for the Intel iGPU fallback.
+// An unrelated sensor must not be reported as the iGPU temperature.
 func packageTempC() int {
-	labels, _ := filepath.Glob("/sys/class/hwmon/hwmon*/temp*_label")
-	for _, lp := range labels {
-		b, err := os.ReadFile(lp)
-		if err != nil {
-			continue
-		}
-		if !strings.HasPrefix(strings.TrimSpace(string(b)), "Package id") {
-			continue
-		}
-		ip := strings.TrimSuffix(lp, "_label") + "_input"
-		v, err := os.ReadFile(ip)
-		if err != nil {
-			continue
-		}
-		if n, err := strconv.Atoi(strings.TrimSpace(string(v))); err == nil && n > 0 {
-			return n / 1000
-		}
-	}
-	return cpuTempC()
+	t, _ := coretempPackageTempCFrom("/sys/class/hwmon")
+	return t
 }
 
 // gpuInfoArray returns the trimmed contents of gpuInfoFile when it holds a
