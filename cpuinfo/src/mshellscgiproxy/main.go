@@ -141,6 +141,10 @@ func coretempPackageTempCFrom(root string) (int, bool) {
 		if t := labeledTempC(device, "Physical id 0"); t > 0 {
 			return t, true
 		}
+		// Some DSM coretemp builds name the same package channel "Package id 0".
+		if t := labeledTempC(device, "Package id 0"); t > 0 {
+			return t, true
+		}
 	}
 	return 0, found
 }
@@ -196,7 +200,7 @@ func acpiTempC() int {
 	return 0
 }
 
-// packageTempC returns coretemp's "Physical id 0" for the Intel iGPU fallback.
+// packageTempC returns coretemp's package 0 channel for the Intel iGPU fallback.
 // An unrelated sensor must not be reported as the iGPU temperature.
 func packageTempC() int {
 	t, _ := coretempPackageTempCFrom("/sys/class/hwmon")
