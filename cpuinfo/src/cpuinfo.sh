@@ -217,9 +217,9 @@ else
     cp -pf "${FILE_JS}.bak" "${FILE_JS}"
   fi
 
-  # CPU/GPU info is always patched statically. mshellscgiproxy only injects
-  # firmware_ver / sys_temp / fan_list into the runtime API response, so the
-  # vendor/family/series/cores/clock values still need to live in admin_center.js.
+  # CPU/GPU info is always patched statically. The proxy injects firmware_ver,
+  # mshell_cpu_temp, acpi_temp, and fan_list into the runtime API response;
+  # vendor/family/series/cores/clock still need to live in admin_center.js.
   VENDOR="" # str
   FAMILY="" # str
   SERIES="" # str
@@ -248,6 +248,20 @@ else
   CORES="$(grep -c 'core id' /proc/cpuinfo 2>/dev/null)C\/$(grep -c 'processor' /proc/cpuinfo 2>/dev/null)T"
   SPEED="$(grep 'MHz' /proc/cpuinfo 2>/dev/null | cut -d: -f2 | cut -d. -f1 | awk '{sum+=$1; count++} END {if(count>0) printf "%.0f", sum/count; else print "0"}')"
   SPEED="${SPEED:-0}"
+  # DSM 7.4: add the live CPU package/die temperature immediately after CPU
+  # Core, before replacing t.cpu_cores with its static display value. Keep
+  # DSM's separate CPU_temperature/system-temp row intact.
+  _CPU_CORE_ANCHOR='Ext.isDefined(t.cpu_cores)&&d.push([_T("status","cpu_cores"),t.cpu_cores]),'
+  if grep -Fq "${_CPU_CORE_ANCHOR}" "${FILE_JS}"; then
+    sed -i 's|Ext\.isDefined(t\.cpu_cores)&&d\.push(\[_T("status","cpu_cores"),t\.cpu_cores\]),|&t.mshell_cpu_temp\&\&d.push(["CPU Temperature",this.renderTempFromC(t.mshell_cpu_temp)]),|g' "${FILE_JS}"
+    if grep -Fq 't.mshell_cpu_temp&&d.push(["CPU Temperature",this.renderTempFromC(t.mshell_cpu_temp)])' "${FILE_JS}"; then
+      echo "CPU Temperature row patch applied after CPU Core (DSM 7.4)"
+    else
+      echo "WARN: CPU Temperature row patch did not apply"
+    fi
+  else
+    echo "WARN: CPU Temperature row — DSM 7.4 CPU Core pattern not found; patch skipped"
+  fi
   sed -i "s/\(\(,\)\|\((\)\).\.cpu_vendor/\1\"${VENDOR//\"/}\"/g" "${FILE_JS}"
   sed -i "s/\(\(,\)\|\((\)\).\.cpu_family/\1\"${FAMILY//\"/}\"/g" "${FILE_JS}"
   sed -i "s/\(\(,\)\|\((\)\).\.cpu_series/\1\"${SERIES//\"/}\"/g" "${FILE_JS}"
@@ -421,7 +435,7 @@ else
     echo "WARN: pcie_slot — 'Synology \${r.cardName}' pattern not found; patch skipped"
   fi
 
-  # ── CPU temperature ─────────────────────────────────────────────────────────
+  # ── DSM system temperature ──────────────────────────────────────────────────
   # The minified variable carrying the system uptime string differs by DSM build
   # (observed: 's' with GPU section, 'n' without). Detect it dynamically so a
   # single code path covers both.

@@ -21,7 +21,7 @@
 //
 //     In SYNO.Core.System.info (matched by "firmware_ver"):
 //     firmware_ver : appended with " / <bootloader version>"
-//     sys_temp     : CPU package/die temperature from coretemp or k10temp (°C)
+//     mshell_cpu_temp : CPU package/die temperature from coretemp or k10temp (°C)
 //     fan_list     : every non-zero hwmon fan*_input value (RPM)
 //
 //     In SYNO.Core.System.GpuInfo.list (matched by "support_gpu"), which is
@@ -365,7 +365,7 @@ var (
 
 func patchJSON(body []byte) []byte {
 	// SYNO.Core.System.info — append the loader version and splice in live
-	// CPU temperature / fan readings (read client-side from t.sys_temp etc).
+	// CPU temperature / fan readings. Keep DSM's native sys_temp unchanged.
 	if bytes.Contains(body, []byte(`"firmware_ver"`)) {
 		if ver := bootloaderVer(); ver != "" {
 			body = fwRe.ReplaceAllFunc(body, func(m []byte) []byte {
@@ -374,8 +374,8 @@ func patchJSON(body []byte) []byte {
 			})
 		}
 		if t := cpuTempC(); t > 0 {
-			body = injectField(body, "firmware_ver", "sys_temp",
-				fmt.Sprintf(`,"sys_temp":%d`, t))
+			body = injectField(body, "firmware_ver", "mshell_cpu_temp",
+				fmt.Sprintf(`,"mshell_cpu_temp":%d`, t))
 		}
 		// DSM's own sys_temp is supplied through synobios and is not a
 		// reliable ACPI reading on every platform.  Expose ACPI separately,
