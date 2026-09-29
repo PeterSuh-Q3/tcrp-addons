@@ -32,11 +32,10 @@ if [ "${1}" = "late" ]; then
   
   export LD_LIBRARY_PATH=/tmpRoot/sbin:/tmpRoot/lib
   ESYNOSCHEDULER_DB="/tmpRoot/usr/syno/etc/esynoscheduler/esynoscheduler.db"
-  echo "insert synoconfbkp task to esynoscheduler.db"
+  # Preserve existing task settings and enabled state on subsequent builds.
+  echo "ensure synoconfbkp tasks in esynoscheduler.db"
   /tmpRoot/bin/sqlite3 "${ESYNOSCHEDULER_DB}" <<EOF
-DELETE FROM task WHERE task_name LIKE 'SynoconfbkpBootup';
-INSERT INTO task VALUES('SynoconfbkpBootup', '', 'bootup', '', 1, 0, 0, 0, '', 0, "/usr/sbin/synoconfbkp.sh ${2:-7} ${3:-bkp}_bootup", 'script', '{}', '', '', '{}', '{}');
-DELETE FROM task WHERE task_name LIKE 'SynoconfbkpShutdown';
-INSERT INTO task VALUES('SynoconfbkpShutdown', '', 'shutdown', '', 1, 0, 0, 0, '', 0, "/usr/sbin/synoconfbkp.sh ${2:-7} ${3:-bkp}_shutdown", 'script', '{}', '', '', '{}', '{}');
+INSERT OR IGNORE INTO task VALUES('SynoconfbkpBootup', '', 'bootup', '', 1, 0, 0, 0, '', 0, "/usr/sbin/synoconfbkp.sh ${2:-7} ${3:-bkp}_bootup", 'script', '{}', '', '', '{}', '{}');
+INSERT OR IGNORE INTO task VALUES('SynoconfbkpShutdown', '', 'shutdown', '', 1, 0, 0, 0, '', 0, "/usr/sbin/synoconfbkp.sh ${2:-7} ${3:-bkp}_shutdown", 'script', '{}', '', '', '{}', '{}');
 EOF
 fi

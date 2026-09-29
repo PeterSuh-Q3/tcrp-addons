@@ -14,3 +14,7 @@ This addon installs `sensors`, `sensors-detect`, and `fancontrol`. It also
 enables the RR fan-control service and modifies DSM fan-support settings when
 fan inputs are detected. Select it only after validating the motherboard's
 sensor-to-PWM mapping; it is not a read-only sensor-display addon.
+
+The `Fancontrol` Scheduler entry is inserted only when absent. Existing task
+settings, including user-selected fan modes and enabled state, are preserved
+on subsequent loader builds.

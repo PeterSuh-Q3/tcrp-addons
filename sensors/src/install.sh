@@ -21,13 +21,10 @@ if [ "${1}" = "late" ]; then
     mkdir -p "$(dirname "${ESYNOSCHEDULER_DB}")"
     cp -vpf ./esynoscheduler.db "${ESYNOSCHEDULER_DB}"
   fi
-  if echo "SELECT * FROM task;" | /tmpRoot/bin/sqlite3 "${ESYNOSCHEDULER_DB}" | grep -E "Fancontrol" -A12 | grep -Eq "^FANMODES=(.*)$"; then
-    echo "Fancontrol task already exists"
-  else
-    echo "insert sensors task to esynoscheduler.db"
-    /tmpRoot/bin/sqlite3 "${ESYNOSCHEDULER_DB}" <<EOF
-DELETE FROM task WHERE task_name LIKE 'Fancontrol';
-INSERT INTO task VALUES('Fancontrol', '', 'bootup', '', 0, 0, 0, 0, '', 0, '
+  # Preserve an existing task, including its enabled state and custom fan
+  # modes. This installer is run again on subsequent loader boots.
+  /tmpRoot/bin/sqlite3 "${ESYNOSCHEDULER_DB}" <<EOF
+INSERT OR IGNORE INTO task VALUES('Fancontrol', '', 'bootup', '', 0, 0, 0, 0, '', 0, '
 # 只需要修改以下12个值即可，无需运行该任务，修改后切换风扇模式生效。
 # You only need to modify the following 12 values. You do not need to run the task. After the modification, the fan mode switch will take effect.
 # 或者自行创建 /etc/fancontrol.full, /etc/fancontrol.high, /etc/fancontrol.low 文件，内容为 /etc/fancontrol 的内容。
@@ -41,7 +38,7 @@ FANMODES=("20 40 255 127" "30 60 255 63" "40 80 192 63")
 # 1: MINTEMP  2: MAXTEMP  3: MINSTART  4: MINSTOP
 ', 'script', '{}', '', '', '{}', '{}');
 EOF
-  fi
+  echo "sensors: Fancontrol task ensured (existing settings preserved)"
 
   mkdir -p "/tmpRoot/usr/lib/systemd/system"
   DEST="/tmpRoot/usr/lib/systemd/system/sensors.service"
