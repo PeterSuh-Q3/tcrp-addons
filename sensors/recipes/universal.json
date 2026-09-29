@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/sensors/src/install.sh",
+      "sha256": "241b0318da38d783c5175c8187adc8f3d04ff5d76065c64c6faa50892a60ff23",
+      "packed": false
+    },
+    {
+      "name": "rr-sensors.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/sensors/src/rr-sensors.sh",
+      "sha256": "21e6fb1b9350ae2e5ff3cfd8e871837c847e81386f0d0fc6457c11eb2b6c7002",
+      "packed": false
+    },
+    {
+      "name": "sensors-7.1.tgz",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/sensors/src/sensors-7.1.tgz",
+      "sha256": "b816f3edb6105fda6815609b8d4d66ad5054e7dcb80829d960ae6219199adff7",
+      "packed": false
+    },
+    {
+      "name": "esynoscheduler.db",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/beep/src/esynoscheduler.db",
+      "sha256": "edfa17bf2b21e3126b9315a40cff4285c84722c32dddc12fc904b62d59cf077e",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
