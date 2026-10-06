@@ -56,6 +56,20 @@ if [ "${1}" = "late" ]; then
     COMMON_PATH="${VMTOOLS_PATH}/lib/open-vm-tools/plugins"
     PLUGINS_PATH="${COMMON_PATH}/vmsvc"
 
+    # The service has its own library path, but CLI tools launched from a DSM
+    # shell do not. Keep their original paths usable without manual exports.
+    for TOOL in vmware-toolbox-cmd vmware-checkvm; do
+      TOOL_PATH="/tmpRoot${VMTOOLS_PATH}/bin/${TOOL}"
+      mv "${TOOL_PATH}" "${TOOL_PATH}.real"
+      cat >"${TOOL_PATH}" <<EOF
+#!/bin/sh
+LD_LIBRARY_PATH=${VMTOOLS_PATH}/lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}
+export LD_LIBRARY_PATH
+exec ${VMTOOLS_PATH}/bin/${TOOL}.real "\$@"
+EOF
+      chmod 755 "${TOOL_PATH}"
+    done
+
     mkdir -p /tmpRoot/usr/vmtools/etc/vmware-tools
     {
       echo "[vmtools]"
