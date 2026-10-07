@@ -17,10 +17,14 @@ The proposed successor to layer injection downloads the user-selected, published
 integrated driver SPK **after DSM boots**, verifies its pinned size/SHA-256 on a
 persistent data volume, and installs it through DSM's package manager. A large
 SPK is not placed in the loader initrd or junior tmpfs. This is a design, not
-the behavior of the current addon. See [the SPK delivery design](docs/spk-delivery-design.md)
+the behavior of the current addon. The driver SPK already includes required GSP
+firmware; a GPU Monitor SPK is mandatory, while a Container Runtime SPK is
+installed only when selected by the user. The optional FFmpeg layer is also
+planned as a separate SPK, with compatibility checked per driver version.
+See [the SPK delivery design](docs/spk-delivery-design.md)
 for version availability, disk-space rules, retries, migration, and validation.
 
-## Layers
+## Current layer-injection implementation (not the proposed SPK path)
 
 | layer | file | scope | why |
 |---|---|---|---|
