@@ -21,9 +21,14 @@ if [ "${1}" = "late" ]; then
 
   mkdir -p /tmpRoot/usr/vmtools
   tar -zxf ./vmtools-7.1.tgz -C /tmpRoot/usr/vmtools
-  ln -sf /usr/vmtools/etc/vmware-tools /tmpRoot/usr/vmtools/etc/vmware-tools
-  ln -sf /usr/vmtools/lib/open-vm-tools /tmpRoot/usr/vmtools/lib/open-vm-tools
-  ln -sf /usr/vmtools/share/open-vm-tools /tmpRoot/usr/vmtools/share/open-vm-tools
+  # The archive already contains these directories. Linking each directory
+  # onto itself creates a recursive child link rather than exposing a new path.
+  for REL in etc/vmware-tools lib/open-vm-tools share/open-vm-tools; do
+    STALE_LINK="/tmpRoot/usr/vmtools/${REL}/${REL##*/}"
+    if [ "$(readlink "${STALE_LINK}" 2>/dev/null)" = "/usr/vmtools/${REL}" ]; then
+      rm -f "${STALE_LINK}"
+    fi
+  done
 
   VMTOOLS_PATH="/usr/vmtools"
 
@@ -79,9 +84,13 @@ EOF
       echo "    vmsvc.level = debug"
       echo "    vmsvc.handler = file"
       echo "    vmsvc.data = /var/log/vmsvc.mshell.log"
+      echo "    vmsvc.maxOldLogFiles = 1"
+      echo "    vmsvc.maxLogSize = 5"
       echo "    vmtoolsd.level = debug"
       echo "    vmtoolsd.handler = file"
       echo "    vmtoolsd.data = /var/log/vmtoolsd.mshell.log"
+      echo "    vmtoolsd.maxOldLogFiles = 1"
+      echo "    vmtoolsd.maxLogSize = 5"
       echo "[powerops]"
       echo "    poweron-script = ${VMTOOLS_PATH}/etc/vmware-tools/poweron-vm-default"
       echo "    poweroff-script = ${VMTOOLS_PATH}/etc/vmware-tools/poweroff-vm-default"
@@ -98,8 +107,10 @@ EOF
       echo "[Service]"
       echo "Type=forking"
       echo "PIDFile=${VMTOOLS_PID}"
-      echo "Environment=\"PATH=${VMTOOLS_PATH}/bin:${VMTOOLS_PATH}/sbin:\$PATH\""
-      echo "Environment=\"LD_LIBRARY_PATH=${VMTOOLS_PATH}/lib:\$LD_LIBRARY_PATH\""
+      # systemd does not expand $PATH or $LD_LIBRARY_PATH in Environment=.
+      # PowerOps scripts need DSM utilities such as dirname, sed, and expr.
+      echo "Environment=PATH=${VMTOOLS_PATH}/bin:${VMTOOLS_PATH}/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      echo "Environment=LD_LIBRARY_PATH=${VMTOOLS_PATH}/lib:/usr/lib:/lib"
       echo "ExecStart=${VMTOOLS_PATH}/bin/vmtoolsd -c ${VMWARE_CONF} --common-path=${COMMON_PATH} --plugin-path=${PLUGINS_PATH} -b ${VMTOOLS_PID}"
       echo "ExecReload=/bin/kill -HUP \$MAINPID"
       echo "Restart=always"
@@ -130,8 +141,8 @@ EOF
       echo "[Service]"
       echo "Type=forking"
       echo "PIDFile=${QGA_PID}"
-      echo "Environment=\"PATH=${VMTOOLS_PATH}/bin:${VMTOOLS_PATH}/sbin:\$PATH\""
-      echo "Environment=\"LD_LIBRARY_PATH=${VMTOOLS_PATH}/lib:\$LD_LIBRARY_PATH\""
+      echo "Environment=PATH=${VMTOOLS_PATH}/bin:${VMTOOLS_PATH}/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      echo "Environment=LD_LIBRARY_PATH=${VMTOOLS_PATH}/lib:/usr/lib:/lib"
       echo "ExecStart=${VMTOOLS_PATH}/bin/qemu-ga -m virtio-serial -p ${GUEST_AGENT} -t /var/run/ -d -f ${QGA_PID}"
       echo "ExecReload=/bin/kill -HUP \$MAINPID"
       echo "Restart=always"
