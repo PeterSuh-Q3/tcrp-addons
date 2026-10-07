@@ -13,9 +13,134 @@
 KVER_CLEAN=$(uname -r | sed -n 's/^\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
 ZPADKVER=$(printf "%01d%03d%03d\n" $(echo "$KVER_CLEAN" | tr '.' ' '))
 
+write_grub_saved_entry_zero() {
+  grubenv="$1"
+  tmp="${grubenv}.tmp.$$"
+  size=$(wc -c < "$grubenv" 2>/dev/null | tr -d ' ')
+
+  # GRUB environment blocks are fixed-size files. Refuse to rewrite an
+  # unexpected format or size rather than risking corruption of the boot env.
+  if [ "$size" -ne 1024 ] || [ "$(head -n 1 "$grubenv")" != "# GRUB Environment Block" ]; then
+    echo "autorecover: cannot safely update unexpected grubenv format; leaving it unchanged"
+    return 1
+  fi
+
+  if ! awk 'NR == 1 { print; next } /^#/ { next } /^saved_entry=/ { next } NF { print }' "$grubenv" > "$tmp"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  echo "saved_entry=0" >> "$tmp"
+
+  size=$(wc -c < "$tmp" 2>/dev/null | tr -d ' ')
+  if [ "$size" -gt 1024 ]; then
+    rm -f "$tmp"
+    echo "autorecover: grubenv content exceeds its fixed-size block; leaving it unchanged"
+    return 1
+  fi
+  pad=$((1024 - size))
+  if [ "$pad" -gt 0 ]; then
+    dd if=/dev/zero bs=1 count="$pad" 2>/dev/null | tr '\000' '#' >> "$tmp" || {
+      rm -f "$tmp"
+      return 1
+    }
+  fi
+
+  if [ "$(wc -c < "$tmp" | tr -d ' ')" -ne 1024 ] || ! grep -q '^saved_entry=0$' "$tmp"; then
+    rm -f "$tmp"
+    echo "autorecover: failed to validate the rewritten grubenv; leaving it unchanged"
+    return 1
+  fi
+
+  if mv -f "$tmp" "$grubenv"; then
+    echo "autorecover: reset grubenv saved_entry to 0"
+    return 0
+  fi
+  rm -f "$tmp"
+  return 1
+}
+
+reset_reinstall_grub_default() {
+  p1=/mnt/p1
+  p1_mounted_here=0
+  p1_loop=0
+  mkdir -p "$p1"
+
+  if ! mount | grep -q " on ${p1} "; then
+    # Match the existing autorecover mount decision: a symlinked synoboot1
+    # uses /.bootdisk/.p1, while a block node is mounted through loop.
+    file_type=$(ls -l /dev/synoboot1 2>/dev/null | cut -c 1)
+    if [ "$file_type" = "b" ]; then
+      if [ -f /lib/modules/loop.ko ] && [ "$(lsmod | grep -c loop)" -eq 0 ]; then
+        modprobe loop || true
+      fi
+      losetup /dev/loop1 /dev/synoboot1 || return 1
+      p1_loop=1
+      mount -t vfat /dev/loop1 "$p1" || {
+        losetup -d /dev/loop1 2>/dev/null || true
+        return 1
+      }
+    else
+      [ -r /.bootdisk ] && [ -r /.p1 ] || return 1
+      bootdisk=$(cat /.bootdisk)
+      p1num=$(cat /.p1)
+      mount -t vfat "${bootdisk}${p1num}" "$p1" || return 1
+    fi
+    p1_mounted_here=1
+  fi
+
+  release_p1_mount() {
+    if [ "$p1_mounted_here" -eq 1 ] && umount "$p1"; then
+      p1_mounted_here=0
+      [ "$p1_loop" -eq 1 ] && losetup -d /dev/loop1 2>/dev/null || true
+    fi
+  }
+
+  grub_cfg="$p1/boot/grub/grub.cfg"
+  grubenv="$p1/boot/grub/grubenv"
+  if [ ! -r "$grub_cfg" ]; then
+    echo "autorecover: GRUB config not found on P1; default unchanged"
+    release_p1_mount
+    return 1
+  fi
+
+  cfg_default=$(sed -n 's/^[[:space:]]*set default="\([0-9][0-9]*\)".*/\1/p' "$grub_cfg" | head -n 1)
+  saved_entry=""
+  if [ -f "$grubenv" ]; then
+    saved_entry=$(sed -n 's/^saved_entry=\([0-9][0-9]*\)$/\1/p' "$grubenv" | tail -n 1)
+  fi
+  effective_default="${saved_entry:-$cfg_default}"
+
+  if [ "$effective_default" != "3" ]; then
+    echo "autorecover: effective GRUB default is ${effective_default:-unknown}, not reinstall entry 3"
+  else
+    if [ -n "$saved_entry" ] && ! write_grub_saved_entry_zero "$grubenv"; then
+      echo "autorecover: saved default is 3 but grubenv reset failed; leaving GRUB config unchanged"
+      release_p1_mount
+      return 1
+    fi
+
+    if [ "$cfg_default" = "3" ]; then
+      sed -i 's/^[[:space:]]*set default="3"[[:space:]]*$/set default="0"/' "$grub_cfg" || {
+        echo "autorecover: failed to reset grub.cfg default"
+        release_p1_mount
+        return 1
+      }
+    fi
+    sync
+    echo "autorecover: reset DSM reinstall boot default from entry 3 to entry 0"
+  fi
+
+  release_p1_mount
+}
+
 if [ "${1}" = "rcExit" ]; then
   echo "autorecover - ${1}"
-  
+
+  # DSM Re-Install is GRUB entry 3. Reset it on rcExit only when it is
+  # currently the effective default, so the next reboot returns to entry 0.
+  # This is independent of smallfix recovery and does not depend on JOT.
+  reset_reinstall_grub_default || echo "autorecover: GRUB default check/reset was not completed"
+
   if [ $(cat /var/log/junior_reason | grep "error \[7\]" | wc -l) -gt 0 ]; then
 
     if [ "$ZPADKVER" -gt 4004059 ] && ! grep -q smallfixnumber /var/log/linuxrc.syno.log; then
@@ -93,7 +218,6 @@ if [ "${1}" = "rcExit" ]; then
       cp -vf /tmpR/.syno/patch/grub_cksum.syno /mnt/p2
   
       if [ $? -eq 0 ]; then
-        [ $(cat /mnt/p1/boot/grub/grub.cfg | grep JOT | wc -l) -gt 0 ] && sed -i "s/set default=\"[0-9]\"/set default=\"0\"/g" /mnt/p1/boot/grub/grub.cfg
         echo "The copy process is complete, Reboot Now..."
         reboot
       fi
