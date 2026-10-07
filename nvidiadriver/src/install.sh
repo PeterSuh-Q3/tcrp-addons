@@ -79,6 +79,7 @@ init_common(){
   [ -f "$EXTDIR/nvidia-index.json" ] || EXTDIR="$(dirname "$0")"
   IDX="$EXTDIR/nvidia-index.json"
   SUP="$EXTDIR/nvidia-gpu-support.json"
+  SPKIDX="$EXTDIR/nvidia-spk-index.json"
   [ -f "$IDX" ] || { log "no nvidia-index.json, skipping"; return 1; }
   ensure_bin jq   || { log "jq not found, skipping"; return 1; }
   ensure_bin curl || { log "curl not found, skipping"; return 1; }
@@ -146,6 +147,7 @@ init_common(){
   GSP_FW="$(jq -r --arg g "$GPUID" '.gpus[$g].gsp_fw // empty' "$SUP" 2>/dev/null)"
 
   DRV="${nvidia_driver:-}"
+  case "$DRV" in auto|Auto|AUTO) DRV="" ;; esac
   if [ -z "$DRV" ]; then
     # A GPU that NVIDIA only supports through a legacy branch (390.xx and older)
     # cannot be driven by anything this project builds. Installing anyway would
@@ -221,13 +223,86 @@ init_common(){
       GFSHA="$(jq -r --arg d "$DRV" '.gsp_firmware[$d].sha256' "$IDX")"
     fi
   fi
+  SPK_MODE="${nvidia_spk_delivery:-true}"
+  if [ "$SPK_MODE" = true ]; then
+    [ -f "$SPKIDX" ] || { log "SPK delivery selected but nvidia-spk-index.json is missing"; return 1; }
+    case "$KVER" in
+      4.4.180) SPK_VARIANT=kver4-dsm70 ;;
+      4.4.302) SPK_VARIANT=kver4-dsm72 ;;
+      5.10.55) SPK_VARIANT=kver5 ;;
+      *) log "no published driver SPK for kernel $KVER"; return 1 ;;
+    esac
+    jq -e --arg v "$SPK_VARIANT" --arg p "$PLATFORM" '.variants[$v].platforms | index($p)' "$SPKIDX" >/dev/null 2>&1 || {
+      log "SPK variant $SPK_VARIANT does not support platform $PLATFORM"; return 1; }
+    SPK_DRIVER="$(jq -c --arg v "$SPK_VARIANT" --arg d "$DRV" '.variants[$v].drivers[$d] // empty' "$SPKIDX")"
+    [ -n "$SPK_DRIVER" ] || { log "no driver SPK published for $SPK_VARIANT / $DRV"; return 1; }
+    SPK_BASE="$(jq -r '.release_base' "$SPKIDX")"
+    SPK_DRV_PKG="$(printf '%s' "$SPK_DRIVER" | jq -r '.package')"
+    SPK_DRV_VER="$(printf '%s' "$SPK_DRIVER" | jq -r '.version')"
+    SPK_DRV_FILE="$(printf '%s' "$SPK_DRIVER" | jq -r '.file')"
+    SPK_DRV_SIZE="$(printf '%s' "$SPK_DRIVER" | jq -r '.size_bytes')"
+    SPK_DRV_SHA="$(printf '%s' "$SPK_DRIVER" | jq -r '.sha256')"
+    SPK_DRV_EXTRACT="$(printf '%s' "$SPK_DRIVER" | jq -r '.extractsize_kb')"
+    SPK_MON_PKG="$(jq -r '.monitor.package' "$SPKIDX")"
+    SPK_MON_VER="$(jq -r '.monitor.version' "$SPKIDX")"
+    SPK_MON_FILE="$(jq -r '.monitor.file' "$SPKIDX")"
+    SPK_MON_SIZE="$(jq -r '.monitor.size_bytes' "$SPKIDX")"
+    SPK_MON_SHA="$(jq -r '.monitor.sha256' "$SPKIDX")"
+    SPK_MON_EXTRACT="$(jq -r '.monitor.extractsize_kb' "$SPKIDX")"
+    if [ "$WANT_CR" = true ]; then
+      SPK_CR="$(jq -c '.container_runtime' "$SPKIDX")"
+      SPK_CR_PKG="$(printf '%s' "$SPK_CR" | jq -r '.package')"
+      SPK_CR_VER="$(printf '%s' "$SPK_CR" | jq -r '.version')"
+      SPK_CR_FILE="$(printf '%s' "$SPK_CR" | jq -r '.file')"
+      SPK_CR_SIZE="$(printf '%s' "$SPK_CR" | jq -r '.size_bytes')"
+      SPK_CR_SHA="$(printf '%s' "$SPK_CR" | jq -r '.sha256')"
+      SPK_CR_EXTRACT="$(printf '%s' "$SPK_CR" | jq -r '.extractsize_kb')"
+    fi
+    if [ "$WANT_FF" = true ]; then
+      SPK_FF="$(jq -c --arg d "$DRV" '.ffmpeg[$d] // empty' "$SPKIDX")"
+      [ -n "$SPK_FF" ] || { log "FFmpeg selected but no FFmpeg SPK for driver $DRV"; return 1; }
+      SPK_FF_PKG="$(printf '%s' "$SPK_FF" | jq -r '.package')"
+      SPK_FF_VER="$(printf '%s' "$SPK_FF" | jq -r '.version')"
+      SPK_FF_FILE="$(printf '%s' "$SPK_FF" | jq -r '.file')"
+      SPK_FF_SIZE="$(printf '%s' "$SPK_FF" | jq -r '.size_bytes')"
+      SPK_FF_SHA="$(printf '%s' "$SPK_FF" | jq -r '.sha256')"
+      SPK_FF_EXTRACT="$(printf '%s' "$SPK_FF" | jq -r '.extractsize_kb')"
+      SPK_FF_JF_MIN="$(printf '%s' "$SPK_FF" | jq -r '.jellyfin_min_major // 0')"
+    fi
+    log "SPK plan resolved: $SPK_VARIANT driver=$DRV runtime=$WANT_CR ffmpeg=$WANT_FF"
+  fi
   return 0
+}
+
+write_spk_plan(){
+  PLAN="$CACHE/spk-plan.conf"
+  mkdir -p "$CACHE"
+  DATA_VOLUME="${nvidia_data_volume:-volume1}"
+  case "$DATA_VOLUME" in
+    volume[0-9]*) DVNUM="${DATA_VOLUME#volume}"; case "$DVNUM" in *[!0-9]*|'') log "invalid nvidia_data_volume '$DATA_VOLUME' (expected volumeN)"; return 1 ;; esac ;;
+    *) log "invalid nvidia_data_volume '$DATA_VOLUME' (expected volumeN)"; return 1 ;;
+  esac
+  {
+    printf 'RELEASE_BASE=%s\nDATA_VOLUME=%s\nPLATFORM=%s\nKERNEL=%s\nVARIANT=%s\n' "$SPK_BASE" "$DATA_VOLUME" "$PLATFORM" "$KVER" "$SPK_VARIANT"
+    printf 'DRIVER_BRANCH_VERSION=%s\nDRIVER_PACKAGE=%s\nDRIVER_VERSION=%s\nDRIVER_FILE=%s\nDRIVER_SIZE=%s\nDRIVER_SHA=%s\nDRIVER_EXTRACT=%s\n' "$DRV" "$SPK_DRV_PKG" "$SPK_DRV_VER" "$SPK_DRV_FILE" "$SPK_DRV_SIZE" "$SPK_DRV_SHA" "$SPK_DRV_EXTRACT"
+    printf 'MONITOR_PACKAGE=%s\nMONITOR_VERSION=%s\nMONITOR_FILE=%s\nMONITOR_SIZE=%s\nMONITOR_SHA=%s\nMONITOR_EXTRACT=%s\n' "$SPK_MON_PKG" "$SPK_MON_VER" "$SPK_MON_FILE" "$SPK_MON_SIZE" "$SPK_MON_SHA" "$SPK_MON_EXTRACT"
+    printf 'RUNTIME_ENABLED=%s\nFFMPEG_ENABLED=%s\n' "$WANT_CR" "$WANT_FF"
+    if [ "$WANT_CR" = true ]; then printf 'RUNTIME_PACKAGE=%s\nRUNTIME_VERSION=%s\nRUNTIME_FILE=%s\nRUNTIME_SIZE=%s\nRUNTIME_SHA=%s\nRUNTIME_EXTRACT=%s\n' "$SPK_CR_PKG" "$SPK_CR_VER" "$SPK_CR_FILE" "$SPK_CR_SIZE" "$SPK_CR_SHA" "$SPK_CR_EXTRACT"; fi
+    if [ "$WANT_FF" = true ]; then printf 'FFMPEG_PACKAGE=%s\nFFMPEG_VERSION=%s\nFFMPEG_FILE=%s\nFFMPEG_SIZE=%s\nFFMPEG_SHA=%s\nFFMPEG_EXTRACT=%s\nFFMPEG_JELLYFIN_MIN_MAJOR=%s\n' "$SPK_FF_PKG" "$SPK_FF_VER" "$SPK_FF_FILE" "$SPK_FF_SIZE" "$SPK_FF_SHA" "$SPK_FF_EXTRACT" "$SPK_FF_JF_MIN"; fi
+  } > "$PLAN"
 }
 
 ###############################################################################
 # PHASE 1 - on_patches : download every layer to the cache (network available)
 ###############################################################################
 do_download(){
+  if [ "$SPK_MODE" = true ]; then
+    mkdir -p "$CACHE"
+    write_spk_plan || return 1
+    echo "$DRV" > "$CACHE/selected"
+    log "SPK delivery plan staged; large SPKs will be downloaded after DSM starts"
+    return 0
+  fi
   mkdir -p "$CACHE"
   echo "$DRV" > "$CACHE/selected"    # lock the version so os_load injects the same one
   log "pre-downloading driver $DRV for $PLATFORM -> $CACHE (patches phase)"
@@ -253,6 +328,19 @@ do_inject(){
   [ -d "$TR/usr" ] || { echo "nvidiadriver: $TR not mounted (late) - abort" >&2; return 1; }
   LOGF="$TR/var/log/nvidiadriver.log"
   mkdir -p "$TR/var/log" 2>/dev/null; echo "===== nvidiadriver os_load $(date) =====" >> "$LOGF" 2>/dev/null
+
+  if [ "$SPK_MODE" = true ]; then
+    write_spk_plan || return 1
+    RCD="$TR/usr/local/etc/rc.d"
+    mkdir -p "$RCD" "$TR/usr/local/etc" "$TR/var/log"
+    cp "$EXTDIR/spk-install.sh" "$RCD/S99nvidiadriver-spk-install.sh" || {
+      log "SPK installer worker missing from extension files"; return 1; }
+    chmod 0755 "$RCD/S99nvidiadriver-spk-install.sh"
+    cp "$PLAN" "$TR/usr/local/etc/nvidiadriver-spk.conf"
+    chmod 0600 "$TR/usr/local/etc/nvidiadriver-spk.conf"
+    log "staged post-boot SPK installer for $SPK_VARIANT / $DRV (driver, required monitor, selected optionals)"
+    return 0
+  fi
 
   # Use the EXACT version the patches phase downloaded (the GPU may not be
   # enumerable at os_load, so re-resolving here could pick a different one).

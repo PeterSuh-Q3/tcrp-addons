@@ -1,0 +1,107 @@
+{
+  "_comment": "Pinned DSM SPK assets for post-boot installation. Update only from verified Release assets and their embedded INFO records.",
+  "release_base": "https://github.com/PeterSuh-Q3/syno_nvidia_driver/releases/download/spk",
+  "variants": {
+    "kver4-dsm70": {
+      "kernel": "4.4.180",
+      "dsm_min": "7.0-00000",
+      "dsm_max": "7.1",
+      "platforms": ["apollolake", "broadwell", "broadwellnk", "broadwellnkv2", "broadwellntbap", "geminilake", "purley", "r1000", "v1000"],
+      "drivers": {
+        "550.163.01": {
+          "package": "syno-nvidia-driver-kver4-dsm70",
+          "version": "550.163.01-1",
+          "file": "syno-nvidia-driver-kver4-dsm70-550.163.01-1-dsm7.0-7.1.spk",
+          "size_bytes": 558521856,
+          "sha256": "4110a10a2a5fd31ebe66748a9e65cb281971ffb0bb7e95eec26bd34fd69d4b51",
+          "extractsize_kb": 1048784
+        }
+      }
+    },
+    "kver4-dsm72": {
+      "kernel": "4.4.302",
+      "dsm_min": "7.2-00000",
+      "dsm_max": "7.4",
+      "platforms": ["apollolake", "broadwell", "broadwellnk", "broadwellnkv2", "broadwellntbap", "geminilake", "purley", "r1000", "v1000"],
+      "drivers": {
+        "550.163.01": {
+          "package": "syno-nvidia-driver-kver4-dsm72",
+          "version": "550.163.01-1",
+          "file": "syno-nvidia-driver-kver4-dsm72-550.163.01-1-dsm7.2-7.4.spk",
+          "size_bytes": 558479360,
+          "sha256": "377591d343135366b14cefc48c37d33d19ea6b98da98b76932c0679a72b9ff90",
+          "extractsize_kb": 1047824
+        }
+      }
+    },
+    "kver5": {
+      "kernel": "5.10.55",
+      "dsm_min": "7.2-00000",
+      "platforms": ["epyc7002", "epyc7003", "epyc7003ntb", "geminilakenk", "icelaked", "r1000nk", "v1000nk"],
+      "drivers": {
+        "580.173.02": {
+          "package": "syno-nvidia-driver-kver5",
+          "version": "580.173.02-2",
+          "file": "syno-nvidia-driver-kver5-580.173.02-2.spk",
+          "size_bytes": 983814656,
+          "sha256": "89d2f451a5bafd3d8156a54e46c72be0ef56250f3126799efbfc4c2c5c8e3b0e",
+          "extractsize_kb": 1729556
+        },
+        "595.99.02": {
+          "package": "syno-nvidia-driver-kver5",
+          "version": "595.99.02-3",
+          "file": "syno-nvidia-driver-kver5-595.99.02-3.spk",
+          "size_bytes": 933372416,
+          "sha256": "5e6526468dabb4d4046d8641347f426c9e8af63ffcf28769fa30698a0ffd213e",
+          "extractsize_kb": 1612256
+        }
+      }
+    }
+  },
+  "monitor": {
+    "package": "syno-nvidia-gpu-monitor",
+    "version": "0.6.5",
+    "file": "syno-nvidia-gpu-monitor-0.6.5-x86_64.spk",
+    "size_bytes": 246784,
+    "sha256": "58cd69a6ac26f88f59ba5fbfcdbdaacf31d283c250fcdf7e06d3ce4ac3498e6f",
+    "extractsize_kb": 168
+  },
+  "container_runtime": {
+    "package": "syno-nvidia-container-runtime",
+    "version": "1.19.1-3",
+    "file": "syno-nvidia-container-runtime-1.19.1-3-x86_64.spk",
+    "size_bytes": 10605056,
+    "sha256": "806604407349828f5be6360ad332abca9a670baa953085eb4fc32e8a206f6607",
+    "extractsize_kb": 28996
+  },
+  "ffmpeg": {
+    "550.163.01": {
+      "package": "syno-nvidia-ffmpeg",
+      "version": "550.163.01-1",
+      "file": "syno-nvidia-ffmpeg-550.163.01-1-x86_64.spk",
+      "size_bytes": 78434816,
+      "sha256": "fb0724899c02d73b5f30a3bdc65e2f0a44431b2fdc5ecf82cca7ac28ad803af3",
+      "extractsize_kb": 212552,
+      "source": "Jellyfin FFmpeg 7.0.2-9"
+    },
+    "580.173.02": {
+      "package": "syno-nvidia-ffmpeg",
+      "version": "580.173.02-1",
+      "file": "syno-nvidia-ffmpeg-580.173.02-1-x86_64.spk",
+      "size_bytes": 81926144,
+      "sha256": "ea980f5a4072f8ff1b2e59ab4215bbf918ec0ce0b284a06845a3ac332ae74a1d",
+      "extractsize_kb": 210588,
+      "source": "Jellyfin FFmpeg 7.1.4-3"
+    },
+    "595.99.02": {
+      "package": "syno-nvidia-ffmpeg",
+      "version": "595.99.02-1",
+      "file": "syno-nvidia-ffmpeg-595.99.02-1-x86_64.spk",
+      "size_bytes": 84010496,
+      "sha256": "f6dd54012b6b3b665a8e47ee9d21a732278d66dbfd92630df8e58309bcb21107",
+      "extractsize_kb": 231160,
+      "source": "Jellyfin FFmpeg 8.1.3-1",
+      "jellyfin_min_major": 12
+    }
+  }
+}
