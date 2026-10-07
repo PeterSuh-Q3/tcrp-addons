@@ -9,7 +9,16 @@ The **binaries are built elsewhere** — this addon only consumes them:
 - build/producer + end-user installer repo: **[PeterSuh-Q3/syno_nvidia_driver](https://github.com/PeterSuh-Q3/syno_nvidia_driver)**
   (borrows the `dante90/syno-compiler` container; cloned on the build VM 192.168.45.139)
 - it publishes all layers to its **GitHub Release (tag `nvidia`)**
-- this addon's `nvidia-index.json` points at those Release URLs; the loader fetches at build time.
+- this addon's `nvidia-index.json` points at those Release URLs; the current addon fetches layers during the junior `on_patches` boot phase, not while building the loader.
+
+## Integrated SPK delivery (design)
+
+The proposed successor to layer injection downloads the user-selected, published
+integrated driver SPK **after DSM boots**, verifies its pinned size/SHA-256 on a
+persistent data volume, and installs it through DSM's package manager. A large
+SPK is not placed in the loader initrd or junior tmpfs. This is a design, not
+the behavior of the current addon. See [the SPK delivery design](docs/spk-delivery-design.md)
+for version availability, disk-space rules, retries, migration, and validation.
 
 ## Layers
 
