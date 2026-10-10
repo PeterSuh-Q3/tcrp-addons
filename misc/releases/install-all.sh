@@ -163,6 +163,61 @@ fixservice() {
   ${SED_PATH} -i 's|ExecStart=/|ExecStart=-/|g' ${SERVICE_PATH}/syno_update_disk_logs.service
 }
 
+ensure_package_feeds() {
+  FEEDS=/tmpRoot/usr/syno/etc/packages/feeds
+  FEEDS_DIR="$(dirname "$FEEDS")"
+  mkdir -p "$FEEDS_DIR" || return 1
+
+  if [ -f "$FEEDS" ]; then
+    FEEDS_JSON="$(awk '
+      {
+        for (i = 1; i <= length($0); i++) {
+          c = substr($0, i, 1)
+          if (escaped) { printf "%s", c; escaped = 0; continue }
+          if (quoted && c == "\\") { printf "%s", c; escaped = 1; continue }
+          if (c == "\"") quoted = !quoted
+          if (quoted || c !~ /[[:space:]]/) printf "%s", c
+        }
+      }
+      END { print "" }
+    ' "$FEEDS" 2>/dev/null)"
+  else
+    FEEDS_JSON='[]'
+  fi
+  case "$FEEDS_JSON" in
+    \[*\]) FEEDS_BODY="${FEEDS_JSON%]}" ;;
+    *) echo "Invalid DSM package feeds JSON; leaving it unchanged"; return 1 ;;
+  esac
+
+  FEEDS_CHANGED=0
+  append_package_feed() {
+    FEED_URL=$1
+    FEED_NAME=$2
+    case "$FEEDS_BODY" in
+      *"$FEED_URL"*) return 0 ;;
+    esac
+    [ "$FEEDS_BODY" = '[' ] || FEEDS_BODY="$FEEDS_BODY,"
+    FEEDS_BODY="${FEEDS_BODY}{\"feed\":\"$FEED_URL\",\"name\":\"$FEED_NAME\"}"
+    FEEDS_CHANGED=1
+  }
+
+  append_package_feed 'https://spk7.imnks.com' 'imnks'
+  append_package_feed 'https://packages.synocommunity.com' 'synocommunity'
+  append_package_feed 'https://nas.dante90.mmv.kr' "Peter Suh's Synology Package Repository"
+  [ "$FEEDS_CHANGED" -eq 1 ] || { echo 'DSM package feeds already contain all configured repositories'; return 0; }
+
+  FEEDS_TMP="$FEEDS.tmp.$$"
+  if [ -f "$FEEDS" ]; then
+    cp -p "$FEEDS" "$FEEDS_TMP" || return 1
+  else
+    : > "$FEEDS_TMP" || return 1
+    chmod 0644 "$FEEDS_TMP" || { rm -f "$FEEDS_TMP"; return 1; }
+  fi
+  printf '%s]\n' "$FEEDS_BODY" > "$FEEDS_TMP" || { rm -f "$FEEDS_TMP"; return 1; }
+  mv -f "$FEEDS_TMP" "$FEEDS" || { rm -f "$FEEDS_TMP"; return 1; }
+  echo 'DSM package feeds updated (imnks, SynoCommunity, Peter Suh repository)'
+}
+
 fixsdcard() {
   # sdcard
   [ ! -f /tmpRoot/usr/lib/udev/script/sdcard.sh.bak ] && cp -vpf /tmpRoot/usr/lib/udev/script/sdcard.sh /tmpRoot/usr/lib/udev/script/sdcard.sh.bak
@@ -632,9 +687,8 @@ LEOF
     fixsdcard
     fixservice
 
-  # packages
-  if [ ! -f /tmpRoot/usr/syno/etc/packages/feeds ]; then
-    mkdir -p /tmpRoot/usr/syno/etc/packages
-    echo '[{"feed":"https://spk7.imnks.com","name":"imnks"},{"feed":"https://packages.synocommunity.com","name":"synocommunity"}]' >/tmpRoot/usr/syno/etc/packages/feeds
-  fi    
+  # Register community package feeds without replacing repositories already
+  # configured in the extracted DSM rootfs. This hook runs in multiple phases,
+  # so ensure_package_feeds is intentionally idempotent.
+  ensure_package_feeds || echo 'WARNING: unable to update DSM package feeds'
 fi
