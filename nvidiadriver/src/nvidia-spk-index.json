@@ -10,11 +10,11 @@
       "drivers": {
         "550.163.01": {
           "package": "syno-nvidia-driver-kver4-dsm70",
-          "version": "550.163.01-1",
-          "file": "syno-nvidia-driver-kver4-dsm70-550.163.01-1-dsm7.0-7.1.spk",
-          "size_bytes": 558521856,
-          "sha256": "4110a10a2a5fd31ebe66748a9e65cb281971ffb0bb7e95eec26bd34fd69d4b51",
-          "extractsize_kb": 1048784
+          "version": "550.163.01-4",
+          "file": "syno-nvidia-driver-kver4-dsm70-550.163.01-4-dsm7.0-7.1.spk",
+          "size_bytes": 558587392,
+          "sha256": "7f497d42fcfc88471f132afa551abe23f50f88d385bc1d216b5154f26828043c",
+          "extractsize_kb": 1048788
         }
       }
     },
@@ -26,11 +26,11 @@
       "drivers": {
         "550.163.01": {
           "package": "syno-nvidia-driver-kver4-dsm72",
-          "version": "550.163.01-1",
-          "file": "syno-nvidia-driver-kver4-dsm72-550.163.01-1-dsm7.2-7.4.spk",
-          "size_bytes": 558479360,
-          "sha256": "377591d343135366b14cefc48c37d33d19ea6b98da98b76932c0679a72b9ff90",
-          "extractsize_kb": 1047824
+          "version": "550.163.01-4",
+          "file": "syno-nvidia-driver-kver4-dsm72-550.163.01-4-dsm7.2-7.4.spk",
+          "size_bytes": 558544896,
+          "sha256": "da4fe2bcf6a4d0d9cfe5d69cdd1398d7df96a6978b1469861459a4a262b2231a",
+          "extractsize_kb": 1047828
         }
       }
     },
@@ -41,18 +41,18 @@
       "drivers": {
         "580.173.02": {
           "package": "syno-nvidia-driver-kver5",
-          "version": "580.173.02-2",
-          "file": "syno-nvidia-driver-kver5-580.173.02-2.spk",
-          "size_bytes": 983814656,
-          "sha256": "89d2f451a5bafd3d8156a54e46c72be0ef56250f3126799efbfc4c2c5c8e3b0e",
+          "version": "580.173.02-5",
+          "file": "syno-nvidia-driver-kver5-580.173.02-5.spk",
+          "size_bytes": 983878144,
+          "sha256": "779e1bf622815fd0bc1ebec21b44f73d5c3dba45b739eb912f3f481d59cd0958",
           "extractsize_kb": 1729556
         },
         "595.99.02": {
           "package": "syno-nvidia-driver-kver5",
-          "version": "595.99.02-3",
-          "file": "syno-nvidia-driver-kver5-595.99.02-3.spk",
-          "size_bytes": 933372416,
-          "sha256": "5e6526468dabb4d4046d8641347f426c9e8af63ffcf28769fa30698a0ffd213e",
+          "version": "595.99.02-6",
+          "file": "syno-nvidia-driver-kver5-595.99.02-6.spk",
+          "size_bytes": 933440512,
+          "sha256": "acbe4011fbcac16d76bce2c71bca464ed39c721b8c58e99d9b213ecc20f0309d",
           "extractsize_kb": 1612256
         }
       }
@@ -60,46 +60,46 @@
   },
   "monitor": {
     "package": "syno-nvidia-gpu-monitor",
-    "version": "0.6.5",
-    "file": "syno-nvidia-gpu-monitor-0.6.5-x86_64.spk",
-    "size_bytes": 246784,
-    "sha256": "58cd69a6ac26f88f59ba5fbfcdbdaacf31d283c250fcdf7e06d3ce4ac3498e6f",
-    "extractsize_kb": 168
+    "version": "0.6.6",
+    "file": "syno-nvidia-gpu-monitor-0.6.6-x86_64.spk",
+    "size_bytes": 252928,
+    "sha256": "914ecde032a2a9f43f3b6d4b7ca031b8a087bdc06450a3fdf9051673632b6cd7",
+    "extractsize_kb": 172
   },
   "container_runtime": {
     "package": "syno-nvidia-container-runtime",
-    "version": "1.19.1-3",
-    "file": "syno-nvidia-container-runtime-1.19.1-3-x86_64.spk",
-    "size_bytes": 10605056,
-    "sha256": "806604407349828f5be6360ad332abca9a670baa953085eb4fc32e8a206f6607",
-    "extractsize_kb": 28996
+    "version": "1.19.1-5",
+    "file": "syno-nvidia-container-runtime-1.19.1-5-x86_64.spk",
+    "size_bytes": 10978816,
+    "sha256": "b1bd3c121fa4b38e42b074d4d9ff687a79948b678c83ccc994ad62db4cac5287",
+    "extractsize_kb": 29956
   },
   "ffmpeg": {
     "550.163.01": {
       "package": "syno-nvidia-ffmpeg",
-      "version": "550.163.01-1",
-      "file": "syno-nvidia-ffmpeg-550.163.01-1-x86_64.spk",
-      "size_bytes": 78434816,
-      "sha256": "fb0724899c02d73b5f30a3bdc65e2f0a44431b2fdc5ecf82cca7ac28ad803af3",
+      "version": "550.163.01-3",
+      "file": "syno-nvidia-ffmpeg-550.163.01-3-x86_64.spk",
+      "size_bytes": 78443520,
+      "sha256": "8d152407edca1adcaf55ca90155559387fe48c6811f5643b6d1106268e0ddc2f",
       "extractsize_kb": 212552,
       "source": "Jellyfin FFmpeg 7.0.2-9"
     },
     "580.173.02": {
       "package": "syno-nvidia-ffmpeg",
-      "version": "580.173.02-1",
-      "file": "syno-nvidia-ffmpeg-580.173.02-1-x86_64.spk",
-      "size_bytes": 81926144,
-      "sha256": "ea980f5a4072f8ff1b2e59ab4215bbf918ec0ce0b284a06845a3ac332ae74a1d",
+      "version": "580.173.02-3",
+      "file": "syno-nvidia-ffmpeg-580.173.02-3-x86_64.spk",
+      "size_bytes": 81934336,
+      "sha256": "2916f13b0818ef44c35b7552b615073672c592b45e83e7aec51d4098dadcb2aa",
       "extractsize_kb": 210588,
       "source": "Jellyfin FFmpeg 7.1.4-3"
     },
     "595.99.02": {
       "package": "syno-nvidia-ffmpeg",
-      "version": "595.99.02-1",
-      "file": "syno-nvidia-ffmpeg-595.99.02-1-x86_64.spk",
-      "size_bytes": 84010496,
-      "sha256": "f6dd54012b6b3b665a8e47ee9d21a732278d66dbfd92630df8e58309bcb21107",
-      "extractsize_kb": 231160,
+      "version": "595.99.02-3",
+      "file": "syno-nvidia-ffmpeg-595.99.02-3-x86_64.spk",
+      "size_bytes": 84018688,
+      "sha256": "6186b774d4c88ad27ee560784f25b413c77b9bbabd7bc29219e4274070fa4d22",
+      "extractsize_kb": 230712,
       "source": "Jellyfin FFmpeg 8.1.3-1",
       "jellyfin_min_major": 12
     }

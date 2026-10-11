@@ -33,8 +33,8 @@ SPK와 기존 계층 주입은 동일 드라이버에 대해 **상호 배타적*
 | 구성 요소 | 선택 조건 | 현재 게시 예시 | 패키지 ID·설치 원칙 |
 |---|---|---|---|
 | 통합 NVIDIA 드라이버 | 사용자가 드라이버 버전을 선택 | 위 표의 커널별 SPK | 항상 먼저 설치. 플랫폼·GPU 호환성을 검사한다. |
-| NVIDIA GPU Monitor | **드라이버 SPK 설치 시 필수** | `syno-nvidia-gpu-monitor-0.6.5-x86_64.spk` | `syno-nvidia-gpu-monitor`. 드라이버 뒤에 설치. 사용자가 끄는 선택지는 두지 않는다. 이미 정확한 버전이면 건너뛴다. |
-| NVIDIA Container Runtime | 사용자가 로더에서 선택한 경우만 | `syno-nvidia-container-runtime-1.19.1-3-x86_64.spk` | `syno-nvidia-container-runtime`. 드라이버 활성 확인 후 설치. 선택하지 않았다면 새로 설치하지 않으며 기존 설치도 자동 제거하지 않는다. |
+| NVIDIA GPU Monitor | **드라이버 SPK 설치 시 필수** | `syno-nvidia-gpu-monitor-0.6.6-x86_64.spk` | `syno-nvidia-gpu-monitor`. 드라이버 뒤에 설치. 사용자가 끄는 선택지는 두지 않는다. 이미 정확한 버전이면 건너뛴다. |
+| NVIDIA Container Runtime | 사용자가 로더에서 선택한 경우만 | `syno-nvidia-container-runtime-1.19.1-5-x86_64.spk` | `syno-nvidia-container-runtime`. 드라이버 활성 확인 후 설치. 선택하지 않았다면 새로 설치하지 않으며 기존 설치도 자동 제거하지 않는다. |
 | NVIDIA FFmpeg | 사용자가 로더에서 선택하고 **해당 드라이버용 SPK가 게시·검증된 경우만** | 550.163.01 / 580.173.02 / 595.99.02 | 독립 `syno-nvidia-ffmpeg` SPK. 드라이버 활성 확인 후 설치하며 Jellyfin 연동은 별도 상태로 검증한다. 595용 FFmpeg 8.1 자동 Jellyfin 전환은 서버 12 이상에서만 허용한다. |
 
 Monitor와 컨테이너 런타임은 드라이버 버전과 **독립적인 SPK 버전**을 가진다. FFmpeg는 검증된 드라이버 호환 범위를 명시한다. 각 SPK의 정확한 자산명·크기·SHA-256·`INFO`를 따로 고정한다. 현재 예시 버전은 배포 시점에 다시 검증한다. GSP는 드라이버 SPK의 내부 구성 요소이며 별도 설치 단계가 아니다. FFmpeg 패키지의 소유권·Jellyfin 연동·595 지원 공백은 `syno_nvidia_driver/docs/nvidia-ffmpeg-spk-design.md`에 상세히 둔다.
@@ -65,7 +65,7 @@ Monitor와 컨테이너 런타임은 드라이버 버전과 **독립적인 SPK �
   "platforms": ["epyc7002", "epyc7003"],
   "driver_version": "595.99.02",
   "package_id": "syno-nvidia-driver-kver5",
-  "package_version": "595.99.02-3",
+  "package_version": "595.99.02-6",
   "asset_url": "https://github.com/PeterSuh-Q3/syno_nvidia_driver/releases/download/spk/<exact-asset>.spk",
   "size_bytes": "<actual integer>",
   "sha256": "<actual 64-hex digest>",
