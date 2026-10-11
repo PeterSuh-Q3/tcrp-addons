@@ -17,10 +17,10 @@
 #
 
 if [ "${1}" = "late" ]; then
-  echo "Installing addon vmtools - ${1}"
+  echo "Installing addon vmtools-qemuga - ${1}"
 
   mkdir -p /tmpRoot/usr/vmtools
-  tar -zxf ./vmtools-7.1.tgz -C /tmpRoot/usr/vmtools
+  tar -zxf ./vmtools-qemuga-7.1.tgz -C /tmpRoot/usr/vmtools
   # The archive already contains these directories. Linking each directory
   # onto itself creates a recursive child link rather than exposing a new path.
   for REL in etc/vmware-tools lib/open-vm-tools share/open-vm-tools; do
@@ -155,6 +155,6 @@ EOF
     ln -sf /usr/lib/systemd/system/mshell-qemu-guest-agent.service /tmpRoot/usr/lib/systemd/system/multi-user.target.wants/mshell-qemu-guest-agent.service
 
   else
-    echo "vmtools: unknown mev, no VMware Tools / QEMU guest agent service installed"
+    echo "vmtools-qemuga: unknown mev, no VMware Tools / QEMU guest agent service installed"
   fi
 fi
