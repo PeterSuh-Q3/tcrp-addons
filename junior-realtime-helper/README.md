@@ -1,10 +1,12 @@
 # Junior Realtime Helper (SA6400 pilot)
 
-This addon runs only in the DSM junior ramdisk, at the `on_patches` hook. It
-shows the current IPv4 address, gateway ping response, LAN-aware TCP/5000
-readiness, and the count and list of kernel-visible disks. It writes
-observations to `/var/log/junior-realtime-helper.log`. It does not install DSM, mount
-a disk, or modify partitions.
+The addon starts an early monitor at the `on_patches` hook and stages a DSM-side
+monitor from `on_os_load` into `/tmpRoot`. DSM 7+ receives an enabled systemd
+service. DSM 6 is not supported by the DSM-stage monitor. That second-stage launcher
+keeps the IPv4, gateway ping, TCP/5000, disk, and display refresh fields live
+after DSM takes over. It writes observations to
+`/var/log/junior-realtime-helper.log`. It does not install DSM, mount a disk,
+or modify partitions.
 
 The bundled static x86-64 `kms-display` helper searches `/dev/dri/card*` for a
 connected DRM display, preferring a connector that is already active. It does
@@ -41,8 +43,10 @@ universal addons. The shell monitor and static x86-64 DRM helper use generic
 Linux interfaces; DRM/KMS drawing is attempted when a compatible display is
 available, with virtual-console output as a fallback. Live hardware validation
 has been performed on the SA6400 / DSM 7.4.1 pilot, not on every registered
-combination. The loader must explicitly include this addon; registration alone
-does not change normal loader builds.
+combination. The loader must explicitly include this addon; registration alone does not
+change normal loader builds. The DSM-stage startup handoff is staged through
+`/tmpRoot` at `on_os_load`; live validation is being performed on the SA6400
+DSM 7.4.1 pilot.
 
 To rebuild the binary, use `src/build-kms-display.sh` with an x86-64 Linux
 static GCC and DRM UAPI headers (for example, the matching DSM toolkit headers

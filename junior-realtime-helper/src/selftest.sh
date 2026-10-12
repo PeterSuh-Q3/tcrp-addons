@@ -5,9 +5,35 @@ export PATH=/usr/syno/bin:/usr/syno/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 trap '' HUP
 ADDON_DIR=${0%/*}
 STATUS_FILE=/tmp/junior-realtime-helper.status
+LOCK_DIR=/var/run/junior-realtime-helper
 CONSOLE=/dev/tty1
 active_console=$(cat /sys/devices/virtual/tty/tty0/active 2>/dev/null)
 case "$active_console" in tty[0-9]*) [ -c "/dev/$active_console" ] && CONSOLE="/dev/$active_console" ;; esac
+
+# on_patches and the DSM boot service can overlap briefly at the root switch.
+# mkdir is atomic, so only one monitor owns the status file and DRM helper.
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+    owner=$(cat "$LOCK_DIR/pid" 2>/dev/null)
+    if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
+        exit 0
+    fi
+    rm -f "$LOCK_DIR/pid" 2>/dev/null
+    rmdir "$LOCK_DIR" 2>/dev/null || exit 0
+    mkdir "$LOCK_DIR" 2>/dev/null || exit 0
+fi
+printf '%s\n' "$$" >"$LOCK_DIR/pid"
+
+cleanup() {
+    trap - 0 INT TERM
+    owner=$(cat "$LOCK_DIR/pid" 2>/dev/null)
+    if [ "$owner" = "$$" ]; then
+        kms_pid=$(cat /tmp/junior-realtime-helper-kms.pid 2>/dev/null)
+        [ -n "$kms_pid" ] && kill "$kms_pid" 2>/dev/null
+        rm -f "$LOCK_DIR/pid"
+        rmdir "$LOCK_DIR" 2>/dev/null
+    fi
+}
+trap cleanup 0 INT TERM
 
 if [ -x "$ADDON_DIR/kms-display" ] &&
    { [ ! -r /tmp/junior-realtime-helper-kms.pid ] ||
@@ -17,9 +43,17 @@ if [ -x "$ADDON_DIR/kms-display" ] &&
 fi
 
 addresses() {
+    primary=$(ip route show default 2>/dev/null |
+        awk 'NR == 1 {for (i = 1; i < NF; i++) if ($i == "dev") {print $(i + 1); exit}}')
     ip -o -4 addr show scope global 2>/dev/null |
-        awk '{split($4, a, "/"); if ($2 != "lo") print $2, a[1]}' |
-        sort -u
+        awk -v primary="$primary" '{
+            name=$2
+            if (name == "lo" || name ~ /^(docker|veth|br-|virbr|tun|tap)/) next
+            split($4, a, "/")
+            if (!a[1]) next
+            if (name == primary) print name, a[1]
+            else other[++n]=name " " a[1]
+        } END {for (i=1; i<=n; i++) print other[i]}'
 }
 
 link_up() {
