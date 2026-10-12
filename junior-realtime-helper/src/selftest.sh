@@ -14,7 +14,7 @@ case "$active_console" in tty[0-9]*) [ -c "/dev/$active_console" ] && CONSOLE="/
 # over the root filesystem. Keep this display helper scoped to junior mode.
 [ -x /linuxrc.syno ] || exit 0
 
-# The on_patches hook can be called more than once. mkdir is atomic, so only
+# The on_jrExit hook can be called more than once. mkdir is atomic, so only
 # one monitor owns the status file and DRM helper.
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     owner=$(cat "$LOCK_DIR/pid" 2>/dev/null)

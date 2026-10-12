@@ -1,11 +1,12 @@
 # Junior Realtime Helper (SA6400 pilot)
 
-The addon runs only in the DSM junior root, started by the `on_patches` hook.
-It checks for `/linuxrc.syno` before starting and on every refresh. The
-`on_os_load` hook stops the monitor and restores the display before DSM takes
-over the root filesystem; no DSM system service is installed. It displays the
-IPv4, gateway ping, TCP/5000, disk, and refresh status during junior mode. It
-writes observations to
+The addon starts at `on_jrExit` only when `/var/log/junior_reason` records
+both `Exit on error [12]` and `go to junior mode`. The hook also runs for other
+linuxrc exits, so this reason check limits startup to the junior fallback.
+The monitor checks for `/linuxrc.syno` before starting and on every refresh,
+then asks the KMS helper to restore the previous display when it exits. No DSM
+system service is installed. It displays IPv4, gateway ping, TCP/5000, disk,
+and refresh status during junior mode. It writes observations to
 `/var/log/junior-realtime-helper.log`. It does not install DSM, mount a disk,
 or modify partitions.
 
