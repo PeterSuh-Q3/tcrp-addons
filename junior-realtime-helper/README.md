@@ -35,9 +35,14 @@ disk's P3 from the count and list. Other kernel-visible disks may include
 devices that are not usable for DSM installation.
 
 TCP readiness means that the local service answered an HTTP connection; it
-does not confirm DSM installation. The recipe is scoped to
-`epyc7002_74_51055`; the SA6400 DSM 7.4.1 loader must explicitly include this
-addon. Merely adding this directory does not change normal loader builds.
+does not confirm DSM installation. The same universal recipe is registered for
+the 52 platform and DSM build combinations used by the repository's other
+universal addons. The shell monitor and static x86-64 DRM helper use generic
+Linux interfaces; DRM/KMS drawing is attempted when a compatible display is
+available, with virtual-console output as a fallback. Live hardware validation
+has been performed on the SA6400 / DSM 7.4.1 pilot, not on every registered
+combination. The loader must explicitly include this addon; registration alone
+does not change normal loader builds.
 
 To rebuild the binary, use `src/build-kms-display.sh` with an x86-64 Linux
 static GCC and DRM UAPI headers (for example, the matching DSM toolkit headers
