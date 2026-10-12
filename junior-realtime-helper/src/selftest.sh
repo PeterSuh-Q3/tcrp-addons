@@ -10,8 +10,12 @@ CONSOLE=/dev/tty1
 active_console=$(cat /sys/devices/virtual/tty/tty0/active 2>/dev/null)
 case "$active_console" in tty[0-9]*) [ -c "/dev/$active_console" ] && CONSOLE="/dev/$active_console" ;; esac
 
-# on_patches and the DSM boot service can overlap briefly at the root switch.
-# mkdir is atomic, so only one monitor owns the status file and DRM helper.
+# /linuxrc.syno exists in the DSM junior root and is absent after DSM takes
+# over the root filesystem. Keep this display helper scoped to junior mode.
+[ -x /linuxrc.syno ] || exit 0
+
+# The on_patches hook can be called more than once. mkdir is atomic, so only
+# one monitor owns the status file and DRM helper.
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     owner=$(cat "$LOCK_DIR/pid" 2>/dev/null)
     if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
@@ -269,6 +273,7 @@ render_status() {
 
 previous=''
 while :; do
+    [ -x /linuxrc.syno ] || exit 0
     addresses=$(addresses)
     disks=$(disk_list)
     count=$(printf '%s\n' "$disks" | awk 'NF {n++} END {print n+0}')

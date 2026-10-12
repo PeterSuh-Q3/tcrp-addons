@@ -1,10 +1,10 @@
 # Junior Realtime Helper (SA6400 pilot)
 
-The addon starts an early monitor at the `on_patches` hook and stages a DSM-side
-monitor from `on_os_load` into `/tmpRoot`. DSM 7+ receives an enabled systemd
-service. DSM 6 remains registered and uses the early monitor; only its DSM-stage
-service is skipped. That second-stage launcher keeps the IPv4, gateway ping,
-TCP/5000, disk, and display refresh fields live after DSM takes over. It writes observations to
+The addon runs only in the DSM junior root, started by the `on_patches` hook.
+It checks for `/linuxrc.syno` before starting and on every refresh; when DSM
+replaces the junior root, the monitor exits and stops its display helper. No DSM
+system service is installed. It displays the IPv4, gateway ping, TCP/5000, disk,
+and refresh status during junior mode. It writes observations to
 `/var/log/junior-realtime-helper.log`. It does not install DSM, mount a disk,
 or modify partitions.
 
@@ -39,15 +39,14 @@ devices that are not usable for DSM installation.
 TCP readiness means that the local service answered an HTTP connection; it
 does not confirm DSM installation. The same universal recipe is registered for
 all 52 platform and DSM build combinations used by the repository's other
-universal addons, including DSM 6. The late hook skips DSM service installation
-on DSM 6. The shell monitor and static x86-64 DRM helper use generic
-Linux interfaces; DRM/KMS drawing is attempted when a compatible display is
-available, with virtual-console output as a fallback. Live hardware validation
+universal addons, including DSM 6. The shell monitor and static x86-64 DRM
+helper use generic Linux interfaces; DRM/KMS drawing is attempted when a
+compatible display is available, with virtual-console output as a fallback.
+Live hardware validation
 has been performed on the SA6400 / DSM 7.4.1 pilot, not on every registered
-combination. The loader must explicitly include this addon; registration alone does not
-change normal loader builds. The DSM-stage startup handoff is staged through
-`/tmpRoot` at `on_os_load`; live validation is being performed on the SA6400
-DSM 7.4.1 pilot.
+combination. The loader must explicitly include this addon; registration alone
+does not change normal loader builds. The helper is intentionally limited to
+junior mode; normal DSM boot is outside its scope.
 
 To rebuild the binary, use `src/build-kms-display.sh` with an x86-64 Linux
 static GCC and DRM UAPI headers (for example, the matching DSM toolkit headers
