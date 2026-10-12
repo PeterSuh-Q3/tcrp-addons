@@ -32,12 +32,16 @@ cleanup() {
     owner=$(cat "$LOCK_DIR/pid" 2>/dev/null)
     if [ "$owner" = "$$" ]; then
         kms_pid=$(cat /tmp/junior-realtime-helper-kms.pid 2>/dev/null)
-        [ -n "$kms_pid" ] && kill "$kms_pid" 2>/dev/null
+        if [ -n "$kms_pid" ]; then
+            kill "$kms_pid" 2>/dev/null
+            wait "$kms_pid" 2>/dev/null
+        fi
         rm -f "$LOCK_DIR/pid"
         rmdir "$LOCK_DIR" 2>/dev/null
     fi
 }
-trap cleanup 0 INT TERM
+trap cleanup 0
+trap 'exit 0' INT TERM
 
 if [ -x "$ADDON_DIR/kms-display" ] &&
    { [ ! -r /tmp/junior-realtime-helper-kms.pid ] ||

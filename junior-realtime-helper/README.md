@@ -25,10 +25,11 @@ bottom: current IP, gateway ping response, DSM TCP/5000 readiness (reported as
 disk rows. The text fallback follows the same top-summary and bottom-self-test
 order.
 
-Because the helper sets a KMS mode and keeps its scanout buffer alive, stop it
-only as part of shutting down/restarting the junior environment. A reboot or
-DRM driver reinitialization restores the display state. The panel shows model,
-serial and MAC from the kernel command line; DSM product/build/update and
+When the monitor exits, it asks the KMS helper to restore the CRTC and
+framebuffer that were active before the panel took over, then waits for that
+cleanup to finish. If another DRM client has already taken control, restoration
+may fail; a driver reinitialization or reboot then resets the display. The panel
+shows model, serial and MAC from the kernel command line; DSM product/build/update and
 platform from `VERSION`; CPU and thread count; DMI identity; UEFI/legacy mode;
 PCI HBA/NIC/GPU counts; NIC IPv4, driver and PCI IDs; and SATA/other and NVMe
 counts with up to eight disk rows. It identifies the loader P3 through

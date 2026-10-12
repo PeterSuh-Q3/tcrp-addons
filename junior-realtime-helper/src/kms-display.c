@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -41,11 +42,22 @@ struct display {
     uint32_t connector;
     uint32_t crtc;
     struct drm_mode_modeinfo mode;
+    struct drm_mode_crtc original_crtc;
+    int original_crtc_valid;
+    int modeset_active;
     struct drm_mode_create_dumb dumb;
     struct drm_mode_fb_cmd fb;
     uint32_t *pixels;
     int dirtyfb_reported;
 };
+
+static volatile sig_atomic_t running = 1;
+
+static void stop_display(int signal_number)
+{
+    (void)signal_number;
+    running = 0;
+}
 
 static const uint8_t *glyph(char c)
 {
@@ -233,6 +245,10 @@ static int setup_display(struct display *d)
         return -1;
     }
     d->connector=selected_conn; d->crtc=selected_crtc; d->mode=selected_mode;
+    d->original_crtc=(struct drm_mode_crtc){.crtc_id=d->crtc};
+    if (ioctl_ok(d->fd, DRM_IOCTL_MODE_GETCRTC, &d->original_crtc) < 0)
+        return -1;
+    d->original_crtc_valid=1;
     d->dumb=(struct drm_mode_create_dumb){
         .width=d->mode.hdisplay, .height=d->mode.vdisplay, .bpp=32
     };
@@ -258,6 +274,7 @@ static int setup_display(struct display *d)
     set.mode=d->mode; set.mode_valid=1;
     if (ioctl_ok(d->fd, DRM_IOCTL_MODE_SETCRTC, &set) < 0)
         return -1;
+    d->modeset_active=1;
     fprintf(stderr, "KMS display active: connector=%u mode=%s %ux%u\n",
             d->connector, d->mode.name, d->mode.hdisplay, d->mode.vdisplay);
     return 0;
@@ -455,6 +472,39 @@ static int parse_status(char *data,struct status *s)
     return 0;
 }
 
+static void restore_display(struct display *d)
+{
+    if (d->fd < 0)
+        return;
+
+    if (d->modeset_active) {
+        if (d->original_crtc_valid && d->original_crtc.fb_id &&
+            d->original_crtc.mode_valid) {
+            struct drm_mode_crtc restore=d->original_crtc;
+            restore.set_connectors_ptr=U64(&d->connector);
+            restore.count_connectors=1;
+            if (ioctl_ok(d->fd, DRM_IOCTL_MODE_SETCRTC, &restore) < 0)
+                fprintf(stderr,"KMS original display restore failed: %s\n",strerror(errno));
+        } else {
+            struct drm_mode_crtc disable={.crtc_id=d->crtc};
+            if (ioctl_ok(d->fd, DRM_IOCTL_MODE_SETCRTC, &disable) < 0)
+                fprintf(stderr,"KMS display disable failed: %s\n",strerror(errno));
+        }
+    }
+
+    if (d->fb.fb_id)
+        ioctl_ok(d->fd, DRM_IOCTL_MODE_RMFB, &d->fb.fb_id);
+    if (d->pixels && d->dumb.size)
+        munmap(d->pixels, d->dumb.size);
+    if (d->dumb.handle) {
+        struct drm_mode_destroy_dumb destroy={.handle=d->dumb.handle};
+        ioctl_ok(d->fd, DRM_IOCTL_MODE_DESTROY_DUMB, &destroy);
+    }
+    ioctl_ok(d->fd, DRM_IOCTL_DROP_MASTER, NULL);
+    close(d->fd);
+    d->fd=-1;
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 2) {
@@ -465,7 +515,12 @@ int main(int argc, char **argv)
     char prev[4096]="";
     int drm_master=0;
     time_t last_render=0;
-    for (;;) {
+    struct sigaction action={0};
+    action.sa_handler=stop_display;
+    sigemptyset(&action.sa_mask);
+    sigaction(SIGTERM,&action,NULL);
+    sigaction(SIGINT,&action,NULL);
+    while (running) {
         char status[4096];
         if (load_status(argv[1],status,sizeof(status)) == 0) {
             int changed=strcmp(status,prev)!=0;
@@ -496,4 +551,6 @@ int main(int argc, char **argv)
         }
         struct timespec ts={.tv_sec=1,.tv_nsec=0}; nanosleep(&ts,NULL);
     }
+    restore_display(&display);
+    return 0;
 }
