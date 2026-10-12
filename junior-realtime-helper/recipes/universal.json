@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/install.sh",
+      "sha256": "ce229717d7e4ecaf0a1a7f611d7077acb8a0528a71cfbe1f17a41f719b11f9a4",
+      "packed": false
+    },
+    {
+      "name": "selftest.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/selftest.sh",
+      "sha256": "703fbe693acc9b50340c22fc9fc11cae90bb23f493de59153e8832ebe3f8cf45",
+      "packed": false
+    },
+    {
+      "name": "kms-display",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/kms-display",
+      "sha256": "586d34fcf52f9172bd277239186e0d8358c02446809945459c814b5fa51b1ae3",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_patches": "install.sh"
+  }
+}

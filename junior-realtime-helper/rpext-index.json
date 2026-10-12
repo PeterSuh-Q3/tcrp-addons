@@ -1,0 +1,13 @@
+{
+  "id": "junior-realtime-helper",
+  "info": {
+    "description": "Read-only SA6400 DSM 7.4.1 junior boot status on the local framebuffer",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/junior-realtime-helper",
+    "name": "Junior Realtime Helper",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/junior-realtime-helper"
+  },
+  "releases": {
+    "epyc7002_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/recipes/universal.json"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/rpext-index.json"
+}
