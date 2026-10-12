@@ -36,6 +36,10 @@ cleanup() {
             kill "$kms_pid" 2>/dev/null
             wait "$kms_pid" 2>/dev/null
         fi
+        [ "$(cat /tmp/junior-realtime-helper-kms.pid 2>/dev/null)" = "$kms_pid" ] &&
+            rm -f /tmp/junior-realtime-helper-kms.pid
+        [ "$(cat /tmp/junior-realtime-helper.pid 2>/dev/null)" = "$$" ] &&
+            rm -f /tmp/junior-realtime-helper.pid
         rm -f "$LOCK_DIR/pid"
         rmdir "$LOCK_DIR" 2>/dev/null
     fi

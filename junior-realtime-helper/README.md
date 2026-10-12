@@ -1,10 +1,11 @@
 # Junior Realtime Helper (SA6400 pilot)
 
 The addon runs only in the DSM junior root, started by the `on_patches` hook.
-It checks for `/linuxrc.syno` before starting and on every refresh; when DSM
-replaces the junior root, the monitor exits and stops its display helper. No DSM
-system service is installed. It displays the IPv4, gateway ping, TCP/5000, disk,
-and refresh status during junior mode. It writes observations to
+It checks for `/linuxrc.syno` before starting and on every refresh. The
+`on_os_load` hook stops the monitor and restores the display before DSM takes
+over the root filesystem; no DSM system service is installed. It displays the
+IPv4, gateway ping, TCP/5000, disk, and refresh status during junior mode. It
+writes observations to
 `/var/log/junior-realtime-helper.log`. It does not install DSM, mount a disk,
 or modify partitions.
 
