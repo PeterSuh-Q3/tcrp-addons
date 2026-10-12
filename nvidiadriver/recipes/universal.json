@@ -15,7 +15,7 @@
     {
       "name": "nvidia-spk-index.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/nvidia-spk-index.json",
-      "sha256": "8971b3058fd388221166349b041f69ea7aa14215f6b163f36bcbd7fe2496131c",
+      "sha256": "ed62c6f9264a1c5e358b4cc4cb6d6ca5bfb7112783bd229601c53c33b30d533a",
       "packed": false
     },
     {
