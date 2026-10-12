@@ -29,7 +29,7 @@ install_dsm_monitor() {
     case "$DSM_MAJOR" in
         7|8|9|[1-9][0-9]*) ;;
         *)
-            echo "junior-realtime-helper: DSM 7 or later required; skipping (DSM ${DSM_MAJOR:-unknown})"
+            echo "junior-realtime-helper: DSM-stage service requires DSM 7 or later; skipping (DSM ${DSM_MAJOR:-unknown})"
             return 0
             ;;
     esac
