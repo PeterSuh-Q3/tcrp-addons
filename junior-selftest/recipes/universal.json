@@ -3,19 +3,13 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-selftest/src/install.sh",
-      "sha256": "c0b6a1fac71e180a295df42db7da9a3a95752a9f761e81a0e322f4366e3f3ade",
+      "sha256": "3477c00fc9775a35f9912baa901fb41022738cfeea0bd96f30a362981fbfe9a7",
       "packed": false
     },
     {
       "name": "selftest.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-selftest/src/selftest.sh",
-      "sha256": "7df9e866c628b0a5da322b0b5ea8a752e4d7c8b5979558e2cc60a65496a070d5",
-      "packed": false
-    },
-    {
-      "name": "fb-status",
-      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-selftest/src/fb-status",
-      "sha256": "e95af073c3e2b83794c45759f8aea250747e036fe27480326b06417dff85cdb9",
+      "sha256": "83d0cca9d0d7eb190599a7265822d0e809f038a4b66e32db552b32f9925a8ad9",
       "packed": false
     }
   ],

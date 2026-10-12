@@ -3,8 +3,9 @@
 # Read-only junior status monitor. Never mounts, formats or writes a disk.
 export PATH=/usr/syno/bin:/usr/syno/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 trap '' HUP
-LOG=/tmp/junior-selftest.log
-fb_ok=1
+CONSOLE=/dev/tty1
+active_console=$(cat /sys/devices/virtual/tty/tty0/active 2>/dev/null)
+case "$active_console" in tty[0-9]*) [ -c "/dev/$active_console" ] && CONSOLE="/dev/$active_console" ;; esac
 
 addresses() {
     ip -o -4 addr show scope global 2>/dev/null |
@@ -39,6 +40,33 @@ port_ready() {
     return 1
 }
 
+render_status() {
+    [ -c "$CONSOLE" ] || return 1
+    {
+        printf '\033[s\033[H'
+        row=0
+        while [ "$row" -lt 14 ]; do
+            printf '\033[2K\r\n'
+            row=$((row + 1))
+        done
+        printf '\033[H'
+        printf '\033[2KREDPILL JUNIOR SELFTEST\r\n'
+        printf '\033[2KMODEL SA6400 DSM 7.4.1\r\n'
+        printf '\033[2KIP %s\r\n' "$ip"
+        printf '\033[2KTCP 5000 %s\r\n' "$port"
+        printf '\033[2KRECOGNIZED DISKS %s\r\n' "$count"
+        printf '\033[2KDEVICE  SIZE   MODEL\r\n'
+        shown=0
+        printf '%s\n' "$disks" | while IFS= read -r disk; do
+            [ -n "$disk" ] || continue
+            [ "$shown" -lt 8 ] || break
+            printf '\033[2K%s\r\n' "$disk"
+            shown=$((shown + 1))
+        done
+        printf '\033[u'
+    } >"$CONSOLE"
+}
+
 previous=''
 while :; do
     ips=$(addresses)
@@ -57,18 +85,6 @@ while :; do
         printf '%s\n' "$current"
         previous=$current
     fi
-    if [ "$fb_ok" -eq 1 ]; then
-        set -- 'REDPILL JUNIOR SELFTEST' 'MODEL SA6400 DSM 7.4.1' \
-            "IP $ip" "TCP 5000 $port" "KERNEL DISKS $count"
-        shown=0
-        printf '%s\n' "$disks" >/tmp/junior-selftest.disks
-        while IFS= read -r disk; do
-            [ -n "$disk" ] || continue
-            [ "$shown" -lt 3 ] || break
-            set -- "$@" "$disk"
-            shown=$((shown + 1))
-        done </tmp/junior-selftest.disks
-        /tmp/junior-fb-status "$@" 2>>"$LOG" || fb_ok=0
-    fi
+    render_status || printf 'junior-selftest: cannot write %s\n' "$CONSOLE" >&2
     sleep 10
 done
