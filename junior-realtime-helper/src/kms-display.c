@@ -327,12 +327,12 @@ fail:
 }
 
 static void draw_line(struct display *d, int *y, int scale,
-                      uint32_t color, const char *fmt, ...)
+                      int line_step, uint32_t color, const char *fmt, ...)
 {
     char buf[256];
     va_list ap; va_start(ap,fmt); vsnprintf(buf,sizeof(buf),fmt,ap); va_end(ap);
     text(d,18*scale,*y,scale,buf,color);
-    *y+=10*scale;
+    *y+=line_step;
 }
 
 static int draw_field(struct display *d, int x, int y, int scale,
@@ -347,21 +347,46 @@ static int draw_field(struct display *d, int x, int y, int scale,
 }
 
 static void draw_field_line(struct display *d, int x, int *y, int scale,
+                            int line_step,
                             const char *label, const char *value,
                             uint32_t label_color, uint32_t value_color)
 {
     (void)draw_field(d,x,*y,scale,label,value,label_color,value_color);
-    *y+=10*scale;
+    *y+=line_step;
 }
 
-static void draw_cmdline(struct display *d, int *y, int scale, const char *value)
+static int cmdline_wrapped_rows(int width, int scale, const char *value)
+{
+    int max_chars=(width-36*scale)/(6*scale);
+    int rows=0;
+
+    if (max_chars<1) return 0;
+    if (max_chars>255) max_chars=255;
+    while (*value) {
+        while (*value==' ') value++;
+        if (!*value) break;
+        size_t length=strlen(value);
+        size_t take=length<(size_t)max_chars?length:(size_t)max_chars;
+        if (take<length) {
+            size_t split=take;
+            while (split>0 && value[split]!=' ') split--;
+            if (split>0) take=split;
+        }
+        value+=take;
+        rows++;
+    }
+    return rows;
+}
+
+static void draw_cmdline(struct display *d, int *y, int scale, int line_step,
+                         const char *value)
 {
     const uint32_t cyan=0xff66d9ef, white=0xffeeeeee;
     int max_chars=(d->mode.hdisplay-36*scale)/(6*scale);
     char line[256];
     if (max_chars<1) return;
     if (max_chars>(int)sizeof(line)-1) max_chars=(int)sizeof(line)-1;
-    draw_line(d,y,scale,cyan,"CMDLINE :");
+    draw_line(d,y,scale,line_step,cyan,"CMDLINE :");
     while (*value) {
         while (*value==' ') value++;
         if (!*value || *y+7*scale>=d->mode.vdisplay) break;
@@ -374,9 +399,25 @@ static void draw_cmdline(struct display *d, int *y, int scale, const char *value
         }
         memcpy(line,value,take);
         line[take]=0;
-        draw_line(d,y,scale,white,"%s",line);
+        draw_line(d,y,scale,line_step,white,"%s",line);
         value+=take;
     }
+}
+
+static int render_fits(const struct display *d, const struct status *s,
+                       int scale, int line_step, int cmdline_scale,
+                       int cmdline_step)
+{
+    int before_cmdline=24+s->gpu_rows+s->nic_rows;
+    int after_cmdline=7+s->disk_rows;
+    int cmdline_rows=1+cmdline_wrapped_rows(d->mode.hdisplay,cmdline_scale,
+                                             s->cmdline);
+    if (d->connector_name[0]) before_cmdline+=3;
+    int top=(scale==2 && d->mode.hdisplay<1500)?9*scale:14*scale;
+    int required=top+line_step*before_cmdline+
+        cmdline_step*cmdline_rows+(line_step+1)/2+
+        line_step*(after_cmdline-1)+7*scale;
+    return required<=d->mode.vdisplay;
 }
 
 static void render(struct display *d, const struct status *s)
@@ -385,70 +426,88 @@ static void render(struct display *d, const struct status *s)
     const uint32_t green=0xff58e39b, cyan=0xff66d9ef, red=0xffff7777;
     const uint32_t amber=0xffffc857, yellow=0xffffe66d;
     const uint32_t light_pink=0xffffb6c1;
-    int scale=d->mode.hdisplay>=1500?2:1;
-    if (scale<1) scale=1;
-    int margin=10*scale, y=margin+4*scale;
+    int scale=(d->mode.hdisplay>=1500 ||
+               (d->mode.hdisplay>=960 && d->mode.vdisplay>=700))?2:1;
+    int line_step=(scale==2 && d->mode.hdisplay<1500)?15:10*scale;
+    int cmdline_scale=(scale==2 && d->mode.hdisplay<1500)?1:scale;
+    int cmdline_step=10*cmdline_scale;
+    if (!render_fits(d,s,scale,line_step,cmdline_scale,cmdline_step)) {
+        scale=1;
+        line_step=10;
+        cmdline_scale=1;
+        cmdline_step=10;
+    }
+    int compact_low_mode=(scale==2 && d->mode.hdisplay<1500);
+    int margin=compact_low_mode?8*scale:10*scale;
+    int y=margin+(compact_low_mode?1:4)*scale;
     size_t n=(size_t)(d->dumb.pitch/4)*d->mode.vdisplay;
     for (size_t i=0; i<n; i++) d->pixels[i]=bg;
-    int step=10*scale;
+    int step=line_step;
+    static int last_logged_scale=0;
+    if (last_logged_scale!=scale) {
+        fprintf(stderr,"KMS text scale: %dx mode=%ux%u line-step=%d\n",
+                scale,d->mode.hdisplay,d->mode.vdisplay,line_step);
+        last_logged_scale=scale;
+    }
 
-    draw_line(d,&y,scale,light_pink,"##### TCRP MSHELL LOADER #####");
+    draw_line(d,&y,scale,line_step,light_pink,"##### TCRP MSHELL LOADER #####");
     y+=step;
-    draw_field_line(d,margin,&y,scale,"MODEL : ",s->model,white,green);
-    draw_field_line(d,margin,&y,scale,"SERIAL : ",s->serial,white,green);
-    draw_field_line(d,margin,&y,scale,"MAC : ",s->mac,white,green);
-    draw_field_line(d,margin,&y,scale,"BUILD : ",s->build,white,green);
-    draw_field_line(d,margin,&y,scale,"UPDATE : ",s->update,white,green);
-    draw_field_line(d,margin,&y,scale,"LKM : ",s->lkm_version,white,green);
-    draw_field_line(d,margin,&y,scale,"tcrp-modules : ",s->modules_version,white,green);
-    draw_field_line(d,margin,&y,scale,"Module Type : ",s->module_type,white,green);
-    draw_field_line(d,margin,&y,scale,"Loader version : ",s->loader_version,white,green);
-    draw_field_line(d,margin,&y,scale,"PLATFORM : ",s->platform,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"MODEL : ",s->model,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"SERIAL : ",s->serial,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"MAC : ",s->mac,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"BUILD : ",s->build,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"UPDATE : ",s->update,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"LKM : ",s->lkm_version,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"tcrp-modules : ",s->modules_version,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"Module Type : ",s->module_type,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"Loader version : ",s->loader_version,white,green);
+    draw_field_line(d,margin,&y,scale,line_step,"PLATFORM : ",s->platform,white,green);
 
     for (int i=0;i<s->gpu_rows;i++) {
-        draw_field_line(d,margin,&y,scale,"GPU : ",s->gpus[i],white,green);
+        draw_field_line(d,margin,&y,scale,line_step,"GPU : ",s->gpus[i],white,green);
     }
     if (d->connector_name[0]) {
-        draw_field_line(d,margin,&y,scale,"KMS Port : ",d->connector_name,white,green);
-        draw_field_line(d,margin,&y,scale,"KMS Status : ",
+        draw_field_line(d,margin,&y,scale,line_step,"KMS Port : ",d->connector_name,white,green);
+        draw_field_line(d,margin,&y,scale,line_step,"KMS Status : ",
                         d->connector_connected?"CONNECTED":"DISCONNECTED",white,
                         d->connector_connected?green:red);
-        draw_line(d,&y,scale,white,"KMS Resolution : %ux%u",
+        draw_line(d,&y,scale,line_step,white,"KMS Resolution : %ux%u",
                   d->mode.hdisplay,d->mode.vdisplay);
     }
 
-    draw_field_line(d,margin,&y,scale,"CPU : ",s->cpu,white,0xffa0a0ff);
-    draw_field_line(d,margin,&y,scale,"THREADS : ",s->threads,white,0xffa0a0ff);
-    draw_field_line(d,margin,&y,scale,"DMI : ",s->dmi,white,yellow);
+    draw_field_line(d,margin,&y,scale,line_step,"CPU : ",s->cpu,white,0xffa0a0ff);
+    draw_field_line(d,margin,&y,scale,line_step,"THREADS : ",s->threads,white,0xffa0a0ff);
+    draw_field_line(d,margin,&y,scale,line_step,"DMI : ",s->dmi,white,yellow);
 
-    draw_field_line(d,margin,&y,scale,"SAS/RAID HBAs Count : ",s->hba_count,white,red);
-    draw_field_line(d,margin,&y,scale,"NICs Count : ",s->pci_nic_count,white,red);
-    draw_field_line(d,margin,&y,scale,"GPU Count : ",s->gpu_count,white,red);
-    draw_field_line(d,margin,&y,scale,"SAS/SATA Disks Count : ",s->sata_count,white,red);
-    draw_field_line(d,margin,&y,scale,"NVMe Disks Count : ",s->nvme_count,white,red);
+    draw_field_line(d,margin,&y,scale,line_step,"SAS/RAID HBAs Count : ",s->hba_count,white,red);
+    draw_field_line(d,margin,&y,scale,line_step,"NICs Count : ",s->pci_nic_count,white,red);
+    draw_field_line(d,margin,&y,scale,line_step,"GPU Count : ",s->gpu_count,white,red);
+    draw_field_line(d,margin,&y,scale,line_step,"SAS/SATA Disks Count : ",s->sata_count,white,red);
+    draw_field_line(d,margin,&y,scale,line_step,"NVMe Disks Count : ",s->nvme_count,white,red);
 
-    draw_line(d,&y,scale,green,"System is running in %s boot mode",s->boot);
+    draw_line(d,&y,scale,line_step,green,"System is running in %s boot mode",s->boot);
 
     for (int i=0;i<s->nic_rows;i++) {
-        draw_field_line(d,margin,&y,scale,"Network : ",s->nics[i],white,green);
+        draw_field_line(d,margin,&y,scale,line_step,"Network : ",s->nics[i],white,green);
     }
-    draw_cmdline(d,&y,scale,s->cmdline);
+    draw_cmdline(d,&y,cmdline_scale,cmdline_step,s->cmdline);
 
     /* Keep the original self-test checks together at the bottom. */
     y+=step/2;
-    draw_line(d,&y,scale,cyan,"JUNIOR REALTIME HELPER");
-    draw_field_line(d,margin,&y,scale,"Current IP : ",s->ip,white,
+    draw_line(d,&y,scale,line_step,cyan,"JUNIOR REALTIME HELPER");
+    draw_field_line(d,margin,&y,scale,line_step,"Current IP : ",s->ip,white,
                     !strcmp(s->ip,"WAITING")?amber:green);
     uint32_t ping_color=!strncmp(s->ping,"REPLY",5)?green:
         (!strcmp(s->ping,"WAITING")||!strcmp(s->ping,"UNAVAILABLE")?amber:red);
-    draw_field_line(d,margin,&y,scale,"Gateway Ping : ",s->ping,white,ping_color);
-    draw_field_line(d,margin,&y,scale,"DSM TCP/5000 : ",s->port,white,
+    draw_field_line(d,margin,&y,scale,line_step,"Gateway Ping : ",s->ping,white,ping_color);
+    draw_field_line(d,margin,&y,scale,line_step,"DSM TCP/5000 : ",s->port,white,
                     !strcmp(s->port,"READY")?green:
                     (!strcmp(s->port,"WAITING")?amber:red));
-    draw_field_line(d,margin,&y,scale,"Recognized Disks : ",s->disk_count,white,green);
-    draw_line(d,&y,scale,muted,"DEVICE  SIZE  MODEL");
-    for (int i=0;i<s->disk_rows;i++) draw_line(d,&y,scale,white,"%s",s->disks[i]);
-    draw_line(d,&y,scale,cyan,"DISPLAY REFRESH : %s (2s interval)",s->refresh);
+    draw_field_line(d,margin,&y,scale,line_step,"Recognized Disks : ",s->disk_count,white,green);
+    draw_line(d,&y,scale,line_step,muted,"DEVICE  SIZE  MODEL");
+    for (int i=0;i<s->disk_rows;i++)
+        draw_line(d,&y,scale,line_step,white,"%s",s->disks[i]);
+    draw_line(d,&y,scale,line_step,cyan,"DISPLAY REFRESH : %s (2s interval)",s->refresh);
     __sync_synchronize();
     (void)msync((void *)d->pixels,d->dumb.size,MS_SYNC);
     struct drm_mode_fb_dirty_cmd dirty={.fb_id=d->fb.fb_id};

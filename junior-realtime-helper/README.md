@@ -36,6 +36,11 @@ The KMS panel also identifies the selected connector (for example `HDMI-A-1`)
 and reports its connection state and active output resolution. This comes from
 the DRM connector and mode selected by the renderer, so it applies to i915,
 amdgpu, and other DRM/KMS drivers without a GPU-specific backlight module.
+On 1024x768 and similar 1280-wide modes, it uses a larger 2x font with tighter
+line spacing for the panel. The longer `/proc/cmdline` text stays at 1x and
+wraps to preserve room for the live status and disk rows. If the complete panel
+still does not fit vertically, the renderer falls back to 1x. The selected
+scale is recorded in the helper log.
 
 When the monitor exits, it asks the KMS helper to restore the CRTC and
 framebuffer that were active before the panel took over, then waits for that
