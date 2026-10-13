@@ -7,8 +7,10 @@ migration case). The hook also runs for other linuxrc exits, so this reason
 check limits startup to these junior fallback states.
 The monitor checks for `/linuxrc.syno` before starting and on every refresh,
 then asks the KMS helper to restore the previous display when it exits. No DSM
-system service is installed. It displays IPv4, gateway ping, TCP/5000, disk,
-and refresh status during junior mode. It writes observations to
+system service is installed. It displays the build-time LKM, module-pack,
+module-type and loader-version snapshots from `/addons`, along with IPv4,
+gateway ping, TCP/5000, disk, and refresh status during junior mode. It writes
+observations to
 `/var/log/junior-realtime-helper.log`. It does not install DSM, mount a disk,
 or modify partitions.
 
@@ -21,8 +23,10 @@ shows the last refresh to the second. It does not need `/dev/fb0`,
 fbcon, or a virtual console. If DRM/KMS is unavailable, the shell monitor
 continues to print to the active virtual console when one exists.
 The panel uses a color-coded layout similar to the FRIEND boot summary. Each
-identity, hardware, device-count, network, and self-test field is displayed on
-its own line. The full `/proc/cmdline` follows the network rows and wraps over
+identity field is displayed on its own line, followed by separate `LKM`,
+`tcrp-modules`, `Module Type`, and `Loader version` rows immediately above
+`PLATFORM`. Hardware, device-count, network, and self-test fields also use one
+line per item. The full `/proc/cmdline` follows the network rows and wraps over
 additional lines when needed. The original self-test results remain grouped at
 the bottom: current IP, gateway ping response, DSM TCP/5000 readiness (reported
 as `NOT READY` when the selected NIC has no carrier), recognized disk count,

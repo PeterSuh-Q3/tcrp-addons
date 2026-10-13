@@ -30,6 +30,7 @@ struct status {
     char ip[64], ping[48], port[24], disk_count[16], refresh[32];
     char cmdline[2048];
     char model[64], serial[64], mac[32], build[64], update[32], platform[96];
+    char lkm_version[128], modules_version[128], module_type[128], loader_version[96];
     char cpu[160], threads[16], dmi[160], boot[16];
     char hba_count[16], pci_nic_count[16], gpu_count[16];
     char sata_count[16], nvme_count[16];
@@ -398,6 +399,10 @@ static void render(struct display *d, const struct status *s)
     draw_field_line(d,margin,&y,scale,"MAC : ",s->mac,white,green);
     draw_field_line(d,margin,&y,scale,"BUILD : ",s->build,white,green);
     draw_field_line(d,margin,&y,scale,"UPDATE : ",s->update,white,green);
+    draw_field_line(d,margin,&y,scale,"LKM : ",s->lkm_version,white,green);
+    draw_field_line(d,margin,&y,scale,"tcrp-modules : ",s->modules_version,white,green);
+    draw_field_line(d,margin,&y,scale,"Module Type : ",s->module_type,white,green);
+    draw_field_line(d,margin,&y,scale,"Loader version : ",s->loader_version,white,green);
     draw_field_line(d,margin,&y,scale,"PLATFORM : ",s->platform,white,green);
 
     for (int i=0;i<s->gpu_rows;i++) {
@@ -489,6 +494,8 @@ static int parse_status(char *data,struct status *s)
         FIELD("REFRESH",s->refresh) FIELD("CMDLINE",s->cmdline)
         FIELD("MODEL",s->model) FIELD("SERIAL",s->serial) FIELD("MAC",s->mac)
         FIELD("BUILD",s->build) FIELD("UPDATE",s->update) FIELD("PLATFORM",s->platform)
+        FIELD("LKM_VERSION",s->lkm_version) FIELD("MODULES_VERSION",s->modules_version)
+        FIELD("MODULE_TYPE",s->module_type) FIELD("LOADER_VERSION",s->loader_version)
         FIELD("CPU",s->cpu) FIELD("THREADS",s->threads)
         FIELD("DMI",s->dmi) FIELD("BOOT",s->boot) FIELD("HBA_COUNT",s->hba_count)
         FIELD("PCI_NIC_COUNT",s->pci_nic_count) FIELD("GPU_COUNT",s->gpu_count)

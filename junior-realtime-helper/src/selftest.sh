@@ -129,6 +129,21 @@ version_value() {
     awk -F= -v key="$1" '$1 == key {gsub(/"/, "", $2); print $2; exit}' "$file" 2>/dev/null
 }
 
+addon_value() {
+    file="/addons/$1"
+    label=$2
+    value=$(awk -v label="$label" '
+        NR == 1 {
+            sub(/\r$/, "")
+            sub("^[[:space:]]*" label "[[:space:]]*:[[:space:]]*", "")
+            print
+            exit
+        }
+    ' "$file" 2>/dev/null)
+    [ -n "$value" ] || value=UNKNOWN
+    printf '%s\n' "$value"
+}
+
 pci_counts() {
     hba=0
     pci_nics=0
@@ -233,6 +248,10 @@ render_status() {
         printf '\033[2KMAC : %s\r\n' "$mac"
         printf '\033[2KBUILD : %s-%s\r\n' "$product" "$build"
         printf '\033[2KUPDATE : %s\r\n' "$update"
+        printf '\033[2KLKM : %s\r\n' "$lkm_version"
+        printf '\033[2Ktcrp-modules : %s\r\n' "$modules_version"
+        printf '\033[2KModule Type : %s\r\n' "$module_type"
+        printf '\033[2KLoader version : %s\r\n' "$loader_version"
         printf '\033[2KPLATFORM : %s\r\n' "$platform"
         shown=0
         printf '%s\n' "$(gpu_list)" | while IFS= read -r gpu; do
@@ -315,6 +334,10 @@ while :; do
     build=$(version_value buildnumber); [ -n "$build" ] || build=UNKNOWN
     update=$(version_value smallfixnumber); [ -n "$update" ] || update=UNKNOWN
     platform=$(version_value unique); [ -n "$platform" ] || platform=UNKNOWN
+    lkm_version=$(addon_value LKM_VERSION LKM)
+    modules_version=$(addon_value MODULES_VERSION tcrp-modules)
+    module_type=$(addon_value MODULE_TYPE 'Module Type')
+    loader_version=$(addon_value VERSION 'Loader version')
     cpu=$(awk -F: '/^model name/ {sub(/^[ \t]+/, "", $2); print $2; exit}' /proc/cpuinfo |
         tr -cd '[:alnum:] ._:/()-')
     [ -n "$cpu" ] || cpu=UNKNOWN
@@ -340,6 +363,8 @@ while :; do
             "$ip" "$ping" "$port" "$count" "$refresh" "$cmdline"
         printf 'MODEL=%s\nSERIAL=%s\nMAC=%s\n' "$model" "$serial" "$mac"
         printf 'BUILD=%s-%s\nUPDATE=%s\nPLATFORM=%s\n' "$product" "$build" "$update" "$platform"
+        printf 'LKM_VERSION=%s\nMODULES_VERSION=%s\nMODULE_TYPE=%s\nLOADER_VERSION=%s\n' \
+            "$lkm_version" "$modules_version" "$module_type" "$loader_version"
         printf 'CPU=%s\nTHREADS=%s\nDMI=%s\n' "$cpu" "$threads" "$dmi"
         printf 'HBA_COUNT=%s\nPCI_NIC_COUNT=%s\nGPU_COUNT=%s\n' "$hba" "$pci_nics" "$gpu_count"
         printf 'SATA_COUNT=%s\nNVME_COUNT=%s\nBOOT=%s\n' "$sata_count" "$nvme_count" "$boot"
