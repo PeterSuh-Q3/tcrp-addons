@@ -3,6 +3,10 @@
 # jrExit runs for every linuxrc Exit(); only the junior fallback reason starts us.
 [ "$1" = jrExit ] || exit 0
 
+# MSHELL Manager persists this opt-out in the loader kernel command line.
+# Absence keeps the addon's historical enabled-by-default behavior.
+grep -Eq '(^|[[:space:]])junior-realtime-helper=0([[:space:]]|$)' /proc/cmdline 2>/dev/null && exit 0
+
 JUNIOR_REASON=/var/log/junior_reason
 grep -Fq 'Exit on error [12]' "$JUNIOR_REASON" 2>/dev/null || exit 0
 grep -Fq 'go to junior mode' "$JUNIOR_REASON" 2>/dev/null || exit 0
