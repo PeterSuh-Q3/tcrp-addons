@@ -8,8 +8,16 @@
 grep -Eq '(^|[[:space:]])junior-realtime-helper=0([[:space:]]|$)' /proc/cmdline 2>/dev/null && exit 0
 
 JUNIOR_REASON=/var/log/junior_reason
-grep -Fq 'Exit on error [12]' "$JUNIOR_REASON" 2>/dev/null || exit 0
-grep -Fq 'go to junior mode' "$JUNIOR_REASON" 2>/dev/null || exit 0
+junior_reason_match=0
+if grep -Fq 'Exit on error [12]' "$JUNIOR_REASON" 2>/dev/null &&
+    grep -Fq 'go to junior mode' "$JUNIOR_REASON" 2>/dev/null; then
+    junior_reason_match=1
+fi
+if grep -Fq 'Exit on error [7]' "$JUNIOR_REASON" 2>/dev/null &&
+    grep -Fq 'root not matched with junior' "$JUNIOR_REASON" 2>/dev/null; then
+    junior_reason_match=1
+fi
+[ "$junior_reason_match" -eq 1 ] || exit 0
 [ -x /linuxrc.syno ] || exit 0
 
 ADDON_DIR=/exts/junior-realtime-helper

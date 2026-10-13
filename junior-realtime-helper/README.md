@@ -1,8 +1,10 @@
 # Junior Realtime Helper (SA6400 pilot)
 
-The addon starts at `on_jrExit` only when `/var/log/junior_reason` records
-both `Exit on error [12]` and `go to junior mode`. The hook also runs for other
-linuxrc exits, so this reason check limits startup to the junior fallback.
+The addon starts at `on_jrExit` when `/var/log/junior_reason` records either
+`Exit on error [12]` together with `go to junior mode`, or
+`Exit on error [7]` together with `root not matched with junior` (the model
+migration case). The hook also runs for other linuxrc exits, so this reason
+check limits startup to these junior fallback states.
 The monitor checks for `/linuxrc.syno` before starting and on every refresh,
 then asks the KMS helper to restore the previous display when it exits. No DSM
 system service is installed. It displays IPv4, gateway ping, TCP/5000, disk,
