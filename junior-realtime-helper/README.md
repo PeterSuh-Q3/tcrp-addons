@@ -18,14 +18,18 @@ every two seconds while the junior monitor runs. A visible local-time stamp
 shows the last refresh to the second. It does not need `/dev/fb0`,
 fbcon, or a virtual console. If DRM/KMS is unavailable, the shell monitor
 continues to print to the active virtual console when one exists.
-The panel uses a compact, color-coded layout similar to the FRIEND boot
-summary: model/DSM identity, GPU, CPU/thread count, DMI, device counts, boot
-mode, and NIC details appear first. The full `/proc/cmdline` is shown directly
-under the network rows. The original self-test results remain grouped at the
-bottom: current IP, gateway ping response, DSM TCP/5000 readiness (reported as
-`NOT READY` when the selected NIC has no carrier), recognized disk count, and
-disk rows. The text fallback follows the same top-summary and bottom-self-test
-order.
+The panel uses a color-coded layout similar to the FRIEND boot summary. Each
+identity, hardware, device-count, network, and self-test field is displayed on
+its own line. The full `/proc/cmdline` follows the network rows and wraps over
+additional lines when needed. The original self-test results remain grouped at
+the bottom: current IP, gateway ping response, DSM TCP/5000 readiness (reported
+as `NOT READY` when the selected NIC has no carrier), recognized disk count,
+disk rows, and the two-second refresh time. The text fallback follows the same
+one-field-per-line order.
+The KMS panel also identifies the selected connector (for example `HDMI-A-1`)
+and reports its connection state and active output resolution. This comes from
+the DRM connector and mode selected by the renderer, so it applies to i915,
+amdgpu, and other DRM/KMS drivers without a GPU-specific backlight module.
 
 When the monitor exits, it asks the KMS helper to restore the CRTC and
 framebuffer that were active before the panel took over, then waits for that

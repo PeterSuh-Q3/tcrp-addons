@@ -225,48 +225,45 @@ ping_status() {
 render_status() {
     [ -c "$CONSOLE" ] || return 1
     {
-        printf '\033[s\033[H'
-        row=0
-        while [ "$row" -lt 24 ]; do
-            printf '\033[2K\r\n'
-            row=$((row + 1))
-        done
-        printf '\033[H'
-        printf '\033[2KJUNIOR REALTIME HELPER\r\n'
+        printf '\033[2J\033[H'
         printf '\033[2K\033[38;5;218m##### TCRP MSHELL LOADER #####\033[0m\r\n'
         printf '\033[2K\r\n'
-        printf '\033[2KMODEL : %s  DSM %s-%s\r\n' "$model" "$product" "$build"
-        printf '\033[2KSERIAL %s\r\n' "$serial"
-        printf '\033[2KMAC %s\r\n' "$mac"
-        printf '\033[2KCPU %s\r\n' "$cpu"
-        printf '\033[2KTHREADS %s\r\n' "$threads"
-        printf '\033[2KPLATFORM %s\r\n' "$platform"
-        printf '\033[2KDMI %s\r\n' "$dmi"
-        printf '\033[2KBOOT %s  HBA %s  NIC %s  GPU %s\r\n' \
-            "$boot" "$hba" "$pci_nics" "$gpu_count"
-        printf '\033[2KNETWORK INTERFACES\r\n'
-        shown=0
-        printf '%s\n' "$(nic_list)" | while IFS= read -r nic; do
-            [ -n "$nic" ] || continue
-            [ "$shown" -lt 2 ] || break
-            printf '\033[2K%s\r\n' "$nic"
-            shown=$((shown + 1))
-        done
-        printf '\033[2KCMDLINE : %s\r\n' "$(cat /proc/cmdline 2>/dev/null)"
-        printf '\033[2KGRAPHICS\r\n'
+        printf '\033[2KMODEL : %s\r\n' "$model"
+        printf '\033[2KSERIAL : %s\r\n' "$serial"
+        printf '\033[2KMAC : %s\r\n' "$mac"
+        printf '\033[2KBUILD : %s-%s\r\n' "$product" "$build"
+        printf '\033[2KUPDATE : %s\r\n' "$update"
+        printf '\033[2KPLATFORM : %s\r\n' "$platform"
         shown=0
         printf '%s\n' "$(gpu_list)" | while IFS= read -r gpu; do
             [ -n "$gpu" ] || continue
             [ "$shown" -lt 2 ] || break
-            printf '\033[2K%s\r\n' "$gpu"
+            printf '\033[2KGPU : %s\r\n' "$gpu"
             shown=$((shown + 1))
         done
+        printf '\033[2KCPU : %s\r\n' "$cpu"
+        printf '\033[2KTHREADS : %s\r\n' "$threads"
+        printf '\033[2KDMI : %s\r\n' "$dmi"
+        printf '\033[2KSAS/RAID HBAs Count : %s\r\n' "$hba"
+        printf '\033[2KNICs Count : %s\r\n' "$pci_nics"
+        printf '\033[2KGPU Count : %s\r\n' "$gpu_count"
+        printf '\033[2KSAS/SATA Disks Count : %s\r\n' "$sata_count"
+        printf '\033[2KNVMe Disks Count : %s\r\n' "$nvme_count"
+        printf '\033[2KSystem is running in %s boot mode\r\n' "$boot"
+        shown=0
+        printf '%s\n' "$(nic_list)" | while IFS= read -r nic; do
+            [ -n "$nic" ] || continue
+            [ "$shown" -lt 2 ] || break
+            printf '\033[2KNetwork : %s\r\n' "$nic"
+            shown=$((shown + 1))
+        done
+        printf '\033[2KCMDLINE :\r\n'
+        printf '\033[2K%s\r\n' "$(cat /proc/cmdline 2>/dev/null)"
         printf '\033[2KJUNIOR REALTIME HELPER\r\n'
-        printf '\033[2KCURRENT IP %s  GATEWAY PING %s\r\n' "$ip" "$ping"
-        printf '\033[2KDISPLAY REFRESH : %s (2s interval)\r\n' "$refresh"
-        printf '\033[2KDSM TCP/5000 %s\r\n' "$port"
-        printf '\033[2KRECOGNIZED DISKS %s  SATA/OTHER %s  NVME %s\r\n' \
-            "$count" "$sata_count" "$nvme_count"
+        printf '\033[2KCurrent IP : %s\r\n' "$ip"
+        printf '\033[2KGateway Ping : %s\r\n' "$ping"
+        printf '\033[2KDSM TCP/5000 : %s\r\n' "$port"
+        printf '\033[2KRecognized Disks : %s\r\n' "$count"
         printf '\033[2KDEVICE  SIZE  MODEL\r\n'
         shown=0
         printf '%s\n' "$disks" | while IFS= read -r disk; do
@@ -275,7 +272,7 @@ render_status() {
             printf '\033[2K%s\r\n' "$disk"
             shown=$((shown + 1))
         done
-        printf '\033[u'
+        printf '\033[2KDISPLAY REFRESH : %s (2s interval)\r\n' "$refresh"
     } >"$CONSOLE"
 }
 

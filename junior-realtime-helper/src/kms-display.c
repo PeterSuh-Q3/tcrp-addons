@@ -40,6 +40,8 @@ struct status {
 struct display {
     int fd;
     uint32_t connector;
+    char connector_name[40];
+    int connector_connected;
     uint32_t crtc;
     struct drm_mode_modeinfo mode;
     struct drm_mode_crtc original_crtc;
@@ -156,6 +158,35 @@ static int get_connector(int fd, uint32_t id, struct drm_mode_get_connector *c,
     return 0;
 }
 
+static const char *connector_type_name(uint32_t type)
+{
+    switch (type) {
+    case DRM_MODE_CONNECTOR_VGA: return "VGA";
+    case DRM_MODE_CONNECTOR_DVII: return "DVI-I";
+    case DRM_MODE_CONNECTOR_DVID: return "DVI-D";
+    case DRM_MODE_CONNECTOR_DVIA: return "DVI-A";
+    case DRM_MODE_CONNECTOR_Composite: return "COMPOSITE";
+    case DRM_MODE_CONNECTOR_SVIDEO: return "SVIDEO";
+    case DRM_MODE_CONNECTOR_LVDS: return "LVDS";
+    case DRM_MODE_CONNECTOR_Component: return "COMPONENT";
+    case DRM_MODE_CONNECTOR_9PinDIN: return "DIN";
+    case DRM_MODE_CONNECTOR_DisplayPort: return "DP";
+    case DRM_MODE_CONNECTOR_HDMIA: return "HDMI-A";
+    case DRM_MODE_CONNECTOR_HDMIB: return "HDMI-B";
+    case DRM_MODE_CONNECTOR_TV: return "TV";
+    case DRM_MODE_CONNECTOR_eDP: return "EDP";
+    case DRM_MODE_CONNECTOR_VIRTUAL: return "VIRTUAL";
+    case DRM_MODE_CONNECTOR_DSI: return "DSI";
+    default: return "UNKNOWN";
+    }
+}
+
+static void set_connector_name(char *dst, size_t size, uint32_t type,
+                               uint32_t type_id)
+{
+    snprintf(dst,size,"%s-%u",connector_type_name(type),type_id);
+}
+
 static int setup_display(struct display *d)
 {
     struct drm_mode_card_res r = {0};
@@ -175,6 +206,8 @@ static int setup_display(struct display *d)
         goto fail;
 
     uint32_t selected_crtc=0, selected_conn=0;
+    uint32_t selected_type=DRM_MODE_CONNECTOR_Unknown, selected_type_id=0;
+    int selected_connected=0;
     struct drm_mode_modeinfo selected_mode={0};
     int best_score=-1;
     for (uint32_t i=0; i<r.count_connectors; i++) {
@@ -235,6 +268,9 @@ static int setup_display(struct display *d)
         if (crtc_id && candidate_mode.hdisplay && score > best_score) {
             best_score=score; selected_crtc=crtc_id;
             selected_conn=connectors[i];
+            selected_type=c.connector_type;
+            selected_type_id=c.connector_type_id;
+            selected_connected=c.connection == CONNECTED;
             selected_mode=candidate_mode;
         }
         free(modes); free(encoder_ids);
@@ -244,7 +280,11 @@ static int setup_display(struct display *d)
         errno = ENODEV;
         return -1;
     }
-    d->connector=selected_conn; d->crtc=selected_crtc; d->mode=selected_mode;
+    d->connector=selected_conn;
+    set_connector_name(d->connector_name,sizeof(d->connector_name),
+                       selected_type,selected_type_id);
+    d->connector_connected=selected_connected;
+    d->crtc=selected_crtc; d->mode=selected_mode;
     d->original_crtc=(struct drm_mode_crtc){.crtc_id=d->crtc};
     if (ioctl_ok(d->fd, DRM_IOCTL_MODE_GETCRTC, &d->original_crtc) < 0)
         return -1;
@@ -275,8 +315,10 @@ static int setup_display(struct display *d)
     if (ioctl_ok(d->fd, DRM_IOCTL_MODE_SETCRTC, &set) < 0)
         return -1;
     d->modeset_active=1;
-    fprintf(stderr, "KMS display active: connector=%u mode=%s %ux%u\n",
-            d->connector, d->mode.name, d->mode.hdisplay, d->mode.vdisplay);
+    fprintf(stderr, "KMS display active: connector=%u name=%s status=%s mode=%s %ux%u\n",
+            d->connector, d->connector_name,
+            d->connector_connected?"connected":"disconnected",
+            d->mode.name, d->mode.hdisplay, d->mode.vdisplay);
     return 0;
 fail:
     free(crtcs); free(connectors); free(fbs); free(encs);
@@ -301,6 +343,14 @@ static int draw_field(struct display *d, int x, int y, int scale,
     text(d,x,y,scale,value,value_color);
     x+=((int)strlen(value)+2)*6*scale;
     return x;
+}
+
+static void draw_field_line(struct display *d, int x, int *y, int scale,
+                            const char *label, const char *value,
+                            uint32_t label_color, uint32_t value_color)
+{
+    (void)draw_field(d,x,*y,scale,label,value,label_color,value_color);
+    *y+=10*scale;
 }
 
 static void draw_cmdline(struct display *d, int *y, int scale, const char *value)
@@ -343,72 +393,54 @@ static void render(struct display *d, const struct status *s)
 
     draw_line(d,&y,scale,light_pink,"##### TCRP MSHELL LOADER #####");
     y+=step;
-    int x=margin;
-    x=draw_field(d,x,y,scale,"MODEL : ",s->model,white,green);
-    x=draw_field(d,x,y,scale,"Serial : ",s->serial,white,green);
-    x=draw_field(d,x,y,scale,"Mac : ",s->mac,white,green);
-    x=draw_field(d,x,y,scale,"Build : ",s->build,white,green);
-    (void)draw_field(d,x,y,scale,"Update : ",s->update,white,green);
-    y+=step;
-
-    x=margin;
-    (void)draw_field(d,x,y,scale,"Platform : ",s->platform,white,green);
-    y+=step;
+    draw_field_line(d,margin,&y,scale,"MODEL : ",s->model,white,green);
+    draw_field_line(d,margin,&y,scale,"SERIAL : ",s->serial,white,green);
+    draw_field_line(d,margin,&y,scale,"MAC : ",s->mac,white,green);
+    draw_field_line(d,margin,&y,scale,"BUILD : ",s->build,white,green);
+    draw_field_line(d,margin,&y,scale,"UPDATE : ",s->update,white,green);
+    draw_field_line(d,margin,&y,scale,"PLATFORM : ",s->platform,white,green);
 
     for (int i=0;i<s->gpu_rows;i++) {
-        x=margin;
-        x=draw_field(d,x,y,scale,"GPU ","",white,white);
-        (void)draw_field(d,x,y,scale,"",s->gpus[i],white,green);
-        y+=step;
+        draw_field_line(d,margin,&y,scale,"GPU : ",s->gpus[i],white,green);
+    }
+    if (d->connector_name[0]) {
+        draw_field_line(d,margin,&y,scale,"KMS Port : ",d->connector_name,white,green);
+        draw_field_line(d,margin,&y,scale,"KMS Status : ",
+                        d->connector_connected?"CONNECTED":"DISCONNECTED",white,
+                        d->connector_connected?green:red);
+        draw_line(d,&y,scale,white,"KMS Resolution : %ux%u",
+                  d->mode.hdisplay,d->mode.vdisplay);
     }
 
-    x=margin;
-    x=draw_field(d,x,y,scale,"CPU : ",s->cpu,white,0xffa0a0ff);
-    x=draw_field(d,x,y,scale,"[",s->threads,white,0xffa0a0ff);
-    (void)draw_field(d,x,y,scale," Thread(s)]", "",white,0xffa0a0ff);
-    y+=step;
+    draw_field_line(d,margin,&y,scale,"CPU : ",s->cpu,white,0xffa0a0ff);
+    draw_field_line(d,margin,&y,scale,"THREADS : ",s->threads,white,0xffa0a0ff);
+    draw_field_line(d,margin,&y,scale,"DMI : ",s->dmi,white,yellow);
 
-    x=margin;
-    (void)draw_field(d,x,y,scale,"DMI : ",s->dmi,white,yellow);
-    y+=step;
+    draw_field_line(d,margin,&y,scale,"SAS/RAID HBAs Count : ",s->hba_count,white,red);
+    draw_field_line(d,margin,&y,scale,"NICs Count : ",s->pci_nic_count,white,red);
+    draw_field_line(d,margin,&y,scale,"GPU Count : ",s->gpu_count,white,red);
+    draw_field_line(d,margin,&y,scale,"SAS/SATA Disks Count : ",s->sata_count,white,red);
+    draw_field_line(d,margin,&y,scale,"NVMe Disks Count : ",s->nvme_count,white,red);
 
-    x=margin;
-    x=draw_field(d,x,y,scale,"SAS/RAID HBAs Count : ",s->hba_count,white,0xffff7777);
-    x=draw_field(d,x,y,scale,"NICs Count : ",s->pci_nic_count,white,0xffff7777);
-    x=draw_field(d,x,y,scale,"SAS/SATA Disks Count : ",s->sata_count,white,0xffff7777);
-    (void)draw_field(d,x,y,scale,"NVMe Disks Count : ",s->nvme_count,white,0xffff7777);
-    y+=step;
-
-    x=margin;
-    (void)draw_field(d,x,y,scale,"System is running in ",s->boot,green,green);
-    text(d,x,y,scale,"boot mode",green);
-    y+=step;
+    draw_line(d,&y,scale,green,"System is running in %s boot mode",s->boot);
 
     for (int i=0;i<s->nic_rows;i++) {
-        x=margin;
-        x=draw_field(d,x,y,scale,"Network : ",s->nics[i],white,green);
-        (void)x;
-        y+=step;
+        draw_field_line(d,margin,&y,scale,"Network : ",s->nics[i],white,green);
     }
     draw_cmdline(d,&y,scale,s->cmdline);
 
     /* Keep the original self-test checks together at the bottom. */
     y+=step/2;
     draw_line(d,&y,scale,cyan,"JUNIOR REALTIME HELPER");
-    x=margin;
-    x=draw_field(d,x,y,scale,"Current IP : ",s->ip,white,
-                 !strcmp(s->ip,"WAITING")?amber:green);
+    draw_field_line(d,margin,&y,scale,"Current IP : ",s->ip,white,
+                    !strcmp(s->ip,"WAITING")?amber:green);
     uint32_t ping_color=!strncmp(s->ping,"REPLY",5)?green:
         (!strcmp(s->ping,"WAITING")||!strcmp(s->ping,"UNAVAILABLE")?amber:red);
-    x=draw_field(d,x,y,scale,"Gateway Ping : ",s->ping,white,ping_color);
-    (void)draw_field(d,x,y,scale,"DSM TCP/5000 : ",s->port,white,
-                     !strcmp(s->port,"READY")?green:
-                     (!strcmp(s->port,"WAITING")?amber:red));
-    y+=step;
-    x=margin;
-    x=draw_field(d,x,y,scale,"Recognized Disks : ",s->disk_count,white,green);
-    (void)x;
-    y+=step;
+    draw_field_line(d,margin,&y,scale,"Gateway Ping : ",s->ping,white,ping_color);
+    draw_field_line(d,margin,&y,scale,"DSM TCP/5000 : ",s->port,white,
+                    !strcmp(s->port,"READY")?green:
+                    (!strcmp(s->port,"WAITING")?amber:red));
+    draw_field_line(d,margin,&y,scale,"Recognized Disks : ",s->disk_count,white,green);
     draw_line(d,&y,scale,muted,"DEVICE  SIZE  MODEL");
     for (int i=0;i<s->disk_rows;i++) draw_line(d,&y,scale,white,"%s",s->disks[i]);
     draw_line(d,&y,scale,cyan,"DISPLAY REFRESH : %s (2s interval)",s->refresh);
