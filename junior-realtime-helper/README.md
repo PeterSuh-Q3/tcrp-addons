@@ -3,8 +3,9 @@
 The addon starts at `on_jrExit` when `/var/log/junior_reason` records either
 `Exit on error [12]` together with `go to junior mode`, or
 `Exit on error [7]` together with `root not matched with junior` (the model
-migration case). The hook also runs for other linuxrc exits, so this reason
-check limits startup to these junior fallback states.
+migration case), or `Exit on error [9] force_junior bootargs detected` (the
+explicit `force_junior` boot argument case). The hook also runs for other
+linuxrc exits, so this reason check limits startup to these junior states.
 The monitor checks for `/linuxrc.syno` before starting and on every refresh,
 then asks the KMS helper to restore the previous display when it exits. No DSM
 system service is installed. It displays the build-time LKM, module-pack,

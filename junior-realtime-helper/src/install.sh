@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright (C) 2026 PeterSuh-Q3. See repository LICENSE.
-# jrExit runs for every linuxrc Exit(); only the junior fallback reason starts us.
+# jrExit runs for every linuxrc Exit(); only recognized junior cases start us.
 [ "$1" = jrExit ] || exit 0
 
 JUNIOR_REASON=/var/log/junior_reason
@@ -11,6 +11,9 @@ if grep -Fq 'Exit on error [12]' "$JUNIOR_REASON" 2>/dev/null &&
 fi
 if grep -Fq 'Exit on error [7]' "$JUNIOR_REASON" 2>/dev/null &&
     grep -Fq 'root not matched with junior' "$JUNIOR_REASON" 2>/dev/null; then
+    junior_reason_match=1
+fi
+if grep -Fq 'Exit on error [9] force_junior bootargs detected' "$JUNIOR_REASON" 2>/dev/null; then
     junior_reason_match=1
 fi
 [ "$junior_reason_match" -eq 1 ] || exit 0
