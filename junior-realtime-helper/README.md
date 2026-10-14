@@ -66,13 +66,6 @@ combination. The loader must explicitly include this addon; registration alone
 does not change normal loader builds. The helper is intentionally limited to
 junior mode; normal DSM boot is outside its scope.
 
-MSHELL Manager can disable the hook for the next loader build by adding the
-kernel argument `junior-realtime-helper=0`. The hook checks `/proc/cmdline`
-before inspecting the junior fallback reason or starting the monitor. If the
-argument is absent, the addon's historical enabled-by-default behavior is
-preserved. Changing the Manager setting requires rebuilding and rebooting the
-loader; it does not stop a helper that is already running.
-
 To rebuild the binary, use `src/build-kms-display.sh` with an x86-64 Linux
 static GCC and DRM UAPI headers (for example, the matching DSM toolkit headers
 through `DRM_INCLUDE`).
