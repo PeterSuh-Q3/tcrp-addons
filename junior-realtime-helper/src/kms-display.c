@@ -25,6 +25,7 @@
 #define MAX_DISKS 8
 #define MAX_NICS 8
 #define MAX_GPUS 4
+#define MAX_DRM_CARDS 8
 
 struct status {
     char ip[64], ping[48], port[24], disk_count[16], refresh[32];
@@ -55,6 +56,7 @@ struct display {
 };
 
 static volatile sig_atomic_t running = 1;
+static void restore_display(struct display *d);
 
 static void stop_display(int signal_number)
 {
@@ -609,9 +611,10 @@ int main(int argc, char **argv)
         fprintf(stderr,"usage: %s STATUS_FILE\n",argv[0]);
         return 2;
     }
-    struct display display={.fd=-1};
+    struct display displays[MAX_DRM_CARDS]={{0}};
+    for (int card=0; card<MAX_DRM_CARDS; card++)
+        displays[card].fd=-1;
     char prev[4096]="";
-    int drm_master=0;
     time_t last_render=0;
     struct sigaction action={0};
     action.sa_handler=stop_display;
@@ -625,30 +628,43 @@ int main(int argc, char **argv)
             char copy[4096]; snprintf(copy,sizeof(copy),"%s",status);
             struct status s;
             if (parse_status(copy,&s)==0) {
-                if (!drm_master) {
-                    for (int card=0; card<8 && !drm_master; card++) {
+                for (int card=0; card<MAX_DRM_CARDS; card++) {
+                    if (displays[card].fd < 0) {
                         char path[32]; snprintf(path,sizeof(path),"/dev/dri/card%d",card);
                         int fd=open(path,O_RDWR|O_CLOEXEC);
                         if (fd<0) continue;
                         if (ioctl_ok(fd,DRM_IOCTL_SET_MASTER,NULL)<0) { close(fd); continue; }
-                        display.fd=fd;
-                        if (setup_display(&display)==0) drm_master=1;
-                        else { fprintf(stderr,"%s: DRM/KMS setup: %s\n",path,strerror(errno)); close(fd); display.fd=-1; }
+                        displays[card].fd=fd;
+                        if (setup_display(&displays[card])<0) {
+                            int saved_errno=errno;
+                            fprintf(stderr,"%s: DRM/KMS setup: %s\n",path,strerror(saved_errno));
+                            restore_display(&displays[card]);
+                            memset(&displays[card],0,sizeof(displays[card]));
+                            displays[card].fd=-1;
+                        }
                     }
                 }
                 time_t now=time(NULL);
-                if (drm_master && (changed || now-last_render>=2)) {
-                    if (!last_render)
-                        fprintf(stderr,"KMS status parsed: disks=%s refresh=%s cmdline=%zu bytes\n",
-                                s.disk_count,s.refresh,strlen(s.cmdline));
-                    render(&display,&s);
-                    snprintf(prev,sizeof(prev),"%s",status);
-                    last_render=now;
+                if (changed || now-last_render>=2) {
+                    int rendered=0;
+                    for (int card=0; card<MAX_DRM_CARDS; card++) {
+                        if (displays[card].fd < 0) continue;
+                        render(&displays[card],&s);
+                        rendered=1;
+                    }
+                    if (rendered) {
+                        if (!last_render)
+                            fprintf(stderr,"KMS status parsed: disks=%s refresh=%s cmdline=%zu bytes\n",
+                                    s.disk_count,s.refresh,strlen(s.cmdline));
+                        snprintf(prev,sizeof(prev),"%s",status);
+                        last_render=now;
+                    }
                 }
             }
         }
         struct timespec ts={.tv_sec=1,.tv_nsec=0}; nanosleep(&ts,NULL);
     }
-    restore_display(&display);
+    for (int card=0; card<MAX_DRM_CARDS; card++)
+        restore_display(&displays[card]);
     return 0;
 }

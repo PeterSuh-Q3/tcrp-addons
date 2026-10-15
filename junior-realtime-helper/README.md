@@ -15,11 +15,14 @@ observations to
 `/var/log/junior-realtime-helper.log`. It does not install DSM, mount a disk,
 or modify partitions.
 
-The bundled static x86-64 `kms-display` helper searches `/dev/dri/card*` for a
-connected DRM display, preferring a connector that is already active. It does
-not assume HDMI or a particular GPU, so DRM-backed HDMI, DisplayPort, VGA, and
-virtual displays can work. The helper owns DRM master and redraws the panel
-every two seconds while the junior monitor runs. A visible local-time stamp
+The bundled static x86-64 `kms-display` helper searches `/dev/dri/card0` through
+`card7` and displays the same panel on every card where it can acquire DRM
+master and configure a connected display. Each card prefers a connector that
+is already active. The current DRM support targets are i915, amdgpu, nvidia,
+bochs, and asm; actual output depends on each driver's KMS and dumb-buffer
+support. DRM-backed HDMI, DisplayPort, VGA, and virtual displays can work.
+The helper redraws every active card every two seconds while the junior monitor
+runs. A visible local-time stamp
 shows the last refresh to the second. It does not need `/dev/fb0`,
 fbcon, or a virtual console. If DRM/KMS is unavailable, the shell monitor
 continues to print to the active virtual console when one exists.
@@ -44,7 +47,7 @@ still does not fit vertically, the renderer falls back to 1x. The selected
 scale is recorded in the helper log.
 
 When the monitor exits, it asks the KMS helper to restore the CRTC and
-framebuffer that were active before the panel took over, then waits for that
+framebuffer on each active card that were in use before the panel took over, then waits for that
 cleanup to finish. If another DRM client has already taken control, restoration
 may fail; a driver reinitialization or reboot then resets the display. The panel
 shows model, serial and MAC from the kernel command line; DSM product/build/update and
