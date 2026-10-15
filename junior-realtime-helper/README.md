@@ -1,4 +1,20 @@
-# Junior Realtime Helper (SA6400 pilot)
+# Junior Realtime Helper
+
+**DRM display targets: i915, amdgpu, nvidia, bochs, and asm.** The KMS helper
+renders on every available `/dev/dri/card0` through `card7` that supports its
+display setup. A connected monitor, DRM master access, KMS modesetting, and
+dumb-buffer support are required for each card.
+
+## License
+
+Original PeterSuh-Q3 code in this addon is provided under the
+[PeterSuh-Q3 Non-Commercial Source-Available License](../LICENSE) for personal
+and other non-commercial use. **Commercial use is prohibited.** Third-party
+components retain their own applicable licenses; the non-commercial restriction
+does not limit rights granted under those licenses. Keep applicable copyright,
+attribution, and license notices when distributing this addon or modifications.
+
+## Operation
 
 The addon starts at `on_jrExit` when `/var/log/junior_reason` records either
 `Exit on error [12]` together with `go to junior mode`, or
@@ -18,8 +34,7 @@ or modify partitions.
 The bundled static x86-64 `kms-display` helper searches `/dev/dri/card0` through
 `card7` and displays the same panel on every card where it can acquire DRM
 master and configure a connected display. Each card prefers a connector that
-is already active. The current DRM support targets are i915, amdgpu, nvidia,
-bochs, and asm; actual output depends on each driver's KMS and dumb-buffer
+is already active. Actual output depends on each driver's KMS and dumb-buffer
 support. DRM-backed HDMI, DisplayPort, VGA, and virtual displays can work.
 The helper redraws every active card every two seconds while the junior monitor
 runs. A visible local-time stamp
@@ -47,9 +62,9 @@ still does not fit vertically, the renderer falls back to 1x. The selected
 scale is recorded in the helper log.
 
 When the monitor exits, it asks the KMS helper to restore the CRTC and
-framebuffer on each active card that were in use before the panel took over, then waits for that
-cleanup to finish. If another DRM client has already taken control, restoration
-may fail; a driver reinitialization or reboot then resets the display. The panel
+framebuffer that were in use on each active card before the panel took over,
+then waits for cleanup to finish. If another DRM client has already taken
+control, restoration may fail; a driver reinitialization or reboot then resets the display. The panel
 shows model, serial and MAC from the kernel command line; DSM product/build/update and
 platform from `VERSION`; CPU and thread count; DMI identity; UEFI/legacy mode;
 PCI HBA/NIC/GPU counts; NIC IPv4, driver and PCI IDs; and SATA/other and NVMe
@@ -64,9 +79,9 @@ all 52 platform and DSM build combinations used by the repository's other
 universal addons, including DSM 6. The shell monitor and static x86-64 DRM
 helper use generic Linux interfaces; DRM/KMS drawing is attempted when a
 compatible display is available, with virtual-console output as a fallback.
-Live hardware validation
-has been performed on the SA6400 / DSM 7.4.1 pilot, not on every registered
-combination. The loader must explicitly include this addon; registration alone
+The universal recipe is available across the registered platforms; actual
+DRM output still depends on the hardware and driver combination. The loader
+must explicitly include this addon; registration alone
 does not change normal loader builds. The helper is intentionally limited to
 junior mode; normal DSM boot is outside its scope.
 
