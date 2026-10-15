@@ -1,6 +1,6 @@
 # Junior Realtime Helper
 
-**DRM display targets: i915, amdgpu, nvidia, bochs, and asm.** The KMS helper
+**DRM display targets: i915, amdgpu, nvidia, bochs, and ast.** The KMS helper
 renders on every available `/dev/dri/card0` through `card7` that supports its
 display setup. A connected monitor, DRM master access, KMS modesetting, and
 dumb-buffer support are required for each card.
@@ -49,8 +49,14 @@ line per item. The full `/proc/cmdline` follows the network rows and wraps over
 additional lines when needed. The original self-test results remain grouped at
 the bottom: current IP, gateway ping response, DSM TCP/5000 readiness (reported
 as `NOT READY` when the selected NIC has no carrier), recognized disk count,
-disk rows, and the two-second refresh time. The text fallback follows the same
-one-field-per-line order.
+disk rows, and the two-second refresh time. When the selected gateway answers
+ping and DSM TCP/5000 is ready in the same probe cycle, the helper plays two
+phrases (about 9.5 seconds) of the “Congratulations” melody once during that
+junior boot through `/exts/beep/beep` (or an installed `beep` binary). This
+requires the `beep` addon, loaded `pcspeaker`/`pcspkr` modules, and a working
+motherboard speaker. A custom module pack must supply those modules; the
+`beep` addon does not load them in Junior. The text fallback
+follows the same one-field-per-line order.
 The KMS panel also identifies the selected connector (for example `HDMI-A-1`)
 and reports its connection state and active output resolution. This comes from
 the DRM connector and mode selected by the renderer, so it applies to i915,

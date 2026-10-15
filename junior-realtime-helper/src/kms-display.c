@@ -41,8 +41,10 @@ struct status {
 
 struct display {
     int fd;
+    unsigned int card_index;
     uint32_t connector;
     char connector_name[40];
+    char connector_label[64];
     int connector_connected;
     uint32_t crtc;
     struct drm_mode_modeinfo mode;
@@ -190,6 +192,64 @@ static void set_connector_name(char *dst, size_t size, uint32_t type,
     snprintf(dst,size,"%s-%u",connector_type_name(type),type_id);
 }
 
+static int i915_downstream_type(const char *debugfs_dir,
+                                const char *connector_name,
+                                char *type, size_t type_size)
+{
+    char path[256], line[512], card_name[128], connector_tag[64];
+    snprintf(path,sizeof(path),"%s/name",debugfs_dir);
+    FILE *f=fopen(path,"r");
+    if (!f)
+        return 0;
+    int is_i915=fgets(card_name,sizeof(card_name),f) &&
+        !strncmp(card_name,"i915 ",5);
+    fclose(f);
+    if (!is_i915 || strncmp(connector_name,"DP-",3))
+        return 0;
+
+    snprintf(path,sizeof(path),"%s/i915_display_info",debugfs_dir);
+    f=fopen(path,"r");
+    if (!f)
+        return 0;
+    snprintf(connector_tag,sizeof(connector_tag),":%s]",connector_name);
+    int matched=0, branch_present=0, found=0;
+    while (fgets(line,sizeof(line),f)) {
+        if (strstr(line,"[CONNECTOR:")) {
+            matched=strstr(line,connector_tag)!=NULL;
+            branch_present=0;
+            continue;
+        }
+        if (!matched)
+            continue;
+        if (strstr(line,"DP branch device present:")) {
+            branch_present=strstr(line,"yes")!=NULL;
+            continue;
+        }
+        if (branch_present && strstr(line,"Type:")) {
+            char downstream[32];
+            if (sscanf(line," Type: %31s",downstream)==1) {
+                snprintf(type,type_size,"%s",downstream);
+                found=1;
+            }
+            break;
+        }
+    }
+    fclose(f);
+    return found;
+}
+
+static void set_connector_label(struct display *d)
+{
+    snprintf(d->connector_label,sizeof(d->connector_label),"%s",d->connector_name);
+    char debugfs_dir[128], downstream[32];
+    snprintf(debugfs_dir,sizeof(debugfs_dir),"/sys/kernel/debug/dri/%u",
+             d->card_index);
+    if (i915_downstream_type(debugfs_dir,d->connector_name,
+                             downstream,sizeof(downstream)))
+        snprintf(d->connector_label,sizeof(d->connector_label),"%s (%s downstream)",
+                 d->connector_name,downstream);
+}
+
 static int setup_display(struct display *d)
 {
     struct drm_mode_card_res r = {0};
@@ -286,6 +346,7 @@ static int setup_display(struct display *d)
     d->connector=selected_conn;
     set_connector_name(d->connector_name,sizeof(d->connector_name),
                        selected_type,selected_type_id);
+    set_connector_label(d);
     d->connector_connected=selected_connected;
     d->crtc=selected_crtc; d->mode=selected_mode;
     d->original_crtc=(struct drm_mode_crtc){.crtc_id=d->crtc};
@@ -319,7 +380,7 @@ static int setup_display(struct display *d)
         return -1;
     d->modeset_active=1;
     fprintf(stderr, "KMS display active: connector=%u name=%s status=%s mode=%s %ux%u\n",
-            d->connector, d->connector_name,
+            d->connector, d->connector_label,
             d->connector_connected?"connected":"disconnected",
             d->mode.name, d->mode.hdisplay, d->mode.vdisplay);
     return 0;
@@ -469,7 +530,7 @@ static void render(struct display *d, const struct status *s)
         draw_field_line(d,margin,&y,scale,line_step,"GPU : ",s->gpus[i],white,green);
     }
     if (d->connector_name[0]) {
-        draw_field_line(d,margin,&y,scale,line_step,"KMS Port : ",d->connector_name,white,green);
+        draw_field_line(d,margin,&y,scale,line_step,"KMS Port : ",d->connector_label,white,green);
         draw_field_line(d,margin,&y,scale,line_step,"KMS Status : ",
                         d->connector_connected?"CONNECTED":"DISCONNECTED",white,
                         d->connector_connected?green:red);
@@ -635,6 +696,7 @@ int main(int argc, char **argv)
                         if (fd<0) continue;
                         if (ioctl_ok(fd,DRM_IOCTL_SET_MASTER,NULL)<0) { close(fd); continue; }
                         displays[card].fd=fd;
+                        displays[card].card_index=(unsigned int)card;
                         if (setup_display(&displays[card])<0) {
                             int saved_errno=errno;
                             fprintf(stderr,"%s: DRM/KMS setup: %s\n",path,strerror(saved_errno));

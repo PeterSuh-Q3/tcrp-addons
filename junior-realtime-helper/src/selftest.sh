@@ -57,15 +57,9 @@ fi
 addresses() {
     primary=$(ip route show default 2>/dev/null |
         awk 'NR == 1 {for (i = 1; i < NF; i++) if ($i == "dev") {print $(i + 1); exit}}')
-    ip -o -4 addr show scope global 2>/dev/null |
-        awk -v primary="$primary" '{
-            name=$2
-            if (name == "lo" || name ~ /^(docker|veth|br-|virbr|tun|tap)/) next
-            split($4, a, "/")
-            if (!a[1]) next
-            if (name == primary) print name, a[1]
-            else other[++n]=name " " a[1]
-        } END {for (i=1; i<=n; i++) print other[i]}'
+    [ -n "$primary" ] || return 0
+    ip -o -4 addr show dev "$primary" scope global 2>/dev/null |
+        awk 'NR == 1 {split($4, a, "/"); if (a[1]) print $2, a[1]; exit}'
 }
 
 link_up() {
@@ -237,6 +231,62 @@ ping_status() {
     printf 'UNAVAILABLE\n'
 }
 
+play_congratulations_once() {
+    [ "$port" = READY ] || return 0
+    case "$ping" in REPLY*) ;; *) return 0 ;; esac
+    marker=/tmp/junior-realtime-helper.congratulations
+    [ -e "$marker" ] && return 0
+    beep=
+    for probe in /exts/beep/beep /usr/bin/beep /bin/beep /tmpRoot/usr/bin/beep; do
+        [ -x "$probe" ] || continue
+        beep=$probe
+        break
+    done
+    [ -n "$beep" ] || return 0
+    mkdir "$marker" 2>/dev/null || return 0
+    (
+        # The beep addon keeps its binary and runtime library in /exts until
+        # the late DSM event. Junior must use both directly from that folder.
+        if [ "$beep" = /exts/beep/beep ]; then
+            LD_LIBRARY_PATH="/exts/beep${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            export LD_LIBRARY_PATH
+        fi
+        # Two refrain lines, with pitches and rests from the reference melody.
+        "$beep" -f 494 -l 303 -D 11 -n \
+            -f 554 -l 290 -D 18 -n \
+            -f 622 -l 263 -D 57 -n \
+            -f 659 -l 556 -D 51 -n \
+            -f 494 -l 697 -D 268 -n \
+            -f 659 -l 268 -D 15 -n \
+            -f 622 -l 254 -D 28 -n \
+            -f 659 -l 312 -D 20 -n \
+            -f 740 -l 625 -D 7 -n \
+            -f 554 -l 707 -D 272 -n \
+            -f 554 -l 281 -D 16 -n \
+            -f 622 -l 276 -D 21 -n \
+            -f 659 -l 314 -D 25 -n \
+            -f 831 -l 270 -D 16 -n \
+            -f 740 -l 304 -D 21 -n \
+            -f 740 -l 306 -D 21 -n \
+            -f 659 -l 306 -D 28 -n \
+            -f 659 -l 286 -D 13 -n \
+            -f 622 -l 301 -D 13 -n \
+            -f 554 -l 301 -D 7 -n \
+            -f 622 -l 299 -D 20 -n \
+            -f 494 -l 1057 -D 0 >>/var/log/junior-realtime-helper.log 2>&1
+        result=$?
+        if [ "$result" -eq 0 ]; then
+            printf '%s congratulations melody played via %s\n' "$(date '+%H:%M:%S')" "$beep" \
+                >>/var/log/junior-realtime-helper.log
+        else
+            printf '%s congratulations melody failed (%s) via %s\n' \
+                "$(date '+%H:%M:%S')" "$result" "$beep" \
+                >>/var/log/junior-realtime-helper.log
+            rmdir "$marker" 2>/dev/null
+        fi
+    ) &
+}
+
 render_status() {
     [ -c "$CONSOLE" ] || return 1
     {
@@ -321,6 +371,7 @@ while :; do
             ping='NO REPLY (LINK DOWN)'
         fi
     fi
+    play_congratulations_once
     current=$(printf 'ip=%s interface=%s gateway=%s tcp5000=%s ping=%s kernel_disks=%s\n%s' \
         "$ip" "$iface" "$gateway" "$port" "$ping" "$count" "$disks")
     if [ "$current" != "$previous" ]; then
