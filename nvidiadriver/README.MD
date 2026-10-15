@@ -24,6 +24,12 @@ planned as a separate SPK, with compatibility checked per driver version.
 See [the SPK delivery design](docs/spk-delivery-design.md)
 for version availability, disk-space rules, retries, migration, and validation.
 
+For kver5, the published 580 and 595 drivers each have separate **Open** and
+**Proprietary** SPKs. The loader menu exposes this choice; Proprietary is the
+default and has broader legacy-GPU coverage, while Open requires Turing or
+newer. Kernel 4.4 builds currently publish only the single 550 SPK per DSM
+range and do not offer a flavor choice.
+
 ## Current layer-injection implementation (not the proposed SPK path)
 
 | layer | file | scope | why |

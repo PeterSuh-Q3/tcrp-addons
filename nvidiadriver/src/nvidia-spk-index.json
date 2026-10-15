@@ -37,23 +37,51 @@
     "kver5": {
       "kernel": "5.10.55",
       "dsm_min": "7.2-00000",
-      "platforms": ["epyc7002", "epyc7003", "epyc7003ntb", "geminilakenk", "icelaked", "r1000nk", "v1000nk"],
+      "platforms": ["epyc7002", "epyc7003", "geminilakenk", "icelaked", "r1000nk", "v1000nk"],
       "drivers": {
         "580.173.02": {
-          "package": "syno-nvidia-driver-kver5",
-          "version": "580.173.02-5",
-          "file": "syno-nvidia-driver-kver5-580.173.02-5.spk",
-          "size_bytes": 983878144,
-          "sha256": "779e1bf622815fd0bc1ebec21b44f73d5c3dba45b739eb912f3f481d59cd0958",
-          "extractsize_kb": 1729556
+          "default_flavor": "proprietary",
+          "flavors": {
+            "open": {
+              "package": "syno-nvidia-driver-kver5-580-open",
+              "version": "580.173.02-1",
+              "file": "syno-nvidia-driver-kver5-580-open-580.173.02-1.spk",
+              "size_bytes": 420178432,
+              "sha256": "4c53fbc087c6768d64453e2dde3974f172856386a1bfe6efe856684f87d66237",
+              "extractsize_kb": 1061748,
+              "gpu_arch_min": "Turing"
+            },
+            "proprietary": {
+              "package": "syno-nvidia-driver-kver5-580-proprietary",
+              "version": "580.173.02-1",
+              "file": "syno-nvidia-driver-kver5-580-proprietary-580.173.02-1.spk",
+              "size_bytes": 893779968,
+              "sha256": "48835f5a0ee5ed23389bd5b575dc2835ab7f82f4fac5eeb82193f99e7b546674",
+              "extractsize_kb": 1614220
+            }
+          }
         },
         "595.99.02": {
-          "package": "syno-nvidia-driver-kver5",
-          "version": "595.99.02-6",
-          "file": "syno-nvidia-driver-kver5-595.99.02-6.spk",
-          "size_bytes": 933440512,
-          "sha256": "acbe4011fbcac16d76bce2c71bca464ed39c721b8c58e99d9b213ecc20f0309d",
-          "extractsize_kb": 1612256
+          "default_flavor": "proprietary",
+          "flavors": {
+            "open": {
+              "package": "syno-nvidia-driver-kver5-595-open",
+              "version": "595.99.02-1",
+              "file": "syno-nvidia-driver-kver5-595-open-595.99.02-1.spk",
+              "size_bytes": 403493376,
+              "sha256": "d7c0144b32d665a4779989869d23a0731db95b6e9417b97caf89a5fb6e7b819f",
+              "extractsize_kb": 992104,
+              "gpu_arch_min": "Turing"
+            },
+            "proprietary": {
+              "package": "syno-nvidia-driver-kver5-595-proprietary",
+              "version": "595.99.02-1",
+              "file": "syno-nvidia-driver-kver5-595-proprietary-595.99.02-1.spk",
+              "size_bytes": 848002560,
+              "sha256": "f221033e0e63f5db5e410b8e80bfa41ac5a24482863387e6f2ae3071acb872f2",
+              "extractsize_kb": 1503612
+            }
+          }
         }
       }
     }
@@ -68,11 +96,11 @@
   },
   "container_runtime": {
     "package": "syno-nvidia-container-runtime",
-    "version": "1.19.1-5",
-    "file": "syno-nvidia-container-runtime-1.19.1-5-x86_64.spk",
-    "size_bytes": 10978816,
-    "sha256": "b1bd3c121fa4b38e42b074d4d9ff687a79948b678c83ccc994ad62db4cac5287",
-    "extractsize_kb": 29956
+    "version": "1.19.1-7",
+    "file": "syno-nvidia-container-runtime-1.19.1-7-x86_64.spk",
+    "size_bytes": 10979328,
+    "sha256": "f1d72215367946a63000eac518295e3554423df8e2f3d129100b2c7ccd3764ce",
+    "extractsize_kb": 29960
   },
   "ffmpeg": {
     "550.163.01": {

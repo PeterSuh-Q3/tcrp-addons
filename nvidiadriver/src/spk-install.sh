@@ -432,9 +432,17 @@ run_install() {
     case "$free_kb" in ''|*[!0-9]*) state waiting_for_space "free-space check unavailable"; exit 0 ;; esac
     [ "$free_kb" -ge "$required_kb" ] || { state waiting_for_space "need ${required_kb}KiB, have ${free_kb}KiB"; exit 0; }
 
-    # Refuse implicit migration between variant package IDs. A K4 DSM migration
-    # changes package IDs and must be handled explicitly, never by side install.
-    for other in syno-nvidia-driver-kver5 syno-nvidia-driver-kver4-dsm72 syno-nvidia-driver-kver4-dsm70; do
+    # Refuse implicit migration between variant package IDs. K5 Open and
+    # Proprietary builds now have distinct IDs; changing flavor or kernel/DSM
+    # variant must be handled explicitly, never by side-installing both.
+    for other in \
+        syno-nvidia-driver-kver5 \
+        syno-nvidia-driver-kver5-580-open \
+        syno-nvidia-driver-kver5-580-proprietary \
+        syno-nvidia-driver-kver5-595-open \
+        syno-nvidia-driver-kver5-595-proprietary \
+        syno-nvidia-driver-kver4-dsm72 \
+        syno-nvidia-driver-kver4-dsm70; do
         [ "$other" = "$driver_pkg" ] && continue
         [ -r "/var/packages/$other/INFO" ] && fail "different driver variant $other is installed; migration needs manual handling"
     done

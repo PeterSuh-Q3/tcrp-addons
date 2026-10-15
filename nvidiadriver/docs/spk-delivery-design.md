@@ -22,11 +22,11 @@ SPK와 기존 계층 주입은 동일 드라이버에 대해 **상호 배타적*
 
 | 패키지 변형 | 커널·DSM 범위 | 현재 SPK 드라이버 버전 | 패키지 ID |
 |---|---|---|---|
-| kver5 | 5.10.55, DSM 7.2 이상 | 580.173.02, 595.99.02 | `syno-nvidia-driver-kver5` |
+| kver5 | 5.10.55, DSM 7.2 이상 | 580.173.02 / 595.99.02, 각각 Open·Proprietary | flavor별 별도 package ID |
 | kver4-72 | 4.4.302, DSM 7.2–7.4 | 550.163.01 | `syno-nvidia-driver-kver4-dsm72` |
 | kver4-70 | 4.4.180, DSM 7.0–7.1 | 550.163.01 | `syno-nvidia-driver-kver4-dsm70` |
 
-현 `scripts/build-spk.sh`의 분기 기준이다. K5 535/550 및 K4 580/595 SPK는 현재 분기에서 만들지 않으므로 기존 계층 인덱스에 버전이 있다는 이유만으로 SPK 설치 메뉴에 노출하면 안 된다. 595 지원 범위는 **GPU PCI ID/드라이버 호환성·GSP 요구사항**과 게시된 SPK 자산을 함께 통과해야 한다. `arch`가 여러 플랫폼을 나열하더라도 실제 커널 ABI가 동일하다는 뜻은 아니며, 통합 SPK 안의 정확한 플랫폼 모듈을 설치 스크립트가 고르는지 검증한다.
+현 공개 SPK 자산 기준이다. K5의 각 버전은 Open/Proprietary가 별도 패키지 ID와 자산으로 게시된다. 로더 메뉴는 flavor를 명시적으로 전달하고 기본은 호환 범위가 더 넓은 Proprietary로 둔다. Open 커널 모듈은 Turing 이상 GPU에서만 선택할 수 있다. K4는 현재 DSM 범위별 550 단일 SPK이며 flavor 선택을 제공하지 않는다. K5 535/550 및 K4 580/595 SPK는 게시하지 않으므로 기존 계층 인덱스에 버전이 있다는 이유만으로 SPK 설치 메뉴에 노출하면 안 된다. 595 지원 범위는 **GPU PCI ID/드라이버 호환성·GSP 요구사항**과 게시된 SPK 자산을 함께 통과해야 한다. `arch`가 여러 플랫폼을 나열하더라도 실제 커널 ABI가 동일하다는 뜻은 아니며, 통합 SPK 안의 정확한 플랫폼 모듈을 설치 스크립트가 고르는지 검증한다.
 
 ## 설치 구성과 의존 관계
 
@@ -34,7 +34,7 @@ SPK와 기존 계층 주입은 동일 드라이버에 대해 **상호 배타적*
 |---|---|---|---|
 | 통합 NVIDIA 드라이버 | 사용자가 드라이버 버전을 선택 | 위 표의 커널별 SPK | 항상 먼저 설치. 플랫폼·GPU 호환성을 검사한다. |
 | NVIDIA GPU Monitor | **드라이버 SPK 설치 시 필수** | `syno-nvidia-gpu-monitor-0.6.6-x86_64.spk` | `syno-nvidia-gpu-monitor`. 드라이버 뒤에 설치. 사용자가 끄는 선택지는 두지 않는다. 이미 정확한 버전이면 건너뛴다. |
-| NVIDIA Container Runtime | 사용자가 로더에서 선택한 경우만 | `syno-nvidia-container-runtime-1.19.1-5-x86_64.spk` | `syno-nvidia-container-runtime`. 드라이버 활성 확인 후 설치. 선택하지 않았다면 새로 설치하지 않으며 기존 설치도 자동 제거하지 않는다. |
+| NVIDIA Container Runtime | 사용자가 로더에서 선택한 경우만 | `syno-nvidia-container-runtime-1.19.1-7-x86_64.spk` | `syno-nvidia-container-runtime`. 드라이버 활성 확인 후 설치. 선택하지 않았다면 새로 설치하지 않으며 기존 설치도 자동 제거하지 않는다. |
 | NVIDIA FFmpeg | 사용자가 로더에서 선택하고 **해당 드라이버용 SPK가 게시·검증된 경우만** | 550.163.01 / 580.173.02 / 595.99.02 | 독립 `syno-nvidia-ffmpeg` SPK. 드라이버 활성 확인 후 설치하며 Jellyfin 연동은 별도 상태로 검증한다. 595용 FFmpeg 8.1 자동 Jellyfin 전환은 서버 12 이상에서만 허용한다. |
 
 Monitor와 컨테이너 런타임은 드라이버 버전과 **독립적인 SPK 버전**을 가진다. FFmpeg는 검증된 드라이버 호환 범위를 명시한다. 각 SPK의 정확한 자산명·크기·SHA-256·`INFO`를 따로 고정한다. 현재 예시 버전은 배포 시점에 다시 검증한다. GSP는 드라이버 SPK의 내부 구성 요소이며 별도 설치 단계가 아니다. FFmpeg 패키지의 소유권·Jellyfin 연동·595 지원 공백은 `syno_nvidia_driver/docs/nvidia-ffmpeg-spk-design.md`에 상세히 둔다.
@@ -43,7 +43,7 @@ Monitor와 컨테이너 런타임은 드라이버 버전과 **독립적인 SPK �
 
 ## 권장 흐름
 
-1. 로더 메뉴는 플랫폼, DSM 빌드, `uname -r`에 해당하는 커널 계열, GPU PCI ID를 식별하고, SPK 매니페스트와 GPU 호환성 카탈로그의 **교집합**만 선택지로 표시한다. 자동 선택도 같은 규칙을 따른다. 선택한 드라이버 버전과 컨테이너 런타임/FFmpeg 선택 여부, 매니페스트 항목의 고유 ID를 `/addons/nvidia.conf` 같은 작은 설정으로 고정한다. Monitor는 항상 포함하며 GSP 선택지는 없다. FFmpeg는 해당 드라이버와 호환·게시된 SPK가 없으면 설치 가능 선택지로 표시하지 않는다.
+1. 로더 메뉴는 플랫폼, DSM 빌드, `uname -r`에 해당하는 커널 계열, GPU PCI ID를 식별하고, SPK 매니페스트와 GPU 호환성 카탈로그의 **교집합**만 선택지로 표시한다. 자동 선택도 같은 규칙을 따른다. K5에서는 드라이버 버전과 Open/Proprietary flavor를 고르고, K4에는 flavor 항목을 표시하지 않는다. 선택값과 컨테이너 런타임/FFmpeg 선택 여부, 매니페스트 항목의 고유 ID를 `/addons/nvidia.conf` 같은 작은 설정으로 고정한다. Monitor는 항상 포함하며 GSP 선택지는 없다. FFmpeg는 해당 드라이버와 호환·게시된 SPK가 없으면 설치 가능 선택지로 표시하지 않는다.
 2. junior 훅은 SPK를 다운로드하거나 설치하지 않는다. 검증된 소형 매니페스트, 선택 정보, DSM용 일회성 시작 스크립트만 준비한다. 기존 `on_os_load` 방식으로 작은 파일을 배치할 수는 있지만, DSM 시작 훅의 정확한 실행 시점과 지속성은 실기에서 확인한 뒤 확정한다.
 3. DSM이 완전히 기동한 뒤 작업자는 네트워크, 지정 데이터 볼륨, 패키지 서비스가 준비될 때까지 **부팅을 막지 않고** 제한 시간·백오프로 기다린다. 지정 볼륨이 없다면 다른 파티션으로 자동 우회하지 않고 `waiting_for_volume`을 기록한다.
 4. 영구 데이터 볼륨의 root 전용 디렉터리(예: 선택한 볼륨의 `@appdata/nvidia-driver-installer`)에 필요한 **각 SPK를 개별** `.part`로 내려받는다. 완료 후 길이와 SHA-256을 확인하고 동일 파일시스템에서 원자적으로 최종 이름으로 바꾼다. TLS 인증을 켜고 HTTPS 리다이렉트를 허용하되, 허용된 게시자/호스트와 매니페스트의 고정 자산만 받는다. 실패·중단 시 제한된 재시도와 resume을 사용하며 **resume 후에도 전체 해시를 다시 검증**한다.

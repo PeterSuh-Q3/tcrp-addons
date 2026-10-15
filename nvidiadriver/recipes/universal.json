@@ -3,7 +3,7 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/install.sh",
-      "sha256": "5f4c78fd47da7c7edc854bd6a0727bed4bd7eb0a03e9e7865a914d8432af97b2",
+      "sha256": "22106c10610c782747d987dd98a9cad64194ed072027aae594c71f4f5016c399",
       "packed": false
     },
     {
@@ -15,13 +15,13 @@
     {
       "name": "nvidia-spk-index.json",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/nvidia-spk-index.json",
-      "sha256": "ed62c6f9264a1c5e358b4cc4cb6d6ca5bfb7112783bd229601c53c33b30d533a",
+      "sha256": "8850a4b6358161d231989bac7a1a58c642e7c1bca6cf962c7708bad21c8bcebc",
       "packed": false
     },
     {
       "name": "spk-install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/nvidiadriver/src/spk-install.sh",
-      "sha256": "ddf2da094d9a2638e0a7ce9c3b624346e0494a257f05ed7639656f73351c42b8",
+      "sha256": "3e90d14489337439c0f6250dea0d83b34fb4360538e92677a8b293421b613d24",
       "packed": false
     },
     {

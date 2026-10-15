@@ -236,6 +236,25 @@ init_common(){
       log "SPK variant $SPK_VARIANT does not support platform $PLATFORM"; return 1; }
     SPK_DRIVER="$(jq -c --arg v "$SPK_VARIANT" --arg d "$DRV" '.variants[$v].drivers[$d] // empty' "$SPKIDX")"
     [ -n "$SPK_DRIVER" ] || { log "no driver SPK published for $SPK_VARIANT / $DRV"; return 1; }
+    SPK_FLAVOR="${nvidia_flavor:-proprietary}"
+    case "$SPK_FLAVOR" in open|proprietary) ;; *) log "invalid NVIDIA module flavor '$SPK_FLAVOR' (expected open or proprietary)"; return 1 ;; esac
+    if printf '%s' "$SPK_DRIVER" | jq -e '.flavors | type == "object"' >/dev/null 2>&1; then
+      SPK_DEFAULT_FLAVOR="$(printf '%s' "$SPK_DRIVER" | jq -r '.default_flavor // "proprietary"')"
+      [ -n "${nvidia_flavor:-}" ] || SPK_FLAVOR="$SPK_DEFAULT_FLAVOR"
+      SPK_DRIVER="$(printf '%s' "$SPK_DRIVER" | jq -c --arg f "$SPK_FLAVOR" '.flavors[$f] // empty')"
+      [ -n "$SPK_DRIVER" ] || { log "no $SPK_FLAVOR driver SPK published for $SPK_VARIANT / $DRV"; return 1; }
+    else
+      # Kernel 4 SPKs are single-flavor packages. Keep the shared setting
+      # harmless when a saved K5 selection is carried across platforms.
+      SPK_FLAVOR="proprietary"
+    fi
+    if [ "$SPK_FLAVOR" = open ] && [ -n "$GPUID" ]; then
+      GPU_ARCH="$(jq -r --arg g "$GPUID" '.gpus[$g].arch // empty' "$SUP" 2>/dev/null)"
+      case "$GPU_ARCH" in
+        Maxwell|Pascal|Volta|Kepler|Fermi|Tesla)
+          log "open kernel module requires Turing or newer; detected $GPU_ARCH GPU $GPUID"; return 1 ;;
+      esac
+    fi
     SPK_BASE="$(jq -r '.release_base' "$SPKIDX")"
     SPK_DRV_PKG="$(printf '%s' "$SPK_DRIVER" | jq -r '.package')"
     SPK_DRV_VER="$(printf '%s' "$SPK_DRIVER" | jq -r '.version')"
@@ -269,7 +288,7 @@ init_common(){
       SPK_FF_EXTRACT="$(printf '%s' "$SPK_FF" | jq -r '.extractsize_kb')"
       SPK_FF_JF_MIN="$(printf '%s' "$SPK_FF" | jq -r '.jellyfin_min_major // 0')"
     fi
-    log "SPK plan resolved: $SPK_VARIANT driver=$DRV runtime=$WANT_CR ffmpeg=$WANT_FF"
+    log "SPK plan resolved: $SPK_VARIANT driver=$DRV flavor=$SPK_FLAVOR runtime=$WANT_CR ffmpeg=$WANT_FF"
   fi
   return 0
 }
@@ -284,7 +303,7 @@ write_spk_plan(){
   esac
   {
     printf 'RELEASE_BASE=%s\nDATA_VOLUME=%s\nPLATFORM=%s\nKERNEL=%s\nVARIANT=%s\n' "$SPK_BASE" "$DATA_VOLUME" "$PLATFORM" "$KVER" "$SPK_VARIANT"
-    printf 'DRIVER_BRANCH_VERSION=%s\nDRIVER_PACKAGE=%s\nDRIVER_VERSION=%s\nDRIVER_FILE=%s\nDRIVER_SIZE=%s\nDRIVER_SHA=%s\nDRIVER_EXTRACT=%s\n' "$DRV" "$SPK_DRV_PKG" "$SPK_DRV_VER" "$SPK_DRV_FILE" "$SPK_DRV_SIZE" "$SPK_DRV_SHA" "$SPK_DRV_EXTRACT"
+    printf 'DRIVER_BRANCH_VERSION=%s\nDRIVER_FLAVOR=%s\nDRIVER_PACKAGE=%s\nDRIVER_VERSION=%s\nDRIVER_FILE=%s\nDRIVER_SIZE=%s\nDRIVER_SHA=%s\nDRIVER_EXTRACT=%s\n' "$DRV" "$SPK_FLAVOR" "$SPK_DRV_PKG" "$SPK_DRV_VER" "$SPK_DRV_FILE" "$SPK_DRV_SIZE" "$SPK_DRV_SHA" "$SPK_DRV_EXTRACT"
     printf 'MONITOR_PACKAGE=%s\nMONITOR_VERSION=%s\nMONITOR_FILE=%s\nMONITOR_SIZE=%s\nMONITOR_SHA=%s\nMONITOR_EXTRACT=%s\n' "$SPK_MON_PKG" "$SPK_MON_VER" "$SPK_MON_FILE" "$SPK_MON_SIZE" "$SPK_MON_SHA" "$SPK_MON_EXTRACT"
     printf 'RUNTIME_ENABLED=%s\nFFMPEG_ENABLED=%s\n' "$WANT_CR" "$WANT_FF"
     if [ "$WANT_CR" = true ]; then printf 'RUNTIME_PACKAGE=%s\nRUNTIME_VERSION=%s\nRUNTIME_FILE=%s\nRUNTIME_SIZE=%s\nRUNTIME_SHA=%s\nRUNTIME_EXTRACT=%s\n' "$SPK_CR_PKG" "$SPK_CR_VER" "$SPK_CR_FILE" "$SPK_CR_SIZE" "$SPK_CR_SHA" "$SPK_CR_EXTRACT"; fi
