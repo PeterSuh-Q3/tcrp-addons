@@ -13,11 +13,10 @@
 //
 // Behavior:
 //
-//   - Request leg (client → upstream) is forwarded byte-for-byte.
+//   - The SCGI request is parsed for API routing and forwarded byte-for-byte.
 //
-//   - Response leg (upstream → client) is buffered up to maxBufferedBytes.
-//     When the buffered body contains a `"firmware_ver"` field we treat it
-//     as a SYNO.Core.System.info payload and inject:
+//   - Non-target responses stream immediately. System and compound API
+//     responses are buffered up to maxBufferedBytes for these patches:
 //
 //     In SYNO.Core.System.info (matched by "firmware_ver"):
 //     firmware_ver : appended with " / <bootloader version>"
@@ -41,13 +40,13 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 )
 
@@ -503,29 +502,211 @@ func patchResponse(resp []byte) []byte {
 	return resp
 }
 
+// forwardRequest validates the SCGI netstring while preserving its exact wire
+// bytes. Request bodies are copied in full; only the first 1 MiB is inspected
+// for API parameters. An oversized or ambiguous compound request is buffered
+// conservatively so its existing patch remains possible.
+func forwardRequest(client io.Reader, upstream io.Writer) (bool, error) {
+	var prefix []byte
+	for {
+		var one [1]byte
+		if _, err := io.ReadFull(client, one[:]); err != nil {
+			return false, err
+		}
+		prefix = append(prefix, one[0])
+		if one[0] == ':' {
+			break
+		}
+		if one[0] < '0' || one[0] > '9' || len(prefix) > 10 {
+			return false, fmt.Errorf("invalid SCGI netstring length")
+		}
+	}
+	n, err := strconv.Atoi(string(prefix[:len(prefix)-1]))
+	if err != nil || n <= 0 || n > 64*1024 {
+		return false, fmt.Errorf("invalid SCGI header length")
+	}
+	header := make([]byte, n+1)
+	if _, err := io.ReadFull(client, header); err != nil {
+		return false, err
+	}
+	if header[n] != ',' {
+		return false, fmt.Errorf("invalid SCGI netstring terminator")
+	}
+	parts := bytes.Split(header[:n], []byte{0})
+	if len(parts) < 5 || len(parts)%2 != 1 || len(parts[len(parts)-1]) != 0 {
+		return false, fmt.Errorf("invalid SCGI headers")
+	}
+	fields := make(map[string]string)
+	for i := 0; i < len(parts)-1; i += 2 {
+		if len(parts[i]) == 0 {
+			return false, fmt.Errorf("empty SCGI header name")
+		}
+		fields[string(parts[i])] = string(parts[i+1])
+	}
+	if fields["SCGI"] != "1" {
+		return false, fmt.Errorf("missing SCGI marker")
+	}
+	bodyLen, err := strconv.ParseInt(fields["CONTENT_LENGTH"], 10, 64)
+	if err != nil || bodyLen < 0 {
+		return false, fmt.Errorf("invalid SCGI content length")
+	}
+	if _, err := io.Copy(upstream, bytes.NewReader(prefix)); err != nil {
+		return false, err
+	}
+	if _, err := io.Copy(upstream, bytes.NewReader(header)); err != nil {
+		return false, err
+	}
+	inspectLen := bodyLen
+	if inspectLen > 1024*1024 {
+		inspectLen = 1024 * 1024
+	}
+	body := make([]byte, int(inspectLen))
+	if _, err := io.ReadFull(client, body); err != nil {
+		return false, err
+	}
+	if _, err := io.Copy(upstream, bytes.NewReader(body)); err != nil {
+		return false, err
+	}
+	if _, err := io.CopyN(upstream, client, bodyLen-inspectLen); err != nil {
+		return false, err
+	}
+	return shouldPatch(fields, body, bodyLen > inspectLen), nil
+}
+
+func shouldPatch(fields map[string]string, body []byte, truncated bool) bool {
+	query := fields["QUERY_STRING"]
+	if rawURI := fields["REQUEST_URI"]; rawURI != "" {
+		uri, err := url.ParseRequestURI(rawURI)
+		if err != nil {
+			return true
+		}
+		query += "&" + uri.RawQuery
+	}
+	params, queryErr := url.ParseQuery(query)
+	bodyParams, bodyErr := url.ParseQuery(string(body))
+	for key, values := range bodyParams {
+		params[key] = append(params[key], values...)
+		for _, value := range values {
+			if strings.Contains(value, "SYNO.Core.System") {
+				return true
+			}
+		}
+	}
+	for _, api := range params["api"] {
+		if api == "SYNO.Core.System" || api == "SYNO.Core.System.GpuInfo" {
+			return true
+		}
+		if api == "SYNO.Entry.Request" || api == "SYNO.API.Request" {
+			return true
+		}
+	}
+	// Compound APIs can carry nested requests in form-encoded or JSON bodies.
+	// Keep buffering when that routing information cannot be fully inspected.
+	if bytes.Contains(body, []byte("SYNO.Core.System")) ||
+		bytes.Contains(body, []byte("SYNO.Entry.Request")) {
+		return true
+	}
+	if truncated || bodyErr != nil || queryErr != nil {
+		return params.Get("api") == ""
+	}
+	return false
+}
+
 // proxyResponse reads up to maxBufferedBytes from upstream so it can splice
 // patches into the body. If the response exceeds the cap, the buffered
 // prefix is flushed and the remainder is streamed through unmodified.
-func proxyResponse(upstream, client net.Conn) error {
-	limited := io.LimitReader(upstream, maxBufferedBytes+1)
+func proxyResponse(upstream, client net.Conn, patch bool) error {
+	if !patch {
+		_, err := io.Copy(client, upstream)
+		return err
+	}
+	// Read only the response headers first. A targeted API can still return a
+	// stream or a binary download, and a length-delimited JSON response may
+	// keep its connection open after its final body byte.
+	var headers []byte
+	for len(headers) < 64*1024 {
+		var one [1]byte
+		if _, err := io.ReadFull(upstream, one[:]); err != nil {
+			if len(headers) == 0 {
+				return err
+			}
+			_, werr := io.Copy(client, bytes.NewReader(headers))
+			return werr
+		}
+		headers = append(headers, one[0])
+		if bytes.HasSuffix(headers, []byte("\r\n\r\n")) || bytes.HasSuffix(headers, []byte("\n\n")) {
+			break
+		}
+	}
+	if !bytes.HasSuffix(headers, []byte("\r\n\r\n")) && !bytes.HasSuffix(headers, []byte("\n\n")) {
+		return streamPrefix(client, upstream, headers)
+	}
+	var contentLength int64 = -1
+	stream := false
+	for _, line := range strings.Split(string(headers), "\n") {
+		line = strings.TrimSpace(line)
+		key, value, ok := strings.Cut(line, ":")
+		if !ok {
+			continue
+		}
+		value = strings.TrimSpace(value)
+		switch strings.ToLower(key) {
+		case "content-length":
+			if n, err := strconv.ParseInt(value, 10, 64); err == nil && n >= 0 {
+				contentLength = n
+			}
+		case "content-type":
+			media := strings.ToLower(value)
+			if !strings.Contains(media, "json") &&
+				!strings.HasPrefix(media, "text/plain") &&
+				!strings.HasPrefix(media, "text/javascript") &&
+				!strings.HasPrefix(media, "application/javascript") {
+				stream = true
+			}
+		case "transfer-encoding":
+			if strings.Contains(strings.ToLower(value), "chunked") {
+				stream = true
+			}
+		}
+	}
+	if stream || contentLength > maxBufferedBytes {
+		return streamPrefix(client, upstream, headers)
+	}
+	if contentLength >= 0 {
+		body := make([]byte, int(contentLength))
+		if _, err := io.ReadFull(upstream, body); err != nil {
+			return err
+		}
+		return writeAll(client, patchResponse(append(headers, body...)))
+	}
+	limited := io.LimitReader(upstream, maxBufferedBytes+1-int64(len(headers)))
 	buf, err := io.ReadAll(limited)
 	if err != nil && len(buf) == 0 {
 		return err
 	}
+	buf = append(headers, buf...)
 
 	if len(buf) > maxBufferedBytes {
 		// Response is larger than the buffer; flush prefix verbatim and
 		// stream the rest without inspecting it.
-		if _, werr := client.Write(buf); werr != nil {
-			return werr
-		}
-		_, werr := io.Copy(client, upstream)
-		return werr
+		return streamPrefix(client, upstream, buf)
 	}
 
 	patched := patchResponse(buf)
-	_, werr := client.Write(patched)
-	return werr
+	return writeAll(client, patched)
+}
+
+func writeAll(dst io.Writer, b []byte) error {
+	_, err := io.Copy(dst, bytes.NewReader(b))
+	return err
+}
+
+func streamPrefix(client net.Conn, upstream net.Conn, prefix []byte) error {
+	if err := writeAll(client, prefix); err != nil {
+		return err
+	}
+	_, err := io.Copy(client, upstream)
+	return err
 }
 
 func handleConnection(client net.Conn, upstreamSock string) {
@@ -538,30 +719,20 @@ func handleConnection(client net.Conn, upstreamSock string) {
 	}
 	defer upstream.Close()
 
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	// Request leg: client → upstream, byte-for-byte.
-	go func() {
-		defer wg.Done()
-		_, _ = io.Copy(upstream, client)
-		if uc, ok := upstream.(*net.UnixConn); ok {
-			_ = uc.CloseWrite()
-		}
-	}()
-
-	// Response leg: upstream → client, with body patching.
-	go func() {
-		defer wg.Done()
-		if err := proxyResponse(upstream, client); err != nil {
-			fmt.Fprintf(os.Stderr, "proxyResponse: %v\n", err)
-		}
-		if uc, ok := client.(*net.UnixConn); ok {
-			_ = uc.CloseWrite()
-		}
-	}()
-
-	wg.Wait()
+	patch, err := forwardRequest(client, upstream)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "forwardRequest: %v\n", err)
+		return
+	}
+	if uc, ok := upstream.(*net.UnixConn); ok {
+		_ = uc.CloseWrite()
+	}
+	if err := proxyResponse(upstream, client, patch); err != nil {
+		fmt.Fprintf(os.Stderr, "proxyResponse: %v\n", err)
+	}
+	if uc, ok := client.(*net.UnixConn); ok {
+		_ = uc.CloseWrite()
+	}
 }
 
 func main() {
