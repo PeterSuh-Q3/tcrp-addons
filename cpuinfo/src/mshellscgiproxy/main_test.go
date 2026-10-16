@@ -38,6 +38,7 @@ func TestRequestClassification(t *testing.T) {
 		{"compound body", map[string]string{"QUERY_STRING": "api=SYNO.Entry.Request&method=request", "CONTENT_TYPE": "application/x-www-form-urlencoded"}, "compound=" + url.QueryEscape(`[{"api":"SYNO.Core.System","method":"info"}]`), true},
 		{"ordinary json", map[string]string{"QUERY_STRING": "api=SYNO.AudioStation.Search&method=list"}, "", false},
 		{"stream path", map[string]string{"REQUEST_URI": "/radio/live"}, "", false},
+		{"nginx empty content length", map[string]string{"REQUEST_URI": "/index.cgi", "CONTENT_LENGTH": ""}, "", false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

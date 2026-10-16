@@ -546,9 +546,20 @@ func forwardRequest(client io.Reader, upstream io.Writer) (bool, error) {
 	if fields["SCGI"] != "1" {
 		return false, fmt.Errorf("missing SCGI marker")
 	}
-	bodyLen, err := strconv.ParseInt(fields["CONTENT_LENGTH"], 10, 64)
-	if err != nil || bodyLen < 0 {
+	contentLength, ok := fields["CONTENT_LENGTH"]
+	if !ok {
 		return false, fmt.Errorf("invalid SCGI content length")
+	}
+	// DSM nginx passes $content_length through scgi_params. For requests
+	// without a body (including GET /index.cgi), that variable is empty.
+	// SCGI still carries the header, and synoscgi treats it as zero.
+	var bodyLen int64
+	if contentLength != "" {
+		var err error
+		bodyLen, err = strconv.ParseInt(contentLength, 10, 64)
+		if err != nil || bodyLen < 0 {
+			return false, fmt.Errorf("invalid SCGI content length")
+		}
 	}
 	if _, err := io.Copy(upstream, bytes.NewReader(prefix)); err != nil {
 		return false, err
