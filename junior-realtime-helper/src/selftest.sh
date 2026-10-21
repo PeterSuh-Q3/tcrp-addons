@@ -50,7 +50,19 @@ trap 'exit 0' INT TERM
 if [ -x "$ADDON_DIR/kms-display" ] &&
    { [ ! -r /tmp/junior-realtime-helper-kms.pid ] ||
      ! kill -0 "$(cat /tmp/junior-realtime-helper-kms.pid 2>/dev/null)" 2>/dev/null; }; then
-    "$ADDON_DIR/kms-display" "$STATUS_FILE" >>/var/log/junior-realtime-helper.log 2>&1 &
+    kms_driver=
+    for pci_device in /sys/bus/pci/devices/*; do
+        [ -r "$pci_device/vendor" ] && [ -r "$pci_device/device" ] || continue
+        [ "$(cat "$pci_device/vendor" 2>/dev/null)" = 0x1234 ] || continue
+        [ "$(cat "$pci_device/device" 2>/dev/null)" = 0x1111 ] || continue
+        kms_driver=bochs-drm
+        break
+    done
+    if [ -n "$kms_driver" ]; then
+        "$ADDON_DIR/kms-display" "$STATUS_FILE" "$kms_driver" >>/var/log/junior-realtime-helper.log 2>&1 &
+    else
+        "$ADDON_DIR/kms-display" "$STATUS_FILE" >>/var/log/junior-realtime-helper.log 2>&1 &
+    fi
     echo "$!" >/tmp/junior-realtime-helper-kms.pid
 fi
 

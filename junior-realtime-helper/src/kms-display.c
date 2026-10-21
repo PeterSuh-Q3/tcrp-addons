@@ -60,6 +60,25 @@ struct display {
 static volatile sig_atomic_t running = 1;
 static void restore_display(struct display *d);
 
+static int card_driver_name(unsigned int card, char *name, size_t name_size)
+{
+    char path[96], target[256];
+    ssize_t length;
+    snprintf(path, sizeof(path), "/sys/class/drm/card%u/device/driver", card);
+    length = readlink(path, target, sizeof(target) - 1);
+    if (length < 0)
+        return -1;
+    target[length] = '\0';
+    const char *base = strrchr(target, '/');
+    base = base ? base + 1 : target;
+    if (!*base || strlen(base) >= name_size) {
+        errno = ENAMETOOLONG;
+        return -1;
+    }
+    memcpy(name, base, strlen(base) + 1);
+    return 0;
+}
+
 static void stop_display(int signal_number)
 {
     (void)signal_number;
@@ -668,10 +687,13 @@ static void restore_display(struct display *d)
 
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
-        fprintf(stderr,"usage: %s STATUS_FILE\n",argv[0]);
+    if (argc < 2 || argc > 3) {
+        fprintf(stderr,"usage: %s STATUS_FILE [DRIVER_NAME]\n",argv[0]);
         return 2;
     }
+    const char *driver_filter = argc == 3 ? argv[2] : NULL;
+    if (driver_filter)
+        fprintf(stderr,"KMS target driver: %s\n",driver_filter);
     struct display displays[MAX_DRM_CARDS]={{0}};
     for (int card=0; card<MAX_DRM_CARDS; card++)
         displays[card].fd=-1;
@@ -692,6 +714,12 @@ int main(int argc, char **argv)
                 for (int card=0; card<MAX_DRM_CARDS; card++) {
                     if (displays[card].fd < 0) {
                         char path[32]; snprintf(path,sizeof(path),"/dev/dri/card%d",card);
+                        char driver_name[128];
+                        if (driver_filter &&
+                            (card_driver_name((unsigned int)card, driver_name,
+                                              sizeof(driver_name)) < 0 ||
+                             strcmp(driver_name, driver_filter) != 0))
+                            continue;
                         int fd=open(path,O_RDWR|O_CLOEXEC);
                         if (fd<0) continue;
                         if (ioctl_ok(fd,DRM_IOCTL_SET_MASTER,NULL)<0) { close(fd); continue; }
