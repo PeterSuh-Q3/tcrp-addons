@@ -9,13 +9,13 @@
     {
       "name": "selftest.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/selftest.sh",
-      "sha256": "9ceb2e9b489d5851faa7e02b413411c55553d6b05f1ecca0a6b7a1a4ba0a77e5",
+      "sha256": "d5d42dfa7da99158a4783327c24b60a963a6abbf2a368a4f6db3f05268cb1fcc",
       "packed": false
     },
     {
       "name": "kms-display",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/kms-display",
-      "sha256": "a114b052d0401245be4f528e8b7c6a284015fb093b174a0ff494eb86d129ca6a",
+      "sha256": "aaf0f422f4272e0708d9c4f7f5bec8f102bd34d1e58247aeda14ce1c1009a3e8",
       "packed": false
     }
   ],
