@@ -29,7 +29,7 @@ runtime_mode() {
     fi
 }
 
-# The DSM service is enabled for DSM 7 only. Junior starts through on_jrExit.
+# DSM rc.d starts the monitor on DSM 7 only. Junior starts through on_jrExit.
 [ -n "$(runtime_mode)" ] || exit 0
 
 # The on_jrExit hook can be called more than once. mkdir is atomic, so only
@@ -314,6 +314,8 @@ ping_status() {
 }
 
 play_congratulations_once() {
+    # The melody is a Junior success cue. DSM starts the same monitor silently.
+    [ "$mode" = JUNIOR ] || return 0
     [ "$port" = READY ] || return 0
     case "$ping" in REPLY*) ;; *) return 0 ;; esac
     marker=/tmp/junior-realtime-helper.congratulations

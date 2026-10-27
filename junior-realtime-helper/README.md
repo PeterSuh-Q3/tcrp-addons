@@ -23,11 +23,13 @@ migration case), or `Exit on error [9] force_junior bootargs detected` (the
 explicit `force_junior` boot argument case). The hook also runs for other
 linuxrc exits, so this reason check limits startup to these junior states.
 The monitor asks the KMS helper to restore the previous display when it exits
-and Junior no longer has a DRM card. On DSM 7, the `late` hook stages a
-systemd service in the mounted DSM root. DSM 6 keeps its universal recipe entry
-but skips this service. The DSM service starts the same monitor only when
-`/linuxrc.syno` is absent and `/dev/dri/card*` exists, so normal DSM boots
-without DRM are left alone. Junior reads its LKM, module-pack, module-type and
+and Junior no longer has a DRM card. On DSM 7, the `late` hook stages an `S99`
+rc.d startup script and the helper payload in the mounted DSM root. DSM 6 keeps
+its universal recipe entry but skips this hook. The rc.d script starts during
+DSM's regular boot sequence, waits up to two minutes for a DRM card, and starts
+the monitor only when `/linuxrc.syno` is absent. It stays silent in DSM; the
+congratulations melody remains a Junior success cue. Junior reads its LKM,
+module-pack, module-type and
 loader-version snapshots from `/addons`; DSM reads the corresponding files
 from `/usr/mshell`. DSM's `PLATFORM` falls back to `platform_name` in
 `/etc.defaults/synoinfo.conf` when `VERSION` has no `unique` value. Both modes
@@ -95,7 +97,7 @@ The universal recipe is available across the registered platforms; actual
 DRM output still depends on the hardware and driver combination. The loader
 must explicitly include this addon; registration alone
 does not change normal loader builds. Normal DSM display monitoring requires
-DSM 7, the staged service, a DRM card node, and a display/driver combination
+DSM 7, the staged rc.d hook, a DRM card node, and a display/driver combination
 that grants KMS access. DSM 6 remains supported by the universal recipe for
 Junior mode only.
 

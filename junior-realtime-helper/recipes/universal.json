@@ -3,13 +3,13 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/install.sh",
-      "sha256": "f851bbc78a4e9881320f0b457dd9f96070b40e7c793c7d368eaf1a9750f392d0",
+      "sha256": "301f39825b6cd63dcca44c12795d0485b9cfac8cdc151e56829d1eeb31887f7b",
       "packed": false
     },
     {
       "name": "selftest.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/selftest.sh",
-      "sha256": "f8fa7d056087930a25d4cb7125f497c846e5a6ff9ccddd20b00584ab86ba3d2f",
+      "sha256": "dcd5ceefc3051924aa7e7ffdd81bf7155bbd41ad2904299d807c416a088d8609",
       "packed": false
     },
     {
