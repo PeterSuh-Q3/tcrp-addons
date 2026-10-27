@@ -16,18 +16,23 @@ attribution, and license notices when distributing this addon or modifications.
 
 ## Operation
 
-The addon starts at `on_jrExit` when `/var/log/junior_reason` records either
+In Junior, the addon starts at `on_jrExit` when `/var/log/junior_reason` records either
 `Exit on error [12]` together with `go to junior mode`, or
 `Exit on error [7]` together with `root not matched with junior` (the model
 migration case), or `Exit on error [9] force_junior bootargs detected` (the
 explicit `force_junior` boot argument case). The hook also runs for other
 linuxrc exits, so this reason check limits startup to these junior states.
-The monitor checks for `/linuxrc.syno` before starting and on every refresh,
-then asks the KMS helper to restore the previous display when it exits. No DSM
-system service is installed. It displays the build-time LKM, module-pack,
-module-type and loader-version snapshots from `/addons`, along with IPv4,
-gateway ping, TCP/5000, disk, and refresh status during junior mode. It writes
-observations to
+The monitor asks the KMS helper to restore the previous display when it exits
+and Junior no longer has a DRM card. On DSM 7, the `late` hook stages a
+systemd service in the mounted DSM root. DSM 6 keeps its universal recipe entry
+but skips this service. The DSM service starts the same monitor only when
+`/linuxrc.syno` is absent and `/dev/dri/card*` exists, so normal DSM boots
+without DRM are left alone. Junior reads its LKM, module-pack, module-type and
+loader-version snapshots from `/addons`; DSM reads the corresponding files
+from `/usr/mshell`. DSM's `PLATFORM` falls back to `platform_name` in
+`/etc.defaults/synoinfo.conf` when `VERSION` has no `unique` value. Both modes
+also show IPv4, gateway ping, TCP/5000, disk, and refresh status while active.
+It writes observations to
 `/var/log/junior-realtime-helper.log`. It does not install DSM, mount a disk,
 or modify partitions.
 
@@ -42,7 +47,8 @@ shows the last refresh to the second. It does not need `/dev/fb0`,
 fbcon, or a virtual console. If DRM/KMS is unavailable, the shell monitor
 continues to print to the active virtual console when one exists.
 The panel uses a color-coded layout similar to the FRIEND boot summary. Each
-identity field is displayed on its own line, followed by separate `LKM`,
+identity field is displayed on its own line, and colon-delimited labels share
+a fixed column before their values. Separate `LKM`,
 `tcrp-modules`, `Module Type`, and `Loader version` rows immediately above
 `PLATFORM`. Hardware, device-count, network, and self-test fields also use one
 line per item. The full `/proc/cmdline` follows the network rows and wraps over
@@ -61,18 +67,18 @@ The KMS panel also identifies the selected connector (for example `HDMI-A-1`)
 and reports its connection state and active output resolution. This comes from
 the DRM connector and mode selected by the renderer, so it applies to i915,
 amdgpu, and other DRM/KMS drivers without a GPU-specific backlight module.
-On 1024x768 and similar 1280-wide modes, it uses a larger 2x font with tighter
-line spacing for the panel. The longer `/proc/cmdline` text stays at 1x and
-wraps to preserve room for the live status and disk rows. If the complete panel
-still does not fit vertically, the renderer falls back to 1x. The selected
-scale is recorded in the helper log.
+On 1024x768 and similar 1280-wide modes, it uses a larger 2x font with a 3px
+gap between text rows. The longer `/proc/cmdline` text stays at 1x and wraps to
+preserve room for the live status and disk rows. If the complete panel still
+does not fit vertically, the renderer falls back to 1x. The selected scale and
+row step are recorded in the helper log.
 
 When the monitor exits, it asks the KMS helper to restore the CRTC and
 framebuffer that were in use on each active card before the panel took over,
 then waits for cleanup to finish. If another DRM client has already taken
 control, restoration may fail; a driver reinitialization or reboot then resets the display. The panel
 shows model, serial and MAC from the kernel command line; DSM product/build/update and
-platform from `VERSION`; CPU and thread count; DMI identity; UEFI/legacy mode;
+platform from `VERSION` or DSM's `synoinfo.conf`; CPU and thread count; DMI identity; UEFI/legacy mode;
 PCI HBA/NIC/GPU counts; NIC IPv4, driver and PCI IDs; and SATA/other and NVMe
 counts with up to eight disk rows. It identifies the loader P3 through
 `/dev/synoboot3` and its filesystem UUID, then omits the matching physical
@@ -88,8 +94,19 @@ compatible display is available, with virtual-console output as a fallback.
 The universal recipe is available across the registered platforms; actual
 DRM output still depends on the hardware and driver combination. The loader
 must explicitly include this addon; registration alone
-does not change normal loader builds. The helper is intentionally limited to
-junior mode; normal DSM boot is outside its scope.
+does not change normal loader builds. Normal DSM display monitoring requires
+DSM 7, the staged service, a DRM card node, and a display/driver combination
+that grants KMS access. DSM 6 remains supported by the universal recipe for
+Junior mode only.
+
+For DMI, DSM first reads `/usr/mshell/DMI` when present, joins its non-empty
+text lines into one display row, and trims unsupported control characters.
+Otherwise the helper
+reads Linux DMI sysfs and uses `dmidecode` only when those fields are absent.
+Some virtual DSM guests expose no SMBIOS data; in that case the display says
+that board DMI is unavailable and shows the DSM platform/model profile as a
+clearly labeled reference. The platform profile does not claim to identify
+the host motherboard.
 
 To rebuild the binary, use `src/build-kms-display.sh` with an x86-64 Linux
 static GCC and DRM UAPI headers (for example, the matching DSM toolkit headers

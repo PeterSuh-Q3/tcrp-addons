@@ -10,9 +10,27 @@ CONSOLE=/dev/tty1
 active_console=$(cat /sys/devices/virtual/tty/tty0/active 2>/dev/null)
 case "$active_console" in tty[0-9]*) [ -c "/dev/$active_console" ] && CONSOLE="/dev/$active_console" ;; esac
 
-# /linuxrc.syno exists in the DSM junior root and is absent after DSM takes
-# over the root filesystem. Keep this display helper scoped to junior mode.
-[ -x /linuxrc.syno ] || exit 0
+is_junior_mode() {
+    [ -x /linuxrc.syno ]
+}
+
+has_drm_card() {
+    for card in /dev/dri/card[0-9]*; do
+        [ -c "$card" ] && return 0
+    done
+    return 1
+}
+
+runtime_mode() {
+    if is_junior_mode; then
+        printf 'JUNIOR\n'
+    elif has_drm_card; then
+        printf 'DSM\n'
+    fi
+}
+
+# The DSM service is enabled for DSM 7 only. Junior starts through on_jrExit.
+[ -n "$(runtime_mode)" ] || exit 0
 
 # The on_jrExit hook can be called more than once. mkdir is atomic, so only
 # one monitor owns the status file and DRM helper.
@@ -135,8 +153,60 @@ version_value() {
     awk -F= -v key="$1" '$1 == key {gsub(/"/, "", $2); print $2; exit}' "$file" 2>/dev/null
 }
 
+synoinfo_value() {
+    awk -F= -v key="$1" '$1 == key {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); sub(/^"/, "", $2); sub(/"$/, "", $2); print $2; exit}' \
+        /etc.defaults/synoinfo.conf 2>/dev/null
+}
+
+dmi_field() {
+    value=$(cat "/sys/class/dmi/id/$1" 2>/dev/null | tr -cd '[:alnum:] ._:/()-')
+    if [ -z "$value" ] && command -v dmidecode >/dev/null 2>&1; then
+        value=$(dmidecode -s "$2" 2>/dev/null | sed -n '1p' | tr -cd '[:alnum:] ._:/()-')
+    fi
+    printf '%s\n' "$value"
+}
+
+dmi_summary() {
+    mode=$1
+    if [ "$mode" = DSM ] && [ -r /usr/mshell/DMI ]; then
+        value=$(awk 'NF {if (out) out=out " "; out=out $0} END {print out}' \
+            /usr/mshell/DMI 2>/dev/null | tr -cd '[:alnum:] ._:/()-' |
+            sed 's/  */ /g; s/^ //; s/ $//')
+        if [ -n "$value" ]; then
+            printf '%s\n' "$value"
+            return
+        fi
+    fi
+
+    vendor=$(dmi_field sys_vendor system-manufacturer)
+    product=$(dmi_field product_name system-product-name)
+    board=$(dmi_field board_name baseboard-product-name)
+    if [ -n "$vendor$product$board" ]; then
+        summary=$(printf '%s %s %s' "$vendor" "$product" "$board" | sed 's/  */ /g; s/^ //; s/ $//')
+        if [ -z "$board" ]; then
+            profile_platform=$(synoinfo_value platform_name)
+            profile_model=$(synoinfo_value upnpmodelname)
+            summary="$summary; board DMI unavailable"
+            if [ -n "$profile_platform$profile_model" ]; then
+                summary="$summary (DSM profile $profile_platform/$profile_model)"
+            fi
+        fi
+        printf '%s\n' "$summary"
+        return
+    fi
+
+    profile_platform=$(synoinfo_value platform_name)
+    profile_model=$(synoinfo_value upnpmodelname)
+    if [ -n "$profile_platform$profile_model" ]; then
+        printf 'SMBIOS unavailable; DSM profile %s/%s (not board DMI)\n' \
+            "${profile_platform:-UNKNOWN}" "${profile_model:-UNKNOWN}"
+    else
+        printf 'UNAVAILABLE\n'
+    fi
+}
+
 addon_value() {
-    file="/addons/$1"
+    file="$1"
     label=$2
     value=$(awk -v label="$label" '
         NR == 1 {
@@ -358,8 +428,10 @@ render_status() {
 }
 
 previous=''
+dmi=$(dmi_summary "$(runtime_mode)")
 while :; do
-    [ -x /linuxrc.syno ] || exit 0
+    mode=$(runtime_mode)
+    [ -n "$mode" ] || exit 0
     addresses=$(addresses)
     disks=$(disk_list)
     count=$(printf '%s\n' "$disks" | awk 'NF {n++} END {print n+0}')
@@ -396,22 +468,20 @@ while :; do
     product=$(version_value productversion); [ -n "$product" ] || product=DSM
     build=$(version_value buildnumber); [ -n "$build" ] || build=UNKNOWN
     update=$(version_value smallfixnumber); [ -n "$update" ] || update=UNKNOWN
-    platform=$(version_value unique); [ -n "$platform" ] || platform=UNKNOWN
-    lkm_version=$(addon_value LKM_VERSION LKM)
-    modules_version=$(addon_value MODULES_VERSION tcrp-modules)
-    module_type=$(addon_value MODULE_TYPE 'Module Type')
-    loader_version=$(addon_value VERSION 'Loader version')
+    platform=$(version_value unique)
+    [ -n "$platform" ] || platform=$(synoinfo_value platform_name)
+    [ -n "$platform" ] || platform=UNKNOWN
+    metadata_dir=/usr/mshell
+    [ "$mode" = JUNIOR ] && metadata_dir=/addons
+    lkm_version=$(addon_value "$metadata_dir/LKM_VERSION" LKM)
+    modules_version=$(addon_value "$metadata_dir/MODULES_VERSION" tcrp-modules)
+    module_type=$(addon_value "$metadata_dir/MODULE_TYPE" 'Module Type')
+    loader_version=$(addon_value "$metadata_dir/VERSION" 'Loader version')
     cpu=$(awk -F: '/^model name/ {sub(/^[ \t]+/, "", $2); print $2; exit}' /proc/cpuinfo |
         tr -cd '[:alnum:] ._:/()-')
     [ -n "$cpu" ] || cpu=UNKNOWN
     threads=$(grep -c '^processor[[:space:]]*:' /proc/cpuinfo 2>/dev/null)
     [ -n "$threads" ] || threads=0
-    dmi_vendor=$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null)
-    dmi_product=$(cat /sys/class/dmi/id/product_name 2>/dev/null)
-    dmi_board=$(cat /sys/class/dmi/id/board_name 2>/dev/null)
-    dmi=$(printf '%s %s %s' "$dmi_vendor" "$dmi_product" "$dmi_board" |
-        tr -cd '[:alnum:] ._:/()-')
-    [ -n "$dmi" ] || dmi=UNAVAILABLE
     set -- $(pci_counts)
     hba=${1:-0}; pci_nics=${2:-0}; gpu_count=${3:-0}
     refresh=$(date '+%H:%M:%S' 2>/dev/null)

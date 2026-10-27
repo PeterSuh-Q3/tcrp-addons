@@ -3,23 +3,24 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/install.sh",
-      "sha256": "d04d07b3a1bc95a5e9dd9631d0e16e1a97a7d66b736f7acf79bbeda5d3a076a0",
+      "sha256": "f851bbc78a4e9881320f0b457dd9f96070b40e7c793c7d368eaf1a9750f392d0",
       "packed": false
     },
     {
       "name": "selftest.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/selftest.sh",
-      "sha256": "d5d42dfa7da99158a4783327c24b60a963a6abbf2a368a4f6db3f05268cb1fcc",
+      "sha256": "f8fa7d056087930a25d4cb7125f497c846e5a6ff9ccddd20b00584ab86ba3d2f",
       "packed": false
     },
     {
       "name": "kms-display",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/kms-display",
-      "sha256": "aaf0f422f4272e0708d9c4f7f5bec8f102bd34d1e58247aeda14ce1c1009a3e8",
+      "sha256": "62f2e0281e49f65e6b10981f1f1a851667e3da4a0765d0aaf034df2ded899bcc",
       "packed": false
     }
   ],
   "scripts": {
-    "on_jrExit": "install.sh"
+    "on_jrExit": "install.sh",
+    "on_os_load": "install.sh"
   }
 }

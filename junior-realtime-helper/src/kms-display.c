@@ -26,6 +26,7 @@
 #define MAX_NICS 8
 #define MAX_GPUS 4
 #define MAX_DRM_CARDS 8
+#define FIELD_LABEL_WIDTH 21
 
 struct status {
     char ip[64], ping[48], port[24], disk_count[16], refresh[32];
@@ -421,6 +422,22 @@ static int draw_field(struct display *d, int x, int y, int scale,
                       const char *label, const char *value,
                       uint32_t label_color, uint32_t value_color)
 {
+    const char *colon=strchr(label,':');
+    if (colon) {
+        size_t prefix_len=(size_t)(colon-label);
+        while (prefix_len>0 && label[prefix_len-1]==' ') prefix_len--;
+        if (prefix_len<=FIELD_LABEL_WIDTH) {
+            char prefix[FIELD_LABEL_WIDTH+1];
+            memcpy(prefix,label,prefix_len);
+            prefix[prefix_len]='\0';
+            text(d,x,y,scale,prefix,label_color);
+            int colon_x=x+FIELD_LABEL_WIDTH*6*scale;
+            text(d,colon_x,y,scale,":",label_color);
+            int value_x=colon_x+12*scale;
+            text(d,value_x,y,scale,value,value_color);
+            return value_x+(int)strlen(value)*6*scale;
+        }
+    }
     text(d,x,y,scale,label,label_color);
     x+=(int)strlen(label)*6*scale;
     text(d,x,y,scale,value,value_color);
@@ -461,14 +478,14 @@ static int cmdline_wrapped_rows(int width, int scale, const char *value)
 }
 
 static void draw_cmdline(struct display *d, int *y, int scale, int line_step,
-                         const char *value)
+                         int margin, const char *value)
 {
     const uint32_t cyan=0xff66d9ef, white=0xffeeeeee;
     int max_chars=(d->mode.hdisplay-36*scale)/(6*scale);
     char line[256];
     if (max_chars<1) return;
     if (max_chars>(int)sizeof(line)-1) max_chars=(int)sizeof(line)-1;
-    draw_line(d,y,scale,line_step,cyan,"CMDLINE :");
+    draw_field_line(d,margin,y,scale,line_step,"CMDLINE : ","",cyan,cyan);
     while (*value) {
         while (*value==' ') value++;
         if (!*value || *y+7*scale>=d->mode.vdisplay) break;
@@ -510,7 +527,7 @@ static void render(struct display *d, const struct status *s)
     const uint32_t light_pink=0xffffb6c1;
     int scale=(d->mode.hdisplay>=1500 ||
                (d->mode.hdisplay>=960 && d->mode.vdisplay>=700))?2:1;
-    int line_step=(scale==2 && d->mode.hdisplay<1500)?15:10*scale;
+    int line_step=(scale==2 && d->mode.hdisplay<1500)?17:10*scale;
     int cmdline_scale=(scale==2 && d->mode.hdisplay<1500)?1:scale;
     int cmdline_step=10*cmdline_scale;
     if (!render_fits(d,s,scale,line_step,cmdline_scale,cmdline_step)) {
@@ -553,8 +570,11 @@ static void render(struct display *d, const struct status *s)
         draw_field_line(d,margin,&y,scale,line_step,"KMS Status : ",
                         d->connector_connected?"CONNECTED":"DISCONNECTED",white,
                         d->connector_connected?green:red);
-        draw_line(d,&y,scale,line_step,white,"KMS Resolution : %ux%u",
-                  d->mode.hdisplay,d->mode.vdisplay);
+        char resolution[32];
+        snprintf(resolution,sizeof(resolution),"%ux%u",
+                 d->mode.hdisplay,d->mode.vdisplay);
+        draw_field_line(d,margin,&y,scale,line_step,"KMS Resolution : ",
+                        resolution,white,white);
     }
 
     draw_field_line(d,margin,&y,scale,line_step,"CPU : ",s->cpu,white,0xffa0a0ff);
@@ -572,7 +592,7 @@ static void render(struct display *d, const struct status *s)
     for (int i=0;i<s->nic_rows;i++) {
         draw_field_line(d,margin,&y,scale,line_step,"Network : ",s->nics[i],white,green);
     }
-    draw_cmdline(d,&y,cmdline_scale,cmdline_step,s->cmdline);
+    draw_cmdline(d,&y,cmdline_scale,cmdline_step,margin,s->cmdline);
 
     /* Keep the original self-test checks together at the bottom. */
     y+=step/2;
@@ -589,7 +609,10 @@ static void render(struct display *d, const struct status *s)
     draw_line(d,&y,scale,line_step,muted,"DEVICE  SIZE  MODEL");
     for (int i=0;i<s->disk_rows;i++)
         draw_line(d,&y,scale,line_step,white,"%s",s->disks[i]);
-    draw_line(d,&y,scale,line_step,cyan,"DISPLAY REFRESH : %s (2s interval)",s->refresh);
+    char refresh[64];
+    snprintf(refresh,sizeof(refresh),"%s (2s interval)",s->refresh);
+    draw_field_line(d,margin,&y,scale,line_step,"DISPLAY REFRESH : ",
+                    refresh,cyan,cyan);
     __sync_synchronize();
     (void)msync((void *)d->pixels,d->dumb.size,MS_SYNC);
     struct drm_mode_fb_dirty_cmd dirty={.fb_id=d->fb.fb_id};
