@@ -7,7 +7,6 @@
     "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/ntbfsdn"
   },
   "releases": {
-    "epyc7003ntb_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/ntbfsdn/recipes/universal.json"
   },
   "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/ntbfsdn/rpext-index.json"
 }
