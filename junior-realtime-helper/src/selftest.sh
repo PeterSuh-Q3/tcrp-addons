@@ -241,7 +241,15 @@ nic_list() {
     for path in /sys/class/net/*; do
         [ -r "$path/address" ] || continue
         name=${path##*/}
-        [ "$name" = lo ] && continue
+        case "$name" in
+            eth*)
+                suffix=${name#eth}
+                case "$suffix" in
+                    ''|*[!0-9]*) continue ;;
+                esac
+                ;;
+            *) continue ;;
+        esac
         [ "$shown" -lt 8 ] || break
         addr=$(ip -o -4 addr show dev "$name" 2>/dev/null | awk 'NR == 1 {print $4}')
         [ -n "$addr" ] || addr=NO-IP
