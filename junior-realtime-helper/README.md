@@ -48,9 +48,12 @@ runs. A visible local-time stamp
 shows the last refresh to the second. It does not need `/dev/fb0`,
 fbcon, or a virtual console. If DRM/KMS is unavailable, the shell monitor
 continues to print to the active virtual console when one exists.
-The panel uses a color-coded layout similar to the FRIEND boot summary. Each
-identity field is displayed on its own line, and colon-delimited labels share
-a fixed column before their values. Separate `LKM`,
+The panel uses a color-coded layout similar to the FRIEND boot summary. A QR
+code for the current `http://IP:5000` URL is fixed at the upper right; while an
+IP is unavailable it encodes `https://finds.synology.com/`. Status fields remain
+visible on the left, with long top-row values shortened to stay clear of the
+QR. Each identity field is displayed on its own line, and colon-delimited
+labels share a fixed column before their values. Separate `LKM`,
 `tcrp-modules`, `Module Type`, and `Loader version` rows immediately above
 `PLATFORM`. Hardware, device-count, network, and self-test fields also use one
 line per item. The full `/proc/cmdline` follows the network rows and wraps over
@@ -69,6 +72,10 @@ The KMS panel also identifies the selected connector (for example `HDMI-A-1`)
 and reports its connection state and active output resolution. This comes from
 the DRM connector and mode selected by the renderer, so it applies to i915,
 amdgpu, and other DRM/KMS drivers without a GPU-specific backlight module.
+When an active i915 CRTC reports a mode name such as `1920x1080` but inconsistent
+source dimensions such as `1024x768`, the renderer resolves that name against
+the connector's advertised modes and allocates the framebuffer at the matched
+output dimensions.
 On 1024x768 and similar 1280-wide modes, it uses a larger 2x font with a 3px
 gap between text rows. The longer `/proc/cmdline` text stays at 1x and wraps to
 preserve room for the live status and disk rows. If the complete panel still
@@ -110,6 +117,8 @@ that board DMI is unavailable and shows the DSM platform/model profile as a
 clearly labeled reference. The platform profile does not claim to identify
 the host motherboard.
 
-To rebuild the binary, use `src/build-kms-display.sh` with an x86-64 Linux
-static GCC and DRM UAPI headers (for example, the matching DSM toolkit headers
-through `DRM_INCLUDE`).
+The QR encoder is Project Nayuki's MIT-licensed C QR Code generator, included
+under `src/third_party/` with its copyright and license notice. To rebuild the
+binary, use `src/build-kms-display.sh` with an x86-64 Linux static GCC and DRM
+UAPI headers (for example, the matching DSM toolkit headers through
+`DRM_INCLUDE`).

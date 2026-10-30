@@ -491,11 +491,16 @@ while :; do
     cmdline=$(cat /proc/cmdline 2>/dev/null | tr '\r\n' '  ')
     nvme_count=$(printf '%s\n' "$disks" | awk '$1 ~ /^nvme/ {n++} END {print n+0}')
     sata_count=$((count - nvme_count))
+    url=https://finds.synology.com/
+    case "$ip" in
+        WAITING|'') ;;
+        *) url="http://$ip:5000" ;;
+    esac
     boot=LEGACY
     case " $(cat /proc/cmdline 2>/dev/null) " in *" withefi "*) boot=UEFI ;; esac
     {
-        printf 'IP=%s\nPING=%s\nPORT=%s\nDISK_COUNT=%s\nREFRESH=%s\nCMDLINE=%s\n' \
-            "$ip" "$ping" "$port" "$count" "$refresh" "$cmdline"
+        printf 'IP=%s\nPING=%s\nPORT=%s\nDISK_COUNT=%s\nREFRESH=%s\nURL=%s\nCMDLINE=%s\n' \
+            "$ip" "$ping" "$port" "$count" "$refresh" "$url" "$cmdline"
         printf 'MODEL=%s\nSERIAL=%s\nMAC=%s\n' "$model" "$serial" "$mac"
         printf 'BUILD=%s-%s\nUPDATE=%s\nPLATFORM=%s\n' "$product" "$build" "$update" "$platform"
         printf 'LKM_VERSION=%s\nMODULES_VERSION=%s\nMODULE_TYPE=%s\nLOADER_VERSION=%s\n' \

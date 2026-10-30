@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <drm.h>
 #include <drm_mode.h>
+#include "qrcodegen.h"
 
 #define U64(p) ((__u64)(uintptr_t)(p))
 #define CONNECTED 1
@@ -29,7 +30,7 @@
 #define FIELD_LABEL_WIDTH 21
 
 struct status {
-    char ip[64], ping[48], port[24], disk_count[16], refresh[32];
+    char ip[64], ping[48], port[24], url[160], disk_count[16], refresh[32];
     char cmdline[2048];
     char model[64], serial[64], mac[32], build[64], update[32], platform[96];
     char lkm_version[128], modules_version[128], module_type[128], loader_version[96];
@@ -127,6 +128,83 @@ static void pixel(struct display *d, int x, int y, uint32_t color)
 {
     if (x >= 0 && y >= 0 && x < d->mode.hdisplay && y < d->mode.vdisplay)
         d->pixels[(size_t)y * (d->dumb.pitch / 4) + x] = color;
+}
+
+static void text(struct display *d, int x, int y, int scale,
+                 const char *s, uint32_t color);
+
+static void fill_rect(struct display *d, int x, int y, int width, int height,
+                      uint32_t color)
+{
+    int x0=x<0?0:x, y0=y<0?0:y;
+    int x1=x+width>(int)d->mode.hdisplay?(int)d->mode.hdisplay:x+width;
+    int y1=y+height>(int)d->mode.vdisplay?(int)d->mode.vdisplay:y+height;
+    for (int py=y0;py<y1;py++)
+        for (int px=x0;px<x1;px++)
+            pixel(d,px,py,color);
+}
+
+static int qr_pixel_size(const struct display *d, int modules)
+{
+    int max_size=(int)d->mode.hdisplay/4;
+    int by_height=(int)d->mode.vdisplay/4;
+    if (max_size>by_height) max_size=by_height;
+    int module_px=max_size/(modules+8);
+    if (module_px>7) module_px=7;
+    return module_px;
+}
+
+static int qr_matrix_size(const char *url)
+{
+    uint8_t qr[qrcodegen_BUFFER_LEN_MAX];
+    uint8_t temp[qrcodegen_BUFFER_LEN_MAX];
+    if (!url || !*url || !qrcodegen_encodeText(url,temp,qr,
+            qrcodegen_Ecc_MEDIUM,1,5,qrcodegen_Mask_AUTO,true))
+        return 0;
+    return qrcodegen_getSize(qr);
+}
+
+static void draw_qr(struct display *d, const char *url, int margin,
+                    int scale, int line_step)
+{
+    if (!url || !*url)
+        return;
+    uint8_t qr[qrcodegen_BUFFER_LEN_MAX];
+    uint8_t temp[qrcodegen_BUFFER_LEN_MAX];
+    if (!qrcodegen_encodeText(url,temp,qr,qrcodegen_Ecc_MEDIUM,1,5,
+                              qrcodegen_Mask_AUTO,true)) {
+        fprintf(stderr,"KMS QR encode failed for DSM URL\n");
+        return;
+    }
+    int modules=qrcodegen_getSize(qr), module_px=qr_pixel_size(d,modules);
+    if (module_px<2) {
+        fprintf(stderr,"KMS QR skipped: mode %ux%u is too small\n",
+                d->mode.hdisplay,d->mode.vdisplay);
+        return;
+    }
+    int total=(modules+8)*module_px;
+    int x=(int)d->mode.hdisplay-margin-total;
+    int y=margin+7*scale+line_step/2;
+    if (x<margin || y+total>(int)d->mode.vdisplay-margin) {
+        fprintf(stderr,"KMS QR skipped: no room in mode %ux%u\n",
+                d->mode.hdisplay,d->mode.vdisplay);
+        return;
+    }
+    text(d,x,margin,scale,"SCAN FOR DSM",0xffeeeeee);
+    fill_rect(d,x,y,total,total,0xffffffff);
+    for (int row=0;row<modules;row++) {
+        for (int col=0;col<modules;col++) {
+            if (qrcodegen_getModule(qr,col,row))
+                fill_rect(d,x+(col+4)*module_px,y+(row+4)*module_px,
+                          module_px,module_px,0xff000000);
+        }
+    }
+    static char last_logged_url[160];
+    if (strcmp(last_logged_url,url)) {
+        fprintf(stderr,"KMS QR active: url=%s size=%d module=%dpx\n",
+                url,total,module_px);
+        snprintf(last_logged_url,sizeof(last_logged_url),"%s",url);
+    }
 }
 
 static void text(struct display *d, int x, int y, int scale,
@@ -270,6 +348,16 @@ static void set_connector_label(struct display *d)
                  d->connector_name,downstream);
 }
 
+static int mode_dimensions_match_name(const struct drm_mode_modeinfo *mode)
+{
+    unsigned int width=0,height=0;
+    char extra;
+    if (sscanf(mode->name,"%ux%u%c",&width,&height,&extra)==2 &&
+        width && height)
+        return mode->hdisplay==width && mode->vdisplay==height;
+    return 1;
+}
+
 static int setup_display(struct display *d)
 {
     struct drm_mode_card_res r = {0};
@@ -321,7 +409,25 @@ static int setup_display(struct display *d)
                             candidate_mode=modes[j];
                             break;
                         }
-                    if (!candidate_mode.hdisplay)
+                    /* Some i915 paths report a CRTC name such as 1920x1080
+                     * while the timing dimensions describe the 1024x768
+                     * source. Prefer the connector's actual advertised mode
+                     * with the same name/clock before falling back to state. */
+                    if (!candidate_mode.hdisplay && state.mode.name[0])
+                        for (uint32_t j=0; j<c.count_modes; j++)
+                            if (!strcmp(modes[j].name,state.mode.name) &&
+                                modes[j].clock == state.mode.clock) {
+                                candidate_mode=modes[j];
+                                break;
+                            }
+                    if (!candidate_mode.hdisplay && state.mode.name[0])
+                        for (uint32_t j=0; j<c.count_modes; j++)
+                            if (!strcmp(modes[j].name,state.mode.name)) {
+                                candidate_mode=modes[j];
+                                break;
+                            }
+                    if (!candidate_mode.hdisplay &&
+                        mode_dimensions_match_name(&state.mode))
                         candidate_mode=state.mode;
                 }
             }
@@ -335,7 +441,7 @@ static int setup_display(struct display *d)
                     if (e.possible_crtcs & (1u << k)) { crtc_id=crtcs[k]; break; }
             }
         }
-        if (crtc_id && !active) {
+        if (crtc_id && !candidate_mode.hdisplay) {
             int preferred=-1;
             for (uint32_t j=0; j<c.count_modes; j++) {
                 if (modes[j].type & DRM_MODE_TYPE_PREFERRED) { preferred=(int)j; break; }
@@ -454,6 +560,50 @@ static void draw_field_line(struct display *d, int x, int *y, int scale,
     *y+=line_step;
 }
 
+static void draw_field_line_clipped(struct display *d, int x, int *y,
+                                    int scale, int line_step, int max_x,
+                                    const char *label, const char *value,
+                                    uint32_t label_color,
+                                    uint32_t value_color)
+{
+    int value_x=x+FIELD_LABEL_WIDTH*6*scale+12*scale;
+    int max_chars=(max_x-value_x)/(6*scale);
+    char clipped[192];
+    if (max_chars<1) {
+        clipped[0]='\0';
+    } else if (strlen(value)>(size_t)max_chars) {
+        size_t n=(size_t)max_chars;
+        if (n>3) {
+            n-=3;
+            memcpy(clipped,value,n);
+            memcpy(clipped+n,"...",4);
+        } else {
+            memcpy(clipped,value,n);
+            clipped[n]='\0';
+        }
+    } else {
+        snprintf(clipped,sizeof(clipped),"%s",value);
+    }
+    draw_field_line(d,x,y,scale,line_step,label,clipped,
+                    label_color,value_color);
+}
+
+static void draw_field_line_qr_aware(struct display *d, int x, int *y,
+                                     int scale, int line_step,
+                                     int qr_bottom, int qr_left,
+                                     const char *label, const char *value,
+                                     uint32_t label_color,
+                                     uint32_t value_color)
+{
+    if (*y<qr_bottom)
+        draw_field_line_clipped(d,x,y,scale,line_step,
+                                qr_left-12*scale,label,value,
+                                label_color,value_color);
+    else
+        draw_field_line(d,x,y,scale,line_step,label,value,
+                        label_color,value_color);
+}
+
 static int cmdline_wrapped_rows(int width, int scale, const char *value)
 {
     int max_chars=(width-36*scale)/(6*scale);
@@ -549,43 +699,62 @@ static void render(struct display *d, const struct status *s)
         last_logged_scale=scale;
     }
 
+    draw_qr(d,s->url,margin,scale,line_step);
+    int modules=qr_matrix_size(s->url);
+    int module_px=modules?qr_pixel_size(d,modules):0;
+    int qr_left=(int)d->mode.hdisplay-margin;
+    int qr_bottom=0;
+    if (module_px>=2) {
+        int total=(modules+8)*module_px;
+        int candidate_left=(int)d->mode.hdisplay-margin-total;
+        int candidate_top=margin+7*scale+line_step/2;
+        if (candidate_left>=margin &&
+            candidate_top+total<=(int)d->mode.vdisplay-margin) {
+            qr_left=candidate_left;
+            qr_bottom=candidate_top+total;
+        }
+    }
     draw_line(d,&y,scale,line_step,light_pink,"##### TCRP MSHELL LOADER #####");
     y+=step;
-    draw_field_line(d,margin,&y,scale,line_step,"MODEL : ",s->model,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"SERIAL : ",s->serial,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"MAC : ",s->mac,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"BUILD : ",s->build,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"UPDATE : ",s->update,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"LKM : ",s->lkm_version,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"tcrp-modules : ",s->modules_version,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"Module Type : ",s->module_type,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"Loader version : ",s->loader_version,white,green);
-    draw_field_line(d,margin,&y,scale,line_step,"PLATFORM : ",s->platform,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"MODEL : ",s->model,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"SERIAL : ",s->serial,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"MAC : ",s->mac,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"BUILD : ",s->build,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"UPDATE : ",s->update,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"LKM : ",s->lkm_version,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"tcrp-modules : ",s->modules_version,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"Module Type : ",s->module_type,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"Loader version : ",s->loader_version,white,green);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"PLATFORM : ",s->platform,white,green);
 
     for (int i=0;i<s->gpu_rows;i++) {
-        draw_field_line(d,margin,&y,scale,line_step,"GPU : ",s->gpus[i],white,green);
+        draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,
+                                 "GPU : ",s->gpus[i],white,green);
     }
     if (d->connector_name[0]) {
-        draw_field_line(d,margin,&y,scale,line_step,"KMS Port : ",d->connector_label,white,green);
-        draw_field_line(d,margin,&y,scale,line_step,"KMS Status : ",
+        draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,
+                                 "KMS Port : ",d->connector_label,white,green);
+        draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,
+                    "KMS Status : ",
                         d->connector_connected?"CONNECTED":"DISCONNECTED",white,
                         d->connector_connected?green:red);
         char resolution[32];
         snprintf(resolution,sizeof(resolution),"%ux%u",
                  d->mode.hdisplay,d->mode.vdisplay);
-        draw_field_line(d,margin,&y,scale,line_step,"KMS Resolution : ",
+        draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,
+                    "KMS Resolution : ",
                         resolution,white,white);
     }
 
-    draw_field_line(d,margin,&y,scale,line_step,"CPU : ",s->cpu,white,0xffa0a0ff);
-    draw_field_line(d,margin,&y,scale,line_step,"THREADS : ",s->threads,white,0xffa0a0ff);
-    draw_field_line(d,margin,&y,scale,line_step,"DMI : ",s->dmi,white,yellow);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"CPU : ",s->cpu,white,0xffa0a0ff);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"THREADS : ",s->threads,white,0xffa0a0ff);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"DMI : ",s->dmi,white,yellow);
 
-    draw_field_line(d,margin,&y,scale,line_step,"SAS/RAID HBAs Count : ",s->hba_count,white,red);
-    draw_field_line(d,margin,&y,scale,line_step,"NICs Count : ",s->pci_nic_count,white,red);
-    draw_field_line(d,margin,&y,scale,line_step,"GPU Count : ",s->gpu_count,white,red);
-    draw_field_line(d,margin,&y,scale,line_step,"SAS/SATA Disks Count : ",s->sata_count,white,red);
-    draw_field_line(d,margin,&y,scale,line_step,"NVMe Disks Count : ",s->nvme_count,white,red);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"SAS/RAID HBAs Count : ",s->hba_count,white,red);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"NICs Count : ",s->pci_nic_count,white,red);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"GPU Count : ",s->gpu_count,white,red);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"SAS/SATA Disks Count : ",s->sata_count,white,red);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"NVMe Disks Count : ",s->nvme_count,white,red);
 
     draw_line(d,&y,scale,line_step,green,"System is running in %s boot mode",s->boot);
 
@@ -655,7 +824,7 @@ static int parse_status(char *data,struct status *s)
         *eq++=0;
 #define FIELD(key,dst) if(!strcmp(line,key)){put(dst,sizeof(dst),eq);continue;}
     FIELD("IP",s->ip) FIELD("PING",s->ping) FIELD("PORT",s->port) FIELD("DISK_COUNT",s->disk_count)
-        FIELD("REFRESH",s->refresh) FIELD("CMDLINE",s->cmdline)
+        FIELD("REFRESH",s->refresh) FIELD("URL",s->url) FIELD("CMDLINE",s->cmdline)
         FIELD("MODEL",s->model) FIELD("SERIAL",s->serial) FIELD("MAC",s->mac)
         FIELD("BUILD",s->build) FIELD("UPDATE",s->update) FIELD("PLATFORM",s->platform)
         FIELD("LKM_VERSION",s->lkm_version) FIELD("MODULES_VERSION",s->modules_version)
