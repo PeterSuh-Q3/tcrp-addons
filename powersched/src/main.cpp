@@ -25,6 +25,7 @@
 #include <ctime>        // std::time_t, std::tm
 #include <vector>       // std::vector
 #include <algorithm>    // std::sort
+#include <cstdint>      // uint8_t
 
 /* Consts */
 const char *dsmFilePath = "/etc/power_sched.conf";
@@ -93,7 +94,7 @@ void processFile(void) {
                     }
                 }
             }
-        } catch(std::invalid_argument i) {
+        } catch(const std::invalid_argument&) {
             break;
         }
     }
@@ -113,6 +114,6 @@ void processFile(void) {
 }
 
 /*****************************************************************************/
-int main(int argc, char **argv) {
+int main() {
     processFile();
 }

@@ -1,0 +1,49 @@
+name: Build powersched (legacy x86-64 baseline)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'powersched/src/main.cpp'
+      - '.github/workflows/build-powersched.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ file binutils
+
+      - name: Build for generic x86-64
+        run: |
+          set -euxo pipefail
+          mkdir -p dist
+          g++ -std=c++11 -O2 -march=x86-64 -mtune=generic \
+            -Wall -Wextra -Werror -o dist/powersched powersched/src/main.cpp
+          file dist/powersched
+          objdump -d dist/powersched > dist/powersched.disassembly.txt
+          sha256sum dist/powersched | tee dist/powersched.sha256
+
+      - name: Verify ELF architecture and baseline metadata
+        run: |
+          set -euxo pipefail
+          readelf -h dist/powersched | grep -q 'Advanced Micro Devices X86-64'
+          readelf -l dist/powersched | grep -q 'Requesting program interpreter'
+          readelf -d dist/powersched | grep NEEDED
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: powersched-ubuntu-24.04-x86-64
+          path: |
+            dist/powersched
+            dist/powersched.sha256
+            dist/powersched.disassembly.txt
+          if-no-files-found: error
+          retention-days: 14
