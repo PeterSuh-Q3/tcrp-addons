@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -54,6 +54,7 @@ jobs:
         env:
           GOOS: linux
           GOARCH: amd64
+          GOAMD64: v1
           CGO_ENABLED: 0
         run: |
           go build -trimpath -ldflags='-s -w' -o mshellscgiproxy .
