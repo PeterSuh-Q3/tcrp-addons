@@ -404,6 +404,7 @@ render_status() {
         done
         printf '\033[2KCPU : %s\r\n' "$cpu"
         printf '\033[2KTHREADS : %s\r\n' "$threads"
+        printf '\033[2KMEMORY : %s\r\n' "$memory"
         printf '\033[2KDMI : %s\r\n' "$dmi"
         printf '\033[2KSAS/RAID HBAs Count : %s\r\n' "$hba"
         printf '\033[2KNICs Count : %s\r\n' "$pci_nics"
@@ -492,6 +493,8 @@ while :; do
     [ -n "$cpu" ] || cpu=UNKNOWN
     threads=$(grep -c '^processor[[:space:]]*:' /proc/cpuinfo 2>/dev/null)
     [ -n "$threads" ] || threads=0
+    memory=$(awk '/^MemTotal:/ {printf "%.0f MB", int($2 / 1024); exit}' /proc/meminfo 2>/dev/null)
+    [ -n "$memory" ] || memory=UNKNOWN
     set -- $(pci_counts)
     hba=${1:-0}; pci_nics=${2:-0}; gpu_count=${3:-0}
     refresh=$(date '+%H:%M:%S' 2>/dev/null)
@@ -513,7 +516,7 @@ while :; do
         printf 'BUILD=%s-%s\nUPDATE=%s\nPLATFORM=%s\n' "$product" "$build" "$update" "$platform"
         printf 'LKM_VERSION=%s\nMODULES_VERSION=%s\nMODULE_TYPE=%s\nLOADER_VERSION=%s\n' \
             "$lkm_version" "$modules_version" "$module_type" "$loader_version"
-        printf 'CPU=%s\nTHREADS=%s\nDMI=%s\n' "$cpu" "$threads" "$dmi"
+        printf 'CPU=%s\nTHREADS=%s\nMEMORY=%s\nDMI=%s\n' "$cpu" "$threads" "$memory" "$dmi"
         printf 'HBA_COUNT=%s\nPCI_NIC_COUNT=%s\nGPU_COUNT=%s\n' "$hba" "$pci_nics" "$gpu_count"
         printf 'SATA_COUNT=%s\nNVME_COUNT=%s\nBOOT=%s\n' "$sata_count" "$nvme_count" "$boot"
         printf '%s\n' "$(nic_list)" | while IFS= read -r row; do

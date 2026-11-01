@@ -34,7 +34,7 @@ struct status {
     char cmdline[2048];
     char model[64], serial[64], mac[32], build[64], update[32], platform[96];
     char lkm_version[128], modules_version[128], module_type[128], loader_version[96];
-    char cpu[160], threads[16], dmi[160], boot[16];
+    char cpu[160], threads[16], memory[32], dmi[160], boot[16];
     char hba_count[16], pci_nic_count[16], gpu_count[16];
     char sata_count[16], nvme_count[16];
     char nics[MAX_NICS][192], gpus[MAX_GPUS][160], disks[MAX_DISKS][192];
@@ -657,7 +657,7 @@ static int render_fits(const struct display *d, const struct status *s,
                        int scale, int line_step, int cmdline_scale,
                        int cmdline_step)
 {
-    int before_cmdline=24+s->gpu_rows+s->nic_rows;
+    int before_cmdline=25+s->gpu_rows+s->nic_rows;
     int after_cmdline=7+s->disk_rows;
     int cmdline_rows=1+cmdline_wrapped_rows(d->mode.hdisplay,cmdline_scale,
                                              s->cmdline);
@@ -748,6 +748,7 @@ static void render(struct display *d, const struct status *s)
 
     draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"CPU : ",s->cpu,white,0xffa0a0ff);
     draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"THREADS : ",s->threads,white,0xffa0a0ff);
+    draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"MEMORY : ",s->memory,white,0xffa0a0ff);
     draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"DMI : ",s->dmi,white,yellow);
 
     draw_field_line_qr_aware(d,margin,&y,scale,line_step,qr_bottom,qr_left,"SAS/RAID HBAs Count : ",s->hba_count,white,red);
@@ -829,7 +830,7 @@ static int parse_status(char *data,struct status *s)
         FIELD("BUILD",s->build) FIELD("UPDATE",s->update) FIELD("PLATFORM",s->platform)
         FIELD("LKM_VERSION",s->lkm_version) FIELD("MODULES_VERSION",s->modules_version)
         FIELD("MODULE_TYPE",s->module_type) FIELD("LOADER_VERSION",s->loader_version)
-        FIELD("CPU",s->cpu) FIELD("THREADS",s->threads)
+        FIELD("CPU",s->cpu) FIELD("THREADS",s->threads) FIELD("MEMORY",s->memory)
         FIELD("DMI",s->dmi) FIELD("BOOT",s->boot) FIELD("HBA_COUNT",s->hba_count)
         FIELD("PCI_NIC_COUNT",s->pci_nic_count) FIELD("GPU_COUNT",s->gpu_count)
         FIELD("SATA_COUNT",s->sata_count) FIELD("NVME_COUNT",s->nvme_count)
