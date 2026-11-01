@@ -269,6 +269,23 @@ set_ifcfg_kv() {
   fi
 }
 
+# Resolve Synology's L3 OVS bridge for a physical NIC.  The physical port's
+# ifcfg-ethN names its bridge, while ifcfg-ovs_ethN owns the address and DHCP
+# client.  Only accept the explicit, reciprocal OVS mapping; otherwise retain
+# the legacy physical-interface behavior.
+ovs_bridge_for_eth() {
+  local eth="$1" eth_cfg="/etc/sysconfig/network-scripts/ifcfg-${1}" bridge bridge_cfg
+  [ -r "${eth_cfg}" ] || return 1
+  bridge=$(sed -n 's/^BRIDGE=//p' "${eth_cfg}" | tail -n 1 | tr -d '"\047\r')
+  case "${bridge}" in ovs_eth[0-9]*) ;; *) return 1 ;; esac
+  echo "${bridge}" | grep -qE '^ovs_eth[0-9]+$' || return 1
+  bridge_cfg="/etc/sysconfig/network-scripts/ifcfg-${bridge}"
+  [ -r "${bridge_cfg}" ] || return 1
+  grep -qx 'TYPE=OVS' "${bridge_cfg}" || return 1
+  grep -qx "PRIMARY=${eth}" "${bridge_cfg}" || return 1
+  printf '%s\n' "${bridge}"
+}
+
 # /etc/rc.network restart 가 ifcfg-ethN 의 GATEWAY= 를 읽어 기본 라우트를
 # 걸어주는 것에 의존했으나, 주니어(설치) 환경에서 실기로 확인한 결과 이 restart
 # 뒤에도 커널 라우팅 테이블에 default 라우트가 전혀 안 걸리는 경우가 있었다
@@ -310,8 +327,20 @@ fixnetwork() {
           set_ifcfg_kv "${F}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
           set_ifcfg_kv "${F}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
           set_ifcfg_kv "${F}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
-          /etc/rc.network restart ${ETH} >/dev/null 2>&1
-          ensure_default_route "${ETH}" "$(echo "${IPRS}" | cut -d/ -f3)"
+          BRIDGE="$(ovs_bridge_for_eth "${ETH}")"
+          NETWORK_IFACE="${ETH}"
+          if [ -n "${BRIDGE}" ]; then
+            BF="/etc/sysconfig/network-scripts/ifcfg-${BRIDGE}"
+            set_ifcfg_kv "${BF}" "BOOTPROTO" "static"
+            set_ifcfg_kv "${BF}" "ONBOOT" "yes"
+            set_ifcfg_kv "${BF}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
+            set_ifcfg_kv "${BF}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
+            set_ifcfg_kv "${BF}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
+            NETWORK_IFACE="${BRIDGE}"
+          fi
+          /etc/rc.network restart "${ETH}" >/dev/null 2>&1
+          [ -z "${BRIDGE}" ] || /etc/rc.network restart "${BRIDGE}" >/dev/null 2>&1
+          ensure_default_route "${NETWORK_IFACE}" "$(echo "${IPRS}" | cut -d/ -f3)"
           [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
         fi
       done
@@ -346,6 +375,32 @@ set_ifcfg_kv() {
   else
     echo "${key}=$3" >> "$1"
   fi
+}
+
+# A Synology OVS bridge, not its physical ethN slave, owns the DSM-layer
+# address and DHCP client.  Validate the ifcfg relationship in both
+# directions before treating the bridge as the L3 interface.
+ovs_bridge_for_eth() {
+  eth="$1"
+  eth_cfg="/etc/sysconfig/network-scripts/ifcfg-${eth}"
+  [ -r "$eth_cfg" ] || return 1
+  bridge=$(sed -n 's/^BRIDGE=//p' "$eth_cfg" | tail -n 1 | tr -d '"\047\r')
+  echo "$bridge" | grep -qE '^ovs_eth[0-9]+$' || return 1
+  bridge_cfg="/etc/sysconfig/network-scripts/ifcfg-${bridge}"
+  [ -r "$bridge_cfg" ] || return 1
+  grep -qx 'TYPE=OVS' "$bridge_cfg" || return 1
+  grep -qx "PRIMARY=${eth}" "$bridge_cfg" || return 1
+  printf '%s\n' "$bridge"
+}
+
+restore_iface_dhcp() {
+  iface="$1"
+  cfg="/etc/sysconfig/network-scripts/ifcfg-${iface}"
+  [ -f "$cfg" ] || return 0
+  set_ifcfg_kv "$cfg" "BOOTPROTO" "dhcp"
+  set_ifcfg_kv "$cfg" "ONBOOT" "yes"
+  # Remove only address fields managed by this script.
+  sed -i '/^IPADDR=/d; /^NETMASK=/d; /^GATEWAY=/d' "$cfg" 2>/dev/null
 }
 
 # rc.network restart 가 ifcfg-ethN 의 GATEWAY= 를 읽고도 커널 라우팅 테이블에
@@ -432,14 +487,15 @@ restore_dhcp_network() {
 
     [ "${owned}" = "true" ] && [ "${still_static}" != "true" ] || continue
     echo "mshell-network: restoring DHCP for ${ETH}"
-    CFG="/etc/sysconfig/network-scripts/ifcfg-${ETH}"
-    set_ifcfg_kv "${CFG}" "BOOTPROTO" "dhcp"
-    set_ifcfg_kv "${CFG}" "ONBOOT" "yes"
-    # These are the exact static keys written by MSHELL.  Do not remove
-    # unrelated user-managed options from the DSM ifcfg file.
-    sed -i '/^IPADDR=/d; /^NETMASK=/d; /^GATEWAY=/d' "${CFG}" 2>/dev/null
+    BRIDGE="$(ovs_bridge_for_eth "${ETH}")"
+    restore_iface_dhcp "${ETH}"
+    if [ -n "${BRIDGE}" ]; then
+      restore_iface_dhcp "${BRIDGE}"
+      unmask_dhcp_client "${BRIDGE}"
+      /etc/rc.network restart "${BRIDGE}" >/dev/null 2>&1
+    fi
     unmask_dhcp_client "${ETH}"
-    /etc/rc.network restart "${ETH}" >/dev/null 2>&1
+    [ -n "${BRIDGE}" ] || /etc/rc.network restart "${ETH}" >/dev/null 2>&1
   done
 
 }
@@ -482,8 +538,22 @@ for F in /sys/class/net/eth*; do
       set_ifcfg_kv "${CFG}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
       set_ifcfg_kv "${CFG}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
       mask_dhcp_client "${ETH}"
-      /etc/rc.network restart "${ETH}" >/dev/null 2>&1
-      ensure_default_route "${ETH}" "$(echo "${IPRS}" | cut -d/ -f3)"
+      BRIDGE="$(ovs_bridge_for_eth "${ETH}")"
+      NETWORK_IFACE="${ETH}"
+      if [ -n "${BRIDGE}" ]; then
+        BCFG="/etc/sysconfig/network-scripts/ifcfg-${BRIDGE}"
+        set_ifcfg_kv "${BCFG}" "BOOTPROTO" "static"
+        set_ifcfg_kv "${BCFG}" "ONBOOT" "yes"
+        set_ifcfg_kv "${BCFG}" "IPADDR" "$(echo "${IPRS}" | cut -d/ -f1)"
+        set_ifcfg_kv "${BCFG}" "NETMASK" "$(echo "${IPRS}" | cut -d/ -f2)"
+        set_ifcfg_kv "${BCFG}" "GATEWAY" "$(echo "${IPRS}" | cut -d/ -f3)"
+        mask_dhcp_client "${BRIDGE}"
+        NETWORK_IFACE="${BRIDGE}"
+        /etc/rc.network restart "${BRIDGE}" >/dev/null 2>&1
+      else
+        /etc/rc.network restart "${ETH}" >/dev/null 2>&1
+      fi
+      ensure_default_route "${NETWORK_IFACE}" "$(echo "${IPRS}" | cut -d/ -f3)"
       [ -n "$(echo "${IPRS}" | cut -d/ -f4)" ] && /etc/rc.network_routing "$(echo "${IPRS}" | cut -d/ -f4)" &
     fi
   done < "${CMDFILE}"
