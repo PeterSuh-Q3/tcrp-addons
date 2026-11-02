@@ -57,6 +57,7 @@ struct display {
     struct drm_mode_fb_cmd fb;
     uint32_t *pixels;
     int dirtyfb_reported;
+    int rendered, text_margin, text_scale, ping_y, refresh_y;
 };
 
 static volatile sig_atomic_t running = 1;
@@ -669,6 +670,30 @@ static int render_fits(const struct display *d, const struct status *s,
     return required<=d->mode.vdisplay;
 }
 
+static uint32_t ping_color(const char *ping)
+{
+    if (!strncmp(ping,"REPLY",5)) return 0xff58e39b;
+    if (!strcmp(ping,"WAITING") || !strcmp(ping,"UNAVAILABLE")) return 0xffffc857;
+    return 0xffff7777;
+}
+
+static void notify_framebuffer(struct display *d)
+{
+    __sync_synchronize();
+    (void)msync((void *)d->pixels,d->dumb.size,MS_SYNC);
+    struct drm_mode_fb_dirty_cmd dirty={.fb_id=d->fb.fb_id};
+    if (ioctl_ok(d->fd,DRM_IOCTL_MODE_DIRTYFB,&dirty)<0) {
+        if (!d->dirtyfb_reported) {
+            fprintf(stderr,"KMS framebuffer refresh notification failed: %s\n",
+                    strerror(errno));
+            d->dirtyfb_reported=1;
+        }
+    } else if (!d->dirtyfb_reported) {
+        fprintf(stderr,"KMS framebuffer refresh notification active\n");
+        d->dirtyfb_reported=1;
+    }
+}
+
 static void render(struct display *d, const struct status *s)
 {
     const uint32_t bg=0xff000000, white=0xffeeeeee, muted=0xffa8a8a8;
@@ -769,9 +794,8 @@ static void render(struct display *d, const struct status *s)
     draw_line(d,&y,scale,line_step,cyan,"JUNIOR REALTIME HELPER");
     draw_field_line(d,margin,&y,scale,line_step,"Current IP : ",s->ip,white,
                     !strcmp(s->ip,"WAITING")?amber:green);
-    uint32_t ping_color=!strncmp(s->ping,"REPLY",5)?green:
-        (!strcmp(s->ping,"WAITING")||!strcmp(s->ping,"UNAVAILABLE")?amber:red);
-    draw_field_line(d,margin,&y,scale,line_step,"Gateway Ping : ",s->ping,white,ping_color);
+    d->ping_y=y;
+    draw_field_line(d,margin,&y,scale,line_step,"Gateway Ping : ",s->ping,white,ping_color(s->ping));
     draw_field_line(d,margin,&y,scale,line_step,"DSM TCP/5000 : ",s->port,white,
                     !strcmp(s->port,"READY")?green:
                     (!strcmp(s->port,"WAITING")?amber:red));
@@ -781,21 +805,39 @@ static void render(struct display *d, const struct status *s)
         draw_line(d,&y,scale,line_step,white,"%s",s->disks[i]);
     char refresh[64];
     snprintf(refresh,sizeof(refresh),"%s (2s interval)",s->refresh);
+    d->refresh_y=y;
     draw_field_line(d,margin,&y,scale,line_step,"DISPLAY REFRESH : ",
                     refresh,cyan,cyan);
-    __sync_synchronize();
-    (void)msync((void *)d->pixels,d->dumb.size,MS_SYNC);
-    struct drm_mode_fb_dirty_cmd dirty={.fb_id=d->fb.fb_id};
-    if (ioctl_ok(d->fd,DRM_IOCTL_MODE_DIRTYFB,&dirty)<0) {
-        if (!d->dirtyfb_reported) {
-            fprintf(stderr,"KMS framebuffer refresh notification failed: %s\n",
-                    strerror(errno));
-            d->dirtyfb_reported=1;
-        }
-    } else if (!d->dirtyfb_reported) {
-        fprintf(stderr,"KMS framebuffer refresh notification active\n");
-        d->dirtyfb_reported=1;
+    d->text_margin=margin;
+    d->text_scale=scale;
+    d->rendered=1;
+    notify_framebuffer(d);
+}
+
+static void render_live_fields(struct display *d, const struct status *s,
+                               int ping_changed, int refresh_changed)
+{
+    const uint32_t bg=0xff000000, white=0xffeeeeee, cyan=0xff66d9ef;
+    int x=d->text_margin, scale=d->text_scale;
+    if (ping_changed) {
+        fill_rect(d,x,d->ping_y,(int)d->mode.hdisplay-x,7*scale,bg);
+        draw_field(d,x,d->ping_y,scale,"Gateway Ping : ",s->ping,white,ping_color(s->ping));
     }
+    if (refresh_changed) {
+        char refresh[64];
+        snprintf(refresh,sizeof(refresh),"%s (2s interval)",s->refresh);
+        fill_rect(d,x,d->refresh_y,(int)d->mode.hdisplay-x,7*scale,bg);
+        draw_field(d,x,d->refresh_y,scale,"DISPLAY REFRESH : ",refresh,cyan,cyan);
+    }
+    notify_framebuffer(d);
+}
+
+static int other_fields_changed(const struct status *a, const struct status *b)
+{
+    struct status x=*a, y=*b;
+    memset(x.ping,0,sizeof(x.ping)); memset(y.ping,0,sizeof(y.ping));
+    memset(x.refresh,0,sizeof(x.refresh)); memset(y.refresh,0,sizeof(y.refresh));
+    return memcmp(&x,&y,sizeof(x)) != 0;
 }
 
 static int load_status(const char *path, char *buf, size_t size)
@@ -890,8 +932,8 @@ int main(int argc, char **argv)
     struct display displays[MAX_DRM_CARDS]={{0}};
     for (int card=0; card<MAX_DRM_CARDS; card++)
         displays[card].fd=-1;
-    char prev[4096]="";
-    time_t last_render=0;
+    struct status previous={0};
+    int previous_valid=0, initial_logged=0;
     struct sigaction action={0};
     action.sa_handler=stop_display;
     sigemptyset(&action.sa_mask);
@@ -900,7 +942,6 @@ int main(int argc, char **argv)
     while (running) {
         char status[4096];
         if (load_status(argv[1],status,sizeof(status)) == 0) {
-            int changed=strcmp(status,prev)!=0;
             char copy[4096]; snprintf(copy,sizeof(copy),"%s",status);
             struct status s;
             if (parse_status(copy,&s)==0) {
@@ -927,22 +968,23 @@ int main(int argc, char **argv)
                         }
                     }
                 }
-                time_t now=time(NULL);
-                if (changed || now-last_render>=2) {
-                    int rendered=0;
-                    for (int card=0; card<MAX_DRM_CARDS; card++) {
-                        if (displays[card].fd < 0) continue;
-                        render(&displays[card],&s);
-                        rendered=1;
-                    }
-                    if (rendered) {
-                        if (!last_render)
-                            fprintf(stderr,"KMS status parsed: disks=%s refresh=%s cmdline=%zu bytes\n",
-                                    s.disk_count,s.refresh,strlen(s.cmdline));
-                        snprintf(prev,sizeof(prev),"%s",status);
-                        last_render=now;
+                int full=!previous_valid || other_fields_changed(&s,&previous);
+                int ping_changed=!previous_valid || strcmp(s.ping,previous.ping)!=0;
+                int refresh_changed=!previous_valid || strcmp(s.refresh,previous.refresh)!=0;
+                for (int card=0; card<MAX_DRM_CARDS; card++) {
+                    struct display *d=&displays[card];
+                    if (d->fd < 0) continue;
+                    if (full || !d->rendered) render(d,&s);
+                    else if (ping_changed || refresh_changed)
+                        render_live_fields(d,&s,ping_changed,refresh_changed);
+                    if (!initial_logged) {
+                        fprintf(stderr,"KMS status parsed: disks=%s refresh=%s cmdline=%zu bytes\n",
+                                s.disk_count,s.refresh,strlen(s.cmdline));
+                        initial_logged=1;
                     }
                 }
+                previous=s;
+                previous_valid=1;
             }
         }
         struct timespec ts={.tv_sec=1,.tv_nsec=0}; nanosleep(&ts,NULL);

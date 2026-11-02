@@ -43,8 +43,9 @@ The bundled static x86-64 `kms-display` helper searches `/dev/dri/card0` through
 master and configure a connected display. Each card prefers a connector that
 is already active. Actual output depends on each driver's KMS and dumb-buffer
 support. DRM-backed HDMI, DisplayPort, VGA, and virtual displays can work.
-The helper redraws every active card every two seconds while the junior monitor
-runs. A visible local-time stamp
+The helper updates the gateway ping and refresh-time rows when their values
+change. It redraws the full panel when other status fields change or a display
+is initialized. A visible local-time stamp
 shows the last refresh to the second. It does not need `/dev/fb0`,
 fbcon, or a virtual console. If DRM/KMS is unavailable, the shell monitor
 continues to print to the active virtual console when one exists.
