@@ -1,0 +1,45 @@
+name: Package acovermissingbin usr.tgz
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: acovermissingbin-usr-package
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Build and verify root-owned archive
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          bash acovermissingbin/auxfiles/build-usr-tgz.sh "$PWD/dist/usr.tgz"
+          sha256sum dist/usr.tgz | tee dist/usr.tgz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acovermissingbin-usr
+          path: dist/
+          if-no-files-found: error
+      - name: Publish archive and matching recipe hash
+        run: |
+          set -euo pipefail
+          hash=$(sha256sum dist/usr.tgz | awk '{print $1}')
+          cp dist/usr.tgz acovermissingbin/auxfiles/usr.tgz
+          jq --arg hash "$hash" '(.files[] | select(.name == "usr.tgz") | .sha256) = $hash' acovermissingbin/recipes/universal.json > dist/universal.json
+          test "$(jq -r '[.files[] | select(.name == "usr.tgz")] | length' dist/universal.json)" = 1
+          mv dist/universal.json acovermissingbin/recipes/universal.json
+          git config user.name github-actions\[bot\]
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add acovermissingbin/auxfiles/usr.tgz acovermissingbin/recipes/universal.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Update acovermissingbin usr archive'
+            git push origin HEAD:main
+          fi
