@@ -7,7 +7,12 @@ case "${1:-}" in
   *) exit 0 ;;
 esac
 [ -d "$ROOT/usr" ] || { echo "mshell-volume-recovery: DSM root missing: $ROOT" >&2; exit 1; }
-SRC=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+EXTS_ROOT=${MSHELL_EXTS_ROOT:-/exts}
+SRC="$EXTS_ROOT/mshell-volume-recovery"
+[ -r "$SRC/volume-recovery.sh" ] || {
+  echo "mshell-volume-recovery: helper missing: $SRC/volume-recovery.sh" >&2
+  exit 1
+}
 APP="$ROOT/usr/local/libexec/mshell-volume-recovery"
 RCD="$ROOT/usr/local/etc/rc.d"
 mkdir -p "$APP" "$RCD"
