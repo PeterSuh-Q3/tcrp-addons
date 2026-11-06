@@ -20,7 +20,18 @@ if [ "${1}" = "early" ]; then
   tar vxfz usr.tgz -C / >/dev/null 2>&1
   rm -f /usr/sbin/kmod
   tar vxfz kmod.tgz -C /
+  # Provide strings through the statically linked BusyBox binary.
+  ln -sf /usr/sbin/busybox-static /usr/sbin/strings
   # Prevent xhci-pci KP when using custom module (NEC USB 3.0 firmware dummy file)
   mkdir -p /lib/firmware
   touch /lib/firmware/renesas_usb_fw.mem
+fi
+
+if [ "${1}" = "late" ]; then
+  # Stage the static BusyBox in the image root. The symlink target must use
+  # the final DSM root path because /tmpRoot is temporary and disappears.
+  mkdir -p /tmpRoot/usr/sbin
+  cp -f /usr/sbin/busybox-static /tmpRoot/usr/sbin/busybox-static
+  chmod 0755 /tmpRoot/usr/sbin/busybox-static
+  ln -sf /usr/sbin/busybox-static /tmpRoot/usr/sbin/strings
 fi
