@@ -21,6 +21,6 @@
   ],
   "scripts": {
     "on_early": "install.sh",
-    "on_late": "install.sh"
+    "on_os_load": "install.sh"
   }
 }
