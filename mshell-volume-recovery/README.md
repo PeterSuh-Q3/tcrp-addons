@@ -1,9 +1,13 @@
 # MSHELL Volume Recovery
 
 DSM-side, fail-closed bounded-retry reboot helper for persistent data-volume
-mount failures on BMI2-absent PML systems. The addon installs
-`/usr/local/etc/rc.d/S99mshell-volume-recovery.sh`; the DSM rc.d hook starts the
-runtime helper from `/usr/local/libexec/mshell-volume-recovery/`.
+mount failures on BMI2-absent PML systems. On DSM 7, the addon's `late` event
+installs a systemd service after the normal CGI/Nginx services. It runs the
+runtime helper from `/usr/local/libexec/mshell-volume-recovery/` without
+blocking normal service startup. During staging it removes the old
+`/usr/local/etc/rc.d/S99mshell-volume-recovery.sh` hook and stale unit overrides,
+logging each removed path so the helper cannot start twice through old and new
+mechanisms.
 
 The runtime gate requires:
 
@@ -28,6 +32,7 @@ the retry budget is exhausted, the helper leaves the host running until one of
 those reset conditions occurs. No RAID/LVM repair or metadata mutation is
 performed.
 
-This first implementation still requires DSM 7.3/7.4 runtime validation of
-rc.d timing, volume-writability command behavior, and state-table compatibility
-before enabling it on production loader builds.
+The service conversion preserves the existing runtime gates and bounded retry
+policy. Runtime validation should still cover DSM 7.3/7.4 volume-writability
+command behavior and state-table compatibility before enabling it on
+production loader builds.

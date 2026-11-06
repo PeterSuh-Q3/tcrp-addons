@@ -1,5 +1,5 @@
 #!/bin/sh
-# Stage the DSM-side volume recovery helper and its rc.d entrypoint.
+# Stage the DSM-side volume recovery helper and its systemd service.
 set -eu
 ROOT=${TMPROOT:-/tmpRoot}
 case "${1:-}" in
@@ -14,21 +14,43 @@ SRC="$EXTS_ROOT/mshell-volume-recovery"
   exit 1
 }
 APP="$ROOT/usr/local/libexec/mshell-volume-recovery"
-RCD="$ROOT/usr/local/etc/rc.d"
-mkdir -p "$APP" "$RCD"
+UNIT="$ROOT/usr/lib/systemd/system/mshell-volume-recovery.service"
+WANTS="$ROOT/usr/lib/systemd/system/multi-user.target.wants/mshell-volume-recovery.service"
+
+remove_managed_path() {
+  path=$1
+  if [ -e "$path" ] || [ -L "$path" ]; then
+    rm -f "$path"
+    echo "mshell-volume-recovery: removed stale startup path $path"
+  fi
+}
+
+# Remove the old unmanaged startup hook and any older unit/override before
+# staging the single systemd-managed boot path.
+remove_managed_path "$ROOT/usr/local/etc/rc.d/S99mshell-volume-recovery.sh"
+remove_managed_path "$UNIT"
+remove_managed_path "$WANTS"
+remove_managed_path "$ROOT/etc/systemd/system/mshell-volume-recovery.service"
+remove_managed_path "$ROOT/etc/systemd/system/multi-user.target.wants/mshell-volume-recovery.service"
+
+mkdir -p "$APP" "$(dirname "$UNIT")" "$(dirname "$WANTS")"
 cp "$SRC/volume-recovery.sh" "$APP/volume-recovery.sh"
 chmod 0755 "$APP/volume-recovery.sh"
-cat > "$RCD/S99mshell-volume-recovery.sh" <<'HOOK'
-#!/bin/sh
-APP=/usr/local/libexec/mshell-volume-recovery/volume-recovery.sh
-case "${1:-start}" in
-  start|"")
-    [ -x "$APP" ] || exit 0
-    (trap '' HUP; exec "$APP" </dev/null >>/var/log/mshell-volume-recovery.log 2>&1) &
-    ;;
-  stop) ;;
-esac
-exit 0
-HOOK
-chmod 0755 "$RCD/S99mshell-volume-recovery.sh"
-echo "mshell-volume-recovery: staged DSM rc.d hook in $ROOT"
+cat > "$UNIT" <<'UNIT_EOF'
+[Unit]
+Description=MSHELL addon bounded volume recovery check
+After=synoscgi.service nginx.service
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c 'exec /usr/local/libexec/mshell-volume-recovery/volume-recovery.sh >>/var/log/mshell-volume-recovery.log 2>&1'
+Restart=no
+KillMode=control-group
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target
+UNIT_EOF
+chmod 0644 "$UNIT"
+ln -sf /usr/lib/systemd/system/mshell-volume-recovery.service "$WANTS"
+echo "mshell-volume-recovery: staged DSM systemd service in $ROOT"
