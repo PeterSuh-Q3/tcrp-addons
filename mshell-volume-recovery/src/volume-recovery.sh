@@ -1,9 +1,10 @@
 #!/bin/sh
-# One-shot DSM data-volume recovery reboot. Read-only diagnosis; no RAID/LVM repair.
+# Bounded DSM data-volume recovery reboot retries. No RAID/LVM repair.
 set -u
 LOG=/var/log/mshell-volume-recovery.log
 STATE=/var/lib/mshell-volume-recovery
-MARKER=$STATE/reboot-attempted
+RETRY_STATE=$STATE/reboot-retry-state
+MAX_REBOOT_ATTEMPTS=2
 SPACE_TABLE=/var/lib/space/space_table
 SYNOSTGVOLUME=/usr/syno/sbin/synostgvolume
 log() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >>"$LOG"; }
@@ -20,6 +21,7 @@ dsm_version_file=/etc.defaults/VERSION
 [ -r "$dsm_version_file" ] || noop 'DSM VERSION file unavailable'
 major=$(awk -F= '$1=="majorversion" {gsub(/["[:space:]]/,"",$2); print $2; exit}' "$dsm_version_file")
 minor=$(awk -F= '$1=="minorversion" {gsub(/["[:space:]]/,"",$2); print $2; exit}' "$dsm_version_file")
+build=$(awk -F= '$1=="buildnumber" {gsub(/["[:space:]]/,"",$2); print $2; exit}' "$dsm_version_file")
 [ -n "$major" ] && [ -n "$minor" ] || noop 'DSM version is not parseable'
 if [ "$major" -lt 7 ] || { [ "$major" -eq 7 ] && [ "$minor" -lt 3 ]; }; then noop "DSM version=$major.$minor below 7.3"; fi
 
@@ -37,24 +39,37 @@ volumes=$(jq -er '[.[] | .volumes[]? | select(.mnt_path != null and .dev_path !=
 tries=0
 volume_ready() {
     failed=0
-    while IFS="$(printf '\t')" read -r mnt dev fsuuid lvuuid; do
+    failed_volume=
+    while IFS="$(printf '\t')" read -r mnt _dev _fsuuid _lvuuid; do
         [ -n "$mnt" ] || continue
-        awk -v m="$mnt" '$2==m {found=1} END {exit !found}' /proc/mounts || { failed=1; continue; }
-        "$SYNOSTGVOLUME" --is-writable "$mnt" >/dev/null 2>&1 || failed=1
+        if ! awk -v m="$mnt" '$2==m {found=1} END {exit !found}' /proc/mounts; then
+            failed=1
+            [ -n "$failed_volume" ] || failed_volume=$mnt
+            continue
+        fi
+        if ! "$SYNOSTGVOLUME" --is-writable "$mnt" >/dev/null 2>&1; then
+            failed=1
+            [ -n "$failed_volume" ] || failed_volume=$mnt
+        fi
     done <<EOF_VOLUMES
 $volumes
 EOF_VOLUMES
     [ "$failed" -eq 0 ]
 }
 while [ "$tries" -lt 18 ]; do
-    volume_ready && exit 0
+    if volume_ready; then
+        if [ -e "$RETRY_STATE" ]; then
+            rm -f "$RETRY_STATE"
+            log 'RETRY_STATE=cleared volume_healthy'
+        fi
+        exit 0
+    fi
     sleep 10
     tries=$((tries+1))
 done
 
 # Record live storage state for diagnosis. Do not reboot on metadata disagreement.
 mkdir -p "$STATE" || noop 'cannot create persistent state directory'
-[ -e "$MARKER" ] && noop 'one-shot reboot marker already exists'
 log "PERSISTENT_VOLUME_FAILURE module_type=$module_type DSM=$major.$minor BMI2=absent"
 log "SPACE_TABLE=$(cat "$SPACE_TABLE" 2>/dev/null)"
 log "MDSTAT=$(cat /proc/mdstat 2>/dev/null | tr '\n' ';')"
@@ -81,19 +96,72 @@ done <<EOF_VG
 $(jq -r '.[].vg_info.vg_path // empty' "$SPACE_TABLE" 2>/dev/null)
 EOF_VG
 
-# Fail-closed one-shot: atomically persist and verify before issuing reboot.
-tmp="$MARKER.tmp.$$"
-(umask 077; printf 'attempted=%s\nDSM=%s.%s\nmodule_type=%s\n' "$(date '+%s')" "$major" "$minor" "$module_type" >"$tmp") || { rm -f "$tmp"; noop 'cannot write reboot marker'; }
-if ! mv "$tmp" "$MARKER" || [ ! -s "$MARKER" ]; then rm -f "$tmp"; noop 'cannot persist reboot marker'; fi
+# Scope retries to this DSM/storage identity. A newly observed post-upgrade
+# event also starts a fresh retry series; healthy volumes clear the state above.
+model=$(awk -F= '$1=="unique" {gsub(/["[:space:]]/,"",$2); print $2; exit}' /etc.defaults/synoinfo.conf 2>/dev/null)
+storage_identity=$(jq -c 'sort_by(.id) | map({id,uuid,raids:(.raids|map({md_path,uuid})|sort_by(.md_path)),volumes:(.volumes|map({mnt_path,fs_uuid,uuid})|sort_by(.mnt_path))})' "$SPACE_TABLE" 2>/dev/null) || noop 'cannot derive storage retry identity'
+identity=$(printf 'DSM=%s.%s.%s\nMODULE=%s\nMODEL=%s\nSTORAGE=%s\n' "$major" "$minor" "$build" "$module_type" "$model" "$storage_identity" | sha256sum | awk '{print $1}')
+[ -n "$identity" ] || noop 'cannot hash storage retry identity'
+boot_id=$(cat /proc/sys/kernel/random/boot_id 2>/dev/null) || noop 'boot ID unavailable'
+[ -n "$boot_id" ] || noop 'boot ID unavailable'
+upgrade_line=$(grep -F 'IS_FIRST_LOGIN_AFTER_UPGRADE=1' /var/log/synobootup.log 2>/dev/null | tail -n 1 || true)
+upgrade_event=
+if [ -n "$upgrade_line" ]; then
+    upgrade_event=$(printf '%s' "$upgrade_line" | sha256sum | awk '{print $1}')
+fi
+
+attempts=0
+last_boot=
+old_identity=
+old_upgrade_event=
+if [ -r "$RETRY_STATE" ]; then
+    attempts=$(sed -n 's/^attempts=//p' "$RETRY_STATE" | head -n 1)
+    last_boot=$(sed -n 's/^last_boot=//p' "$RETRY_STATE" | head -n 1)
+    old_identity=$(sed -n 's/^identity=//p' "$RETRY_STATE" | head -n 1)
+    old_upgrade_event=$(sed -n 's/^upgrade_event=//p' "$RETRY_STATE" | head -n 1)
+    case "$attempts" in ''|*[!0-9]*) noop 'retry state is malformed' ;; esac
+fi
+
+if [ -n "$old_identity" ] && [ "$old_identity" != "$identity" ]; then
+    log 'RETRY_STATE=reset identity_changed'
+    attempts=0
+    old_upgrade_event=
+fi
+if [ -n "$upgrade_event" ] && [ "$upgrade_event" != "$old_upgrade_event" ]; then
+    log 'RETRY_STATE=reset new_post_upgrade_event'
+    attempts=0
+    old_upgrade_event=$upgrade_event
+fi
+[ "$last_boot" != "$boot_id" ] || noop 'reboot already requested during this boot'
+[ "$attempts" -lt "$MAX_REBOOT_ATTEMPTS" ] || noop "retry budget exhausted attempts=$attempts; waiting for healthy volume or new migration identity"
+
+# Persist a bounded retry ledger before invoking reboot. Unlike the old global
+# marker, it auto-clears on a healthy boot and resets for changed migration or
+# storage identity. Keep at most two reboot requests per incident.
+next_attempt=$((attempts+1))
+if [ -z "$upgrade_event" ]; then upgrade_event=$old_upgrade_event; fi
+tmp="$RETRY_STATE.tmp.$$"
+(umask 077; printf 'attempts=%s\nlast_boot=%s\nidentity=%s\nupgrade_event=%s\n' \
+    "$next_attempt" "$boot_id" "$identity" "$upgrade_event" >"$tmp") || { rm -f "$tmp"; noop 'cannot write retry state'; }
+if ! mv "$tmp" "$RETRY_STATE" || [ ! -s "$RETRY_STATE" ]; then rm -f "$tmp"; noop 'cannot persist retry state'; fi
+chmod 600 "$RETRY_STATE" || noop 'cannot secure retry state'
 sync
-log 'DECISION=reboot_once marker=persisted'
+log "DECISION=reboot attempt=$next_attempt/$MAX_REBOOT_ATTEMPTS retry_state=persisted"
 NOTIFY=/usr/syno/bin/synodsmnotify
-notify_title='Volume recovery reboot'
-notify_message="A persistent data-volume mount failure was detected on this DSM $major.$minor system. DSM will reboot once to retry volume assembly. If the volume remains unavailable afterward, automatic reboot will not repeat; manual recovery is required."
-if [ -x "$NOTIFY" ] && "$NOTIFY" -l warn '@administrators' "$notify_title" "$notify_message"; then
+failed_volume=${failed_volume:-/volume1}
+volume_id=${failed_volume##*/}
+case "$volume_id" in
+    volume[0-9]*) notify_volume="볼륨 ${volume_id#volume}" ;;
+    *) notify_volume='볼륨' ;;
+esac
+notify_operation='볼륨 복구'
+notify_args=$(jq -cn --arg volume "$notify_volume" --arg operation "$notify_operation" \
+    '{"%VOLUME_NAME%":$volume,"%VOLUME_OFFLINE_OP%":$operation}') || notify_args=
+if [ -x "$NOTIFY" ] && [ -n "$notify_args" ] && \
+    "$NOTIFY" -e false -b false '@administrators' 'StrMgrVolumeOfflineOpPanic' "$notify_args"; then
     log 'DSM_NOTIFICATION=sent recipient=@administrators'
 else
-    log 'DSM_NOTIFICATION=failed; continuing with one-shot reboot'
+    log 'DSM_NOTIFICATION=failed; continuing with bounded reboot attempt'
 fi
 /sbin/reboot
 exit $?

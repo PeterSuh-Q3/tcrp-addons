@@ -1,7 +1,7 @@
 {
   "id": "mshell-volume-recovery",
   "info": {
-    "description": "One-shot DSM data-volume recovery reboot helper for BMI2-absent PML systems",
+    "description": "Bounded-retry DSM data-volume recovery reboot helper for BMI2-absent PML systems",
     "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/mshell-volume-recovery",
     "name": "MSHELL Volume Recovery",
     "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/mshell-volume-recovery"
