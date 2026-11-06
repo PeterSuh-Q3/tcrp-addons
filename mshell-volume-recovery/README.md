@@ -1,0 +1,27 @@
+# MSHELL Volume Recovery
+
+DSM-side, fail-closed one-shot reboot helper for persistent data-volume mount
+failures on BMI2-absent PML systems. The addon installs
+`/usr/local/etc/rc.d/S99mshell-volume-recovery.sh`; the DSM rc.d hook starts the
+runtime helper from `/usr/local/libexec/mshell-volume-recovery/`.
+
+The runtime gate requires:
+
+- `/usr/mshell/MODULE_TYPE` equal to `all-modules (PML)` or
+  `custom-modules (PML)`;
+- DSM 7.3 or newer, parsed from `/etc.defaults/VERSION` or `/etc/VERSION`;
+- BMI2 absent from at least one reported CPU flags line;
+- an expected volume registered in `/var/lib/space/space_table`.
+
+It waits up to three minutes for registered volumes to become mounted and
+writable. On persistent failure it records diagnostics and proceeds only when
+space metadata reports assembly eligible with no missing/faulty/dropped disks,
+and the expected md array and VG path exist. It then records a persistent
+one-shot marker under `/var/lib/mshell-volume-recovery/` before requesting a
+reboot. The marker is never cleared automatically; a subsequent failure is
+logged and left for manual recovery. No RAID/LVM repair or metadata mutation is
+performed.
+
+This first implementation still requires DSM 7.3/7.4 runtime validation of
+rc.d timing, volume-writability command behavior, and state-table compatibility
+before enabling it on production loader builds.

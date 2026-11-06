@@ -1,0 +1,22 @@
+{
+  "id": "mshell-volume-recovery",
+  "info": {
+    "description": "One-shot DSM data-volume recovery reboot helper for BMI2-absent PML systems",
+    "help_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/mshell-volume-recovery",
+    "name": "MSHELL Volume Recovery",
+    "packer_url": "https://github.com/PeterSuh-Q3/tcrp-addons/tree/main/mshell-volume-recovery"
+  },
+  "releases": {
+    "epyc7002_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "epyc7002_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "epyc7003_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "geminilakenk_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "geminilakenk_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "icelaked_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "r1000nk_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "r1000nk_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "v1000nk_73_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json",
+    "v1000nk_74_51055": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/recipes/universal.json"
+  },
+  "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/rpext-index.json"
+}

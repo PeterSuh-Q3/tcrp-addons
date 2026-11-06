@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "name": "install.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/src/install.sh",
+      "sha256": "d7f52bc50bcab2b92fb4df27b06f864f4d57f80dfab242cdd14a5199c07c24a3",
+      "packed": false
+    },
+    {
+      "name": "volume-recovery.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/mshell-volume-recovery/src/volume-recovery.sh",
+      "sha256": "3a42bec2caee3d52a6a83f16a40b4b8521d2b40338837a50381078f2ec18ca69",
+      "packed": false
+    }
+  ],
+  "scripts": {
+    "on_os_load": "install.sh"
+  }
+}
