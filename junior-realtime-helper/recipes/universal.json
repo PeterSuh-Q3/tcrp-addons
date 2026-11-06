@@ -3,7 +3,13 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/install.sh",
-      "sha256": "301f39825b6cd63dcca44c12795d0485b9cfac8cdc151e56829d1eeb31887f7b",
+      "sha256": "388b10da7d368e1bff8d73979e11336b1442d42e19c095e5507b0792c920c192",
+      "packed": false
+    },
+    {
+      "name": "dsm-launch.sh",
+      "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/dsm-launch.sh",
+      "sha256": "99d8d5267d640aceb338d65fc700275d9a9a7c2ab6c5fe48f01ec08b83a3ad65",
       "packed": false
     },
     {
