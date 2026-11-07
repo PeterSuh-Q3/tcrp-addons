@@ -1,6 +1,6 @@
 # Junior Realtime Helper log isolation design
 
-**Status:** implemented locally on 2026-11-07; DSM pilot remains pending  
+**Status:** implemented and pushed; DSM pilot started on 2026-11-07  
 **Incident:** DSM 7.4.1 / Docker Joplin, 2026-11-06
 
 ## 1. Goal
@@ -218,4 +218,13 @@ Local validation was performed in Docker Desktop with a static x86-64 build.
 The isolated logger test confirmed that writing resumes at the current path
 after an external rename, the FIFO is mode 0600, each retained log stays at or
 below 256 KiB, and a missing FIFO reader does not block a log sender. The
-48-hour DSM pilot and device-side screen validation are not yet performed.
+The initial DSM 7.4.1-90080 smoke pilot is running. The helper service stayed
+active; KMS reported the VMware `VIRTUAL-1` connector at 1280x800; the status
+refresh advanced by two seconds while gateway ping, TCP/5000, and three disks
+were populated. The preexisting helper log was about 10 MiB and was preserved
+before startup; after startup, the active file was 1,368 bytes, `.1` was exactly
+256 KiB, and `.2` was empty. The log size did not change during a subsequent
+30-second observation, and no helper process held the persistent log open. No
+Docker containers were running before or after the helper update. The 48-hour
+passive observation and direct visual inspection of the monitor remain pending;
+no forced rotation or global signal was used.
