@@ -4,8 +4,6 @@
 # The late event stages a systemd service so DSM can track the monitor process.
 
 ADDON_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-LOG=/var/log/junior-realtime-helper.log
-
 start_junior_monitor() {
     JUNIOR_REASON=/var/log/junior_reason
     junior_reason_match=0
@@ -33,7 +31,7 @@ start_junior_monitor() {
     fi
 
     [ -f "$MONITOR_DIR/kms-display" ] && chmod 755 "$MONITOR_DIR/kms-display" 2>/dev/null || :
-    (trap '' HUP; exec /bin/sh "$MONITOR_DIR/selftest.sh" </dev/null >>"$LOG" 2>&1) &
+    (trap '' HUP; exec /bin/sh "$MONITOR_DIR/selftest.sh" </dev/null >/dev/null 2>&1) &
     echo "$!" >"$PID_FILE"
 }
 

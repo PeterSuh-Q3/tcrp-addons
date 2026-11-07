@@ -1,20 +1,15 @@
 #!/bin/sh
 # DSM systemd entry point. Junior mode continues to use the on_jrExit hook.
 APPDIR=/usr/local/lib/junior-realtime-helper
-LOG=/var/log/junior-realtime-helper.log
 PID_FILE=/tmp/junior-realtime-helper.pid
 
-log() {
-    printf '%s dsm-launch: %s\n' "$(date '+%H:%M:%S')" "$*" >>"$LOG"
-}
-
 if [ -x /linuxrc.syno ]; then
-    log 'skipped; Junior is still active'
+    echo 'junior-realtime-helper: skipped; Junior is still active'
     exit 0
 fi
 
 if [ -r "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; then
-    log 'skipped; helper process is already running'
+    echo 'junior-realtime-helper: skipped; helper process is already running'
     exit 0
 fi
 
@@ -32,14 +27,14 @@ while ! has_drm_card && [ "$tries" -lt 60 ]; do
     tries=$((tries + 1))
 done
 if ! has_drm_card; then
-    log 'skipped; no /dev/dri/card node appeared after 120 seconds'
+    echo 'junior-realtime-helper: skipped; no /dev/dri/card node appeared after 120 seconds'
     exit 0
 fi
 
 if [ ! -r "$APPDIR/selftest.sh" ] || [ ! -x "$APPDIR/kms-display" ]; then
-    log 'failed; helper payload is incomplete'
+    echo 'junior-realtime-helper: failed; helper payload is incomplete'
     exit 1
 fi
 
-log 'starting DSM helper'
-exec /bin/sh "$APPDIR/selftest.sh" </dev/null >>"$LOG" 2>&1
+echo 'junior-realtime-helper: starting DSM helper'
+exec /bin/sh "$APPDIR/selftest.sh" </dev/null >/dev/null 2>&1

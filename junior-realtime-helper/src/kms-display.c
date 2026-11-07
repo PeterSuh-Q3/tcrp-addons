@@ -15,6 +15,8 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <poll.h>
 #include <time.h>
 #include <unistd.h>
 #include <drm.h>
@@ -28,6 +30,107 @@
 #define MAX_GPUS 4
 #define MAX_DRM_CARDS 8
 #define FIELD_LABEL_WIDTH 21
+#define LOG_LIMIT (256U * 1024U)
+
+static const char *log_fifo;
+
+static void event_log(const char *fmt, ...)
+{
+    char line[2048];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(line, sizeof(line), fmt, ap);
+    va_end(ap);
+    if (!log_fifo) {
+        fprintf(stderr, "%s\n", line);
+        return;
+    }
+    int fd = open(log_fifo, O_WRONLY | O_NONBLOCK | O_CLOEXEC);
+    if (fd < 0) return;
+    size_t n = strnlen(line, sizeof(line));
+    if (n > 1800) n = 1800;
+    line[n++] = '\n';
+    (void)write(fd, line, n);
+    close(fd);
+}
+
+static int write_tail(int out, const char *path, size_t limit)
+{
+    int in = open(path, O_RDONLY | O_CLOEXEC);
+    if (in < 0) return -1;
+    struct stat st;
+    if (fstat(in, &st) < 0) { close(in); return -1; }
+    off_t start = st.st_size > (off_t)limit ? st.st_size - (off_t)limit : 0;
+    if (lseek(in, start, SEEK_SET) < 0) { close(in); return -1; }
+    char buf[8192];
+    ssize_t got;
+    while ((got = read(in, buf, sizeof(buf))) > 0) {
+        ssize_t off = 0;
+        while (off < got) {
+            ssize_t put = write(out, buf + off, (size_t)(got - off));
+            if (put <= 0) { close(in); return -1; }
+            off += put;
+        }
+    }
+    close(in);
+    return got < 0 ? -1 : 0;
+}
+
+static void rotate_log(const char *path)
+{
+    char one[512], two[512];
+    snprintf(one, sizeof(one), "%s.1", path);
+    snprintf(two, sizeof(two), "%s.2", path);
+    unlink(two);
+    int out = open(two, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    if (out >= 0) { (void)write_tail(out, one, LOG_LIMIT); close(out); }
+    unlink(one);
+    out = open(one, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    if (out >= 0) { (void)write_tail(out, path, LOG_LIMIT); close(out); }
+    unlink(path);
+}
+
+static int log_worker(const char *fifo, const char *path)
+{
+    signal(SIGHUP, SIG_IGN);
+    pid_t owner = getppid();
+    int fd = open(fifo, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+    if (fd < 0) return 1;
+    char pending[4096]; size_t used = 0;
+    struct pollfd pfd = { .fd = fd, .events = POLLIN };
+    for (;;) {
+        int ready = poll(&pfd, 1, 1000);
+        if (getppid() != owner) { close(fd); return 0; }
+        if (ready <= 0) continue;
+        char buf[2048]; ssize_t n = read(fd, buf, sizeof(buf));
+        if (n <= 0) continue;
+        for (ssize_t i = 0; i < n; i++) {
+            if (buf[i] != '\n' && used + 1 < sizeof(pending)) {
+                pending[used++] = buf[i]; continue;
+            }
+            pending[used] = '\0'; used = 0;
+            if (!pending[0]) continue;
+            if (strcmp(pending, "__JRH_LOG_STOP__") == 0) { close(fd); return 0; }
+            struct stat st;
+            if (stat(path, &st) == 0 && (uint64_t)st.st_size + strlen(pending) + 32 > LOG_LIMIT)
+                rotate_log(path);
+            if (stat(path, &st) == 0 &&
+                (uint64_t)st.st_size + strlen(pending) + 32 > LOG_LIMIT)
+                continue;
+            int out = open(path, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0600);
+            if (out >= 0) {
+                (void)fchmod(out, 0600);
+                char stamp[32]; time_t now = time(NULL); struct tm tm;
+                localtime_r(&now, &tm);
+                size_t prefix = strftime(stamp, sizeof(stamp), "%Y-%m-%d %H:%M:%S ", &tm);
+                (void)write(out, stamp, prefix);
+                (void)write(out, pending, strlen(pending));
+                (void)write(out, "\n", 1);
+                close(out);
+            }
+        }
+    }
+}
 
 struct status {
     char ip[64], ping[48], port[24], url[160], disk_count[16], refresh[32];
@@ -58,10 +161,26 @@ struct display {
     uint32_t *pixels;
     int dirtyfb_reported;
     int rendered, text_margin, text_scale, ping_y, refresh_y;
+    time_t retry_after, last_failure;
+    unsigned int retry_delay, failures;
 };
 
 static volatile sig_atomic_t running = 1;
 static void restore_display(struct display *d);
+
+static void card_failure(struct display *d, const char *path, int error, time_t now)
+{
+    d->failures++;
+    if (d->failures == 1 || now - d->last_failure >= 300) {
+        event_log("%s: DRM/KMS unavailable (%s; %u retries)",
+                  path, strerror(error), d->failures);
+        d->last_failure = now;
+    }
+    unsigned int delay = d->retry_delay ? d->retry_delay : 1;
+    d->retry_after = now + delay;
+    d->retry_delay = delay < 8 ? delay * 2 : 30;
+    if (d->retry_delay > 30) d->retry_delay = 30;
+}
 
 static int card_driver_name(unsigned int card, char *name, size_t name_size)
 {
@@ -174,12 +293,12 @@ static void draw_qr(struct display *d, const char *url, int margin,
     uint8_t temp[qrcodegen_BUFFER_LEN_MAX];
     if (!qrcodegen_encodeText(url,temp,qr,qrcodegen_Ecc_MEDIUM,1,5,
                               qrcodegen_Mask_AUTO,true)) {
-        fprintf(stderr,"KMS QR encode failed for DSM URL\n");
+        event_log("KMS QR encode failed for DSM URL");
         return;
     }
     int modules=qrcodegen_getSize(qr), module_px=qr_pixel_size(d,modules);
     if (module_px<2) {
-        fprintf(stderr,"KMS QR skipped: mode %ux%u is too small\n",
+        event_log("KMS QR skipped: mode %ux%u is too small",
                 d->mode.hdisplay,d->mode.vdisplay);
         return;
     }
@@ -187,7 +306,7 @@ static void draw_qr(struct display *d, const char *url, int margin,
     int x=(int)d->mode.hdisplay-margin-total;
     int y=margin+7*scale+line_step/2;
     if (x<margin || y+total>(int)d->mode.vdisplay-margin) {
-        fprintf(stderr,"KMS QR skipped: no room in mode %ux%u\n",
+        event_log("KMS QR skipped: no room in mode %ux%u",
                 d->mode.hdisplay,d->mode.vdisplay);
         return;
     }
@@ -202,7 +321,7 @@ static void draw_qr(struct display *d, const char *url, int margin,
     }
     static char last_logged_url[160];
     if (strcmp(last_logged_url,url)) {
-        fprintf(stderr,"KMS QR active: url=%s size=%d module=%dpx\n",
+        event_log("KMS QR active: url=%s size=%d module=%dpx",
                 url,total,module_px);
         snprintf(last_logged_url,sizeof(last_logged_url),"%s",url);
     }
@@ -506,7 +625,7 @@ static int setup_display(struct display *d)
     if (ioctl_ok(d->fd, DRM_IOCTL_MODE_SETCRTC, &set) < 0)
         return -1;
     d->modeset_active=1;
-    fprintf(stderr, "KMS display active: connector=%u name=%s status=%s mode=%s %ux%u\n",
+    event_log("KMS display active: connector=%u name=%s status=%s mode=%s %ux%u",
             d->connector, d->connector_label,
             d->connector_connected?"connected":"disconnected",
             d->mode.name, d->mode.hdisplay, d->mode.vdisplay);
@@ -684,12 +803,12 @@ static void notify_framebuffer(struct display *d)
     struct drm_mode_fb_dirty_cmd dirty={.fb_id=d->fb.fb_id};
     if (ioctl_ok(d->fd,DRM_IOCTL_MODE_DIRTYFB,&dirty)<0) {
         if (!d->dirtyfb_reported) {
-            fprintf(stderr,"KMS framebuffer refresh notification failed: %s\n",
+            event_log("KMS framebuffer refresh notification failed: %s",
                     strerror(errno));
             d->dirtyfb_reported=1;
         }
     } else if (!d->dirtyfb_reported) {
-        fprintf(stderr,"KMS framebuffer refresh notification active\n");
+        event_log("KMS framebuffer refresh notification active");
         d->dirtyfb_reported=1;
     }
 }
@@ -719,7 +838,7 @@ static void render(struct display *d, const struct status *s)
     int step=line_step;
     static int last_logged_scale=0;
     if (last_logged_scale!=scale) {
-        fprintf(stderr,"KMS text scale: %dx mode=%ux%u line-step=%d\n",
+        event_log("KMS text scale: %dx mode=%ux%u line-step=%d",
                 scale,d->mode.hdisplay,d->mode.vdisplay,line_step);
         last_logged_scale=scale;
     }
@@ -899,11 +1018,11 @@ static void restore_display(struct display *d)
             restore.set_connectors_ptr=U64(&d->connector);
             restore.count_connectors=1;
             if (ioctl_ok(d->fd, DRM_IOCTL_MODE_SETCRTC, &restore) < 0)
-                fprintf(stderr,"KMS original display restore failed: %s\n",strerror(errno));
+                event_log("KMS original display restore failed: %s",strerror(errno));
         } else {
             struct drm_mode_crtc disable={.crtc_id=d->crtc};
             if (ioctl_ok(d->fd, DRM_IOCTL_MODE_SETCRTC, &disable) < 0)
-                fprintf(stderr,"KMS display disable failed: %s\n",strerror(errno));
+                event_log("KMS display disable failed: %s",strerror(errno));
         }
     }
 
@@ -922,13 +1041,25 @@ static void restore_display(struct display *d)
 
 int main(int argc, char **argv)
 {
+    log_fifo = getenv("JRH_LOG_FIFO");
+    if (argc == 4 && strcmp(argv[1], "--log") == 0) {
+        log_fifo = argv[2];
+        event_log("%s", argv[3]);
+        return 0;
+    }
+    if (argc == 4 && strcmp(argv[1], "--log-worker") == 0)
+        return log_worker(argv[2], argv[3]);
+    if (argc == 2 && strcmp(argv[1], "--log-worker") == 0) {
+        fprintf(stderr, "usage: %s --log-worker FIFO LOGFILE\n", argv[0]);
+        return 2;
+    }
     if (argc < 2 || argc > 3) {
         fprintf(stderr,"usage: %s STATUS_FILE [DRIVER_NAME]\n",argv[0]);
         return 2;
     }
     const char *driver_filter = argc == 3 ? argv[2] : NULL;
     if (driver_filter)
-        fprintf(stderr,"KMS target driver: %s\n",driver_filter);
+        event_log("KMS target driver: %s",driver_filter);
     struct display displays[MAX_DRM_CARDS]={{0}};
     for (int card=0; card<MAX_DRM_CARDS; card++)
         displays[card].fd=-1;
@@ -940,6 +1071,7 @@ int main(int argc, char **argv)
     sigaction(SIGTERM,&action,NULL);
     sigaction(SIGINT,&action,NULL);
     while (running) {
+        time_t now = time(NULL);
         char status[4096];
         if (load_status(argv[1],status,sizeof(status)) == 0) {
             char copy[4096]; snprintf(copy,sizeof(copy),"%s",status);
@@ -947,6 +1079,7 @@ int main(int argc, char **argv)
             if (parse_status(copy,&s)==0) {
                 for (int card=0; card<MAX_DRM_CARDS; card++) {
                     if (displays[card].fd < 0) {
+                        if (displays[card].retry_after > now) continue;
                         char path[32]; snprintf(path,sizeof(path),"/dev/dri/card%d",card);
                         char driver_name[128];
                         if (driver_filter &&
@@ -955,16 +1088,29 @@ int main(int argc, char **argv)
                              strcmp(driver_name, driver_filter) != 0))
                             continue;
                         int fd=open(path,O_RDWR|O_CLOEXEC);
-                        if (fd<0) continue;
-                        if (ioctl_ok(fd,DRM_IOCTL_SET_MASTER,NULL)<0) { close(fd); continue; }
+                        if (fd<0) { card_failure(&displays[card],path,errno,now); continue; }
+                        if (ioctl_ok(fd,DRM_IOCTL_SET_MASTER,NULL)<0) {
+                            int saved_errno=errno; close(fd);
+                            card_failure(&displays[card],path,saved_errno,now); continue;
+                        }
                         displays[card].fd=fd;
                         displays[card].card_index=(unsigned int)card;
                         if (setup_display(&displays[card])<0) {
                             int saved_errno=errno;
-                            fprintf(stderr,"%s: DRM/KMS setup: %s\n",path,strerror(saved_errno));
+                            struct display *d=&displays[card];
+                            card_failure(d,path,saved_errno,now);
                             restore_display(&displays[card]);
-                            memset(&displays[card],0,sizeof(displays[card]));
-                            displays[card].fd=-1;
+                            int failures=d->failures;
+                            time_t retry_after=d->retry_after, last_failure=d->last_failure;
+                            unsigned int retry_delay=d->retry_delay;
+                            memset(d,0,sizeof(*d)); d->fd=-1;
+                            d->failures=failures; d->retry_after=retry_after;
+                            d->last_failure=last_failure; d->retry_delay=retry_delay;
+                        } else if (displays[card].failures) {
+                            event_log("%s: DRM/KMS recovered after %u retries",path,
+                                      displays[card].failures);
+                            displays[card].failures=0;
+                            displays[card].retry_delay=0;
                         }
                     }
                 }
@@ -978,7 +1124,7 @@ int main(int argc, char **argv)
                     else if (ping_changed || refresh_changed)
                         render_live_fields(d,&s,ping_changed,refresh_changed);
                     if (!initial_logged) {
-                        fprintf(stderr,"KMS status parsed: disks=%s refresh=%s cmdline=%zu bytes\n",
+                        event_log("KMS status parsed: disks=%s refresh=%s cmdline=%zu bytes",
                                 s.disk_count,s.refresh,strlen(s.cmdline));
                         initial_logged=1;
                     }

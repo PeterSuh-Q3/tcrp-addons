@@ -3,25 +3,25 @@
     {
       "name": "install.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/install.sh",
-      "sha256": "388b10da7d368e1bff8d73979e11336b1442d42e19c095e5507b0792c920c192",
+      "sha256": "3c664936aff84662ca978ed7ec77ebe51f48beaa0be7c5d7fb7a0b455a6d6673",
       "packed": false
     },
     {
       "name": "dsm-launch.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/dsm-launch.sh",
-      "sha256": "99d8d5267d640aceb338d65fc700275d9a9a7c2ab6c5fe48f01ec08b83a3ad65",
+      "sha256": "39fef0072bf18b92b3531deb53d6acdcfce4de3d0a995052a39b095fa8c1dca7",
       "packed": false
     },
     {
       "name": "selftest.sh",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/selftest.sh",
-      "sha256": "427f9fae2a1d95e61a8fa63ed7ee3a3ea249be2bf81f27cdda109521d92be2c7",
+      "sha256": "79eddcde1fd7b407dc38b60047540f3dd6611049f7919b68447bbf0ab4fa5e9b",
       "packed": false
     },
     {
       "name": "kms-display",
       "url": "https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/junior-realtime-helper/src/kms-display",
-      "sha256": "8dd97a14d43f544aed2ab87c156a4d090ed8b00f5fc0630f75207693584f31c8",
+      "sha256": "bc04ff82eb1b5578160116e7840ad614275a6bb30d40c739e6f0bac677d44ded",
       "packed": false
     }
   ],

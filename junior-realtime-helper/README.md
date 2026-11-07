@@ -36,8 +36,16 @@ loader-version snapshots from `/addons`; DSM reads the corresponding files
 from `/usr/mshell`. DSM's `PLATFORM` falls back to `platform_name` in
 `/etc.defaults/synoinfo.conf` when `VERSION` has no `unique` value. Both modes
 also show IPv4, gateway ping, TCP/5000, disk, and refresh status while active.
-It writes observations to
-`/var/log/junior-realtime-helper.log`. It does not install DSM, mount a disk,
+It writes meaningful state transitions and rate-limited diagnostics to
+`/var/log/junior-realtime-helper.log`. A mode-0600 FIFO under `/tmp` feeds one
+logger worker; each record opens and closes the log by pathname, so DSM log
+renames do not leave the helper writing through an old file descriptor. The
+active log and each of two plain-text rotations are capped at 256 KiB. Live
+ping RTT and the two-second refresh timestamp remain on screen but do not create
+log entries. Repeated console and KMS failures are rate-limited while DRM
+discovery continues with 1, 2, 4, 8, then 30-second retries. The launcher does
+not redirect the monitor's lifetime stdout/stderr to the DSM log file. It does
+not install DSM, mount a disk,
 or modify partitions.
 
 The bundled static x86-64 `kms-display` helper searches `/dev/dri/card0` through

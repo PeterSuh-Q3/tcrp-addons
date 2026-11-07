@@ -45,6 +45,22 @@ if ! mkdir "$LOCK_DIR" 2>/dev/null; then
 fi
 printf '%s\n' "$$" >"$LOCK_DIR/pid"
 
+LOG=/var/log/junior-realtime-helper.log
+LOG_FIFO=/tmp/junior-realtime-helper.$$.fifo
+LOGGER_PID=
+umask 077
+if [ -x "$ADDON_DIR/kms-display" ] && mkfifo "$LOG_FIFO" 2>/dev/null; then
+    "$ADDON_DIR/kms-display" --log-worker "$LOG_FIFO" "$LOG" >/dev/null 2>&1 &
+    LOGGER_PID=$!
+fi
+
+log_event() {
+    [ -n "$LOGGER_PID" ] && kill -0 "$LOGGER_PID" 2>/dev/null || return 0
+    "$ADDON_DIR/kms-display" --log "$LOG_FIFO" "$*" >/dev/null 2>&1 || :
+}
+
+log_event "monitor started mode=$(runtime_mode)"
+
 cleanup() {
     trap - 0 INT TERM
     owner=$(cat "$LOCK_DIR/pid" 2>/dev/null)
@@ -54,6 +70,12 @@ cleanup() {
             kill "$kms_pid" 2>/dev/null
             wait "$kms_pid" 2>/dev/null
         fi
+        if [ -n "$LOGGER_PID" ]; then
+            log_event 'monitor stopping'
+            log_event '__JRH_LOG_STOP__'
+            wait "$LOGGER_PID" 2>/dev/null
+        fi
+        rm -f "$LOG_FIFO"
         [ "$(cat /tmp/junior-realtime-helper-kms.pid 2>/dev/null)" = "$kms_pid" ] &&
             rm -f /tmp/junior-realtime-helper-kms.pid
         [ "$(cat /tmp/junior-realtime-helper.pid 2>/dev/null)" = "$$" ] &&
@@ -77,9 +99,9 @@ if [ -x "$ADDON_DIR/kms-display" ] &&
         break
     done
     if [ -n "$kms_driver" ]; then
-        "$ADDON_DIR/kms-display" "$STATUS_FILE" "$kms_driver" >>/var/log/junior-realtime-helper.log 2>&1 &
+        JRH_LOG_FIFO=$LOG_FIFO "$ADDON_DIR/kms-display" "$STATUS_FILE" "$kms_driver" 2>/dev/null &
     else
-        "$ADDON_DIR/kms-display" "$STATUS_FILE" >>/var/log/junior-realtime-helper.log 2>&1 &
+        JRH_LOG_FIFO=$LOG_FIFO "$ADDON_DIR/kms-display" "$STATUS_FILE" 2>/dev/null &
     fi
     echo "$!" >/tmp/junior-realtime-helper-kms.pid
 fi
@@ -365,15 +387,12 @@ play_congratulations_once() {
             -f 622 -l 301 -D 13 -n \
             -f 554 -l 301 -D 7 -n \
             -f 622 -l 299 -D 20 -n \
-            -f 494 -l 1057 -D 0 >>/var/log/junior-realtime-helper.log 2>&1
+            -f 494 -l 1057 -D 0 >/dev/null 2>&1
         result=$?
         if [ "$result" -eq 0 ]; then
-            printf '%s congratulations melody played via %s\n' "$(date '+%H:%M:%S')" "$beep" \
-                >>/var/log/junior-realtime-helper.log
+            log_event "congratulations melody played via $beep"
         else
-            printf '%s congratulations melody failed (%s) via %s\n' \
-                "$(date '+%H:%M:%S')" "$result" "$beep" \
-                >>/var/log/junior-realtime-helper.log
+            log_event "congratulations melody failed ($result) via $beep"
             rmdir "$marker" 2>/dev/null
         fi
     ) &
@@ -439,6 +458,8 @@ render_status() {
 }
 
 previous=''
+console_failures=0
+last_console_error=0
 dmi=$(dmi_summary "$(runtime_mode)")
 while :; do
     mode=$(runtime_mode)
@@ -467,11 +488,14 @@ while :; do
         fi
     fi
     play_congratulations_once
-    current=$(printf 'ip=%s interface=%s gateway=%s tcp5000=%s ping=%s kernel_disks=%s\n%s' \
-        "$ip" "$iface" "$gateway" "$port" "$ping" "$count" "$disks")
-    if [ "$current" != "$previous" ]; then
-        printf '%s\n' "$current"
-        previous=$current
+    ping_reachability=NO_REPLY
+    case "$ping" in REPLY*) ping_reachability=REPLY ;; esac
+    state=$(printf 'mode=%s interface=%s ip=%s gateway=%s link=%s ping=%s tcp5000=%s disk_count=%s disks=%s' \
+        "$mode" "$iface" "$ip" "$gateway" "$(link_up "$iface" && echo UP || echo DOWN)" \
+        "$ping_reachability" "$port" "$count" "$(printf '%s' "$disks" | tr '\n' ';')")
+    if [ "$state" != "$previous" ]; then
+        log_event "$state"
+        previous=$state
     fi
     model=$(cmdline_value syno_hw_version); [ -n "$model" ] || model=UNKNOWN
     serial=$(cmdline_value sn); [ -n "$serial" ] || serial=N/A
@@ -528,6 +552,18 @@ while :; do
         printf '%s\n' "$disks" | awk 'NF && n++ < 8 {print "DISK=" $0}'
     } >/tmp/junior-realtime-helper.status.new &&
         mv -f /tmp/junior-realtime-helper.status.new "$STATUS_FILE"
-    render_status || printf 'junior-realtime-helper: cannot write %s\n' "$CONSOLE" >&2
+    if render_status; then
+        if [ "$console_failures" -gt 0 ]; then
+            log_event "console recovered after $console_failures write failures"
+            console_failures=0
+        fi
+    else
+        console_failures=$((console_failures + 1))
+        now=$(date +%s 2>/dev/null); [ -n "$now" ] || now=0
+        if [ "$console_failures" -eq 1 ] || [ $((now - last_console_error)) -ge 300 ]; then
+            log_event "cannot write console $CONSOLE; failures=$console_failures"
+            last_console_error=$now
+        fi
+    fi
     sleep 2
 done
