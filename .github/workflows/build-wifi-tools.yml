@@ -1,0 +1,61 @@
+name: Build Wi-Fi tools
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Commit archive and matching recipe hash (after license review)'
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wifi-tools-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Build and verify isolated x86-64 runtime
+        run: |
+          set -euo pipefail
+          sh wifi-tools/build-wifi-tools.sh
+          sh wifi-tools/build-sources.sh
+          mkdir -p dist/wifi-tools
+          tar -xzf wifi-tools/releases/wifi-tools.tgz -C dist/wifi-tools
+          dist/wifi-tools/lib/ld-musl-x86_64.so.1 --library-path dist/wifi-tools/lib dist/wifi-tools/bin/wpa_supplicant -v
+          printf '%s\n' 'test-password' | dist/wifi-tools/lib/ld-musl-x86_64.so.1 --library-path dist/wifi-tools/lib dist/wifi-tools/bin/wpa_passphrase test-network | grep -Eq '^[[:space:]]*psk=[[:xdigit:]]{64}$'
+          sha256sum wifi-tools/releases/wifi-tools.tgz > dist/wifi-tools.tgz.sha256
+          sha256sum wifi-tools/releases/wifi-tools-sources.tgz > dist/wifi-tools-sources.tgz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wifi-tools-build
+          path: |
+            wifi-tools/releases/wifi-tools.tgz
+            wifi-tools/releases/wifi-tools-sources.tgz
+            dist/wifi-tools.tgz.sha256
+            dist/wifi-tools-sources.tgz.sha256
+          if-no-files-found: error
+      - name: Publish archive and recipe hash
+        if: ${{ inputs.publish }}
+        run: |
+          set -euo pipefail
+          recipe=wifi-tools/recipes/universal.json
+          test "$(jq '[.files[] | select(.name == "wifi-tools.tgz")] | length' "$recipe")" = 1
+          hash=$(sha256sum wifi-tools/releases/wifi-tools.tgz | awk '{print $1}')
+          jq --arg hash "$hash" '(.files[] | select(.name == "wifi-tools.tgz") | .sha256) = $hash' "$recipe" > dist/universal.json
+          mv dist/universal.json "$recipe"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add wifi-tools/releases/wifi-tools.tgz wifi-tools/releases/wifi-tools-sources.tgz "$recipe"
+          if ! git diff --cached --quiet; then
+            git commit -m 'Build Wi-Fi tools archive'
+            git push origin HEAD:main
+          fi
