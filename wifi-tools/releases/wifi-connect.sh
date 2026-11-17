@@ -89,30 +89,48 @@ capture_diagnostics() {
     fi
 }
 
-save_to_loader_p3() {
-    stage=$1
-    p3=
+find_uuid_device() {
+    wanted_uuid=$1
+    dev=
     if command -v blkid >/dev/null 2>&1; then
-        p3=$(blkid -U 6234-C863 2>/dev/null)
-        [ -n "$p3" ] || p3=$(blkid -U 8765-4321 2>/dev/null)
+        dev=$(blkid -U "$wanted_uuid" 2>/dev/null)
+        [ ! -b "$dev" ] && dev=$(blkid 2>/dev/null | grep -i "UUID=\"$wanted_uuid\"" | head -1 | cut -d: -f1)
     fi
-    [ -b /dev/synoboot3 ] && p3=/dev/synoboot3
-    [ -b "$p3" ] || {
-        log 'Could not locate loader P3 by UUID 6234-C863 or 8765-4321.'
-        return 1
-    }
+    [ -b "$dev" ] && { echo "$dev"; return 0; }
+    return 1
+}
 
-    mounted_path=$(awk -v d="$p3" '$1 == d {print $2; exit}' /proc/mounts 2>/dev/null)
+find_label_device() {
+    wanted_label=$1
+    dev=
+    if command -v blkid >/dev/null 2>&1; then
+        dev=$(blkid -L "$wanted_label" 2>/dev/null)
+        [ ! -b "$dev" ] && dev=$(blkid 2>/dev/null | grep -i "LABEL=\"$wanted_label\"" | head -1 | cut -d: -f1)
+    fi
+    [ -b "$dev" ] && { echo "$dev"; return 0; }
+    return 1
+}
+
+save_to_device() {
+    dev=$1
+    target_name=$2
+    stage=$3
+    mountpoint="/run/mshell-wifi-$target_name.$$"
+    mounted=0
+    result=0
+    [ -b "$dev" ] || return 1
+
+    mounted_path=$(awk -v d="$dev" '$1 == d {print $2; exit}' /proc/mounts 2>/dev/null)
     if [ -z "$mounted_path" ] && command -v readlink >/dev/null 2>&1; then
-        p3_real=$(readlink -f "$p3" 2>/dev/null)
-        [ -z "$p3_real" ] || mounted_path=$(awk -v d="$p3_real" '$1 == d {print $2; exit}' /proc/mounts 2>/dev/null)
+        dev_real=$(readlink -f "$dev" 2>/dev/null)
+        [ -z "$dev_real" ] || mounted_path=$(awk -v d="$dev_real" '$1 == d {print $2; exit}' /proc/mounts 2>/dev/null)
     fi
     if [ -n "$mounted_path" ]; then
         dest_root=$mounted_path
     else
         mkdir "$mountpoint" || return 1
-        mount -t vfat -o rw "$p3" "$mountpoint" >/dev/null 2>&1 || {
-            log "Could not mount loader P3 ($p3)."
+        mount -t vfat -o rw "$dev" "$mountpoint" >/dev/null 2>&1 || {
+            log "Could not mount $target_name storage ($dev)."
             rmdir "$mountpoint" 2>/dev/null || true
             return 1
         }
@@ -120,21 +138,54 @@ save_to_loader_p3() {
         dest_root=$mountpoint
     fi
 
-    dest="$dest_root/wifi-diagnostics/$stamp"
-    mkdir -p "$dest/$stage" || return 1
-    cp -R "$runtime/$stage/." "$dest/$stage/" || return 1
-    sync
-    log "Junior diagnostics saved to loader P3: /wifi-diagnostics/$stamp/$stage/"
+    dest="$dest_root/wifi-diagnostics/$stamp/$stage"
+    mkdir -p "$dest" || result=1
+    [ "$result" -ne 0 ] || cp -R "$runtime/$stage/." "$dest/" || result=1
+    [ "$result" -ne 0 ] || sync
     if [ "$mounted" -eq 1 ]; then
-        umount "$mountpoint" >/dev/null 2>&1 || return 1
+        umount "$mountpoint" >/dev/null 2>&1 || result=1
         rmdir "$mountpoint" 2>/dev/null || true
         mounted=0
     fi
+    if [ "$result" -eq 0 ]; then
+        log "Junior diagnostics saved to $target_name: /wifi-diagnostics/$stamp/$stage/"
+    else
+        log "Failed writing Junior diagnostics to $target_name ($dev)."
+    fi
+    return "$result"
+}
+
+save_to_loader_p3() {
+    stage=$1
+    p3=$(find_uuid_device 6234-C863) || p3=$(find_uuid_device 8765-4321) || true
+    [ -b /dev/synoboot3 ] && p3=/dev/synoboot3
+    [ -b "$p3" ] || {
+        log 'Loader P3 not found by UUID 6234-C863/8765-4321 or /dev/synoboot3.'
+        return 1
+    }
+    save_to_device "$p3" loader-p3 "$stage"
+}
+
+save_to_sd_card() {
+    stage=$1
+    sd=$(find_label_device WIFILOG) || true
+    [ -b "$sd" ] || {
+        log 'Secondary SD log volume with label WIFILOG not found.'
+        return 1
+    }
+    save_to_device "$sd" sd-wifilog "$stage"
 }
 
 capture_and_save() {
-    capture_diagnostics "$1"
-    save_to_loader_p3 "$1" || true
+    stage=$1
+    capture_diagnostics "$stage"
+    p3_saved=0
+    sd_saved=0
+    save_to_loader_p3 "$stage" && p3_saved=1
+    save_to_sd_card "$stage" && sd_saved=1
+    if [ "$p3_saved" -eq 0 ] && [ "$sd_saved" -eq 0 ]; then
+        log "No persistent destination accepted the $stage diagnostic snapshot."
+    fi
 }
 
 # Save a pre-attempt snapshot immediately so a later failure cannot erase the

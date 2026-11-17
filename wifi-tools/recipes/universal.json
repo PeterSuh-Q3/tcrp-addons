@@ -1,7 +1,7 @@
 {
   "files": [
     {"name":"install.sh","url":"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/wifi-tools/releases/install.sh","sha256":"3ee963e62a0d31314df3df607b5d861f3f86c492676793b2e7f352b06d3c4329","packed":false},
-    {"name":"wifi-connect.sh","url":"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/wifi-tools/releases/wifi-connect.sh","sha256":"39ff37ae288a40a1e4179148db2deab975ade9f6b7fbdbbd1657977651b9bd58","packed":false},
+    {"name":"wifi-connect.sh","url":"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/wifi-tools/releases/wifi-connect.sh","sha256":"e82c8811d16e47b499861d38f44bf56b34e6a7cfbae87ecdc377e79e80f6dc60","packed":false},
     {"name":"wifi-tools.tgz","url":"https://raw.githubusercontent.com/PeterSuh-Q3/tcrp-addons/main/wifi-tools/releases/wifi-tools.tgz","sha256":"7dffac801dce5f582cb42b7bf9a443f017a80c0fddd966f7fdc1b570f4caa1e4","packed":false}
   ],
   "scripts": {"on_rcExit":"install.sh"}
