@@ -4,7 +4,10 @@ umask 077
 [ -s /addons/mshell-wifi.conf ] || exit 0
 mkdir /run/mshell-wifi.lock 2>/dev/null || exit 0
 trap 'rmdir /run/mshell-wifi.lock 2>/dev/null' EXIT
-runtime=$(mktemp -d /run/mshell-wifi.XXXXXX) || exit 1
+# DSM junior does not necessarily provide mktemp. mkdir fails if this name
+# already exists, preventing accidental reuse of another directory.
+runtime=/run/mshell-wifi.$$
+mkdir "$runtime" || exit 1
 tar -xzf /exts/wifi-tools/wifi-tools.tgz -C "$runtime" || exit 1
 wpa="$runtime/bin/wpa_supplicant"
 count=0
