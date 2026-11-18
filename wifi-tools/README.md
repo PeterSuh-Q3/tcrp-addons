@@ -15,6 +15,11 @@ routing to DSM. It does not load drivers or firmware. Those must already be
 present and compatible. WPA3-only, enterprise authentication and open networks
 are not supported by this configuration interface.
 
+The bundled `wpa_cli` checks for WPA authentication completion before the
+worker reports success. Supplicant output is captured without the unsupported
+`-f` option. IPv4 configuration remains the responsibility of the existing
+DSM DHCP client; the worker does not start a competing DHCP client.
+
 At `rcExit`, the worker now records an early snapshot even if no Wi-Fi config
 is present, then records a final snapshot after the connection attempt. It
 waits up to five minutes for a non-link-local IPv4 address. Each snapshot is

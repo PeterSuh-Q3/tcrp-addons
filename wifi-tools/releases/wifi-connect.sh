@@ -24,6 +24,8 @@ trap cleanup EXIT HUP INT TERM
 
 iface=
 started=0
+state=not-started
+dhcp_status=not-started
 wpa_log="$runtime/wpa_supplicant.log"
 wpa=
 tools_error=
@@ -45,6 +47,8 @@ capture_diagnostics() {
         echo "Capture stage: $stage"
         echo "Wi-Fi config present: $HAS_CONFIG (contents intentionally excluded)"
         echo "Supplicant started: $started"
+        echo "WPA state: $state"
+        echo "DHCP status: $dhcp_status"
         echo "Wi-Fi interface: ${iface:-not-found}"
         echo "Tool extraction status: ${tools_error:-ok/not-needed}"
         if [ -n "$iface" ]; then
@@ -204,6 +208,11 @@ if [ ! -s "$TOOLS" ] || ! tar -xzf "$TOOLS" -C "$runtime"; then
     exit 1
 fi
 wpa="$runtime/bin/wpa_supplicant"
+wpa_cli="$runtime/bin/wpa_cli"
+loader="$runtime/lib/ld-musl-x86_64.so.1"
+ctrl="$runtime/ctrl"
+runtime_config="$runtime/wpa.conf"
+{ printf 'ctrl_interface=%s\n' "$ctrl"; cat "$CONFIG"; } > "$runtime_config" || exit 1
 
 count=0
 while [ "$count" -lt 150 ]; do
@@ -213,7 +222,9 @@ while [ "$count" -lt 150 ]; do
         iface=${iface##*/}
         case "$iface" in p2p*) continue ;; esac
 
-        if [ -S "/var/run/wpa_supplicant/$iface" ] || [ -s /run/mshell-wifi.pid ]; then
+        existing_pid=$(cat /run/mshell-wifi.pid 2>/dev/null)
+        case "$existing_pid" in *[!0-9]*|'') existing_pid= ;; esac
+        if [ -S "/var/run/wpa_supplicant/$iface" ] || { [ -n "$existing_pid" ] && kill -0 "$existing_pid" 2>/dev/null; }; then
             log 'An existing WPA supplicant appears to own the wireless interface; skipping.'
             capture_and_save final
             exit 0
@@ -223,8 +234,13 @@ while [ "$count" -lt 150 ]; do
             capture_and_save final
             exit 1
         fi
-        if ! "$runtime/lib/ld-musl-x86_64.so.1" --library-path "$runtime/lib" "$wpa" -B -D nl80211 -i "$iface" -c "$CONFIG" -P /run/mshell-wifi.pid -f "$wpa_log" >/dev/null 2>&1; then
+        "$loader" --library-path "$runtime/lib" "$wpa" -D nl80211 -i "$iface" -c "$runtime_config" > "$wpa_log" 2>&1 </dev/null &
+        wpa_pid=$!
+        printf '%s\n' "$wpa_pid" > /run/mshell-wifi.pid
+        sleep 2
+        if ! kill -0 "$wpa_pid" 2>/dev/null; then
             log 'Wireless authentication service failed to start.'
+            rm /run/mshell-wifi.pid 2>/dev/null || true
             capture_and_save final
             exit 1
         fi
@@ -232,16 +248,41 @@ while [ "$count" -lt 150 ]; do
         log "Wireless authentication service started on $iface; waiting up to 300 seconds for a non-link-local IPv4 address."
 
         elapsed=0
+        connected=0
+        dhcp_attempted=0
         while [ "$elapsed" -lt 300 ]; do
-            if ip -4 addr show dev "$iface" 2>/dev/null | awk '$1 == "inet" && $2 !~ /^169\.254\./ {found=1} END {exit !found}'; then
+            state=$("$loader" --library-path "$runtime/lib" "$wpa_cli" -p "$ctrl" -i "$iface" status 2>/dev/null | sed -n 's/^wpa_state=//p')
+            if [ "$state" = COMPLETED ] && ip -4 addr show dev "$iface" 2>/dev/null | awk '$1 == "inet" && $2 !~ /^169\.254\./ {found=1} END {exit !found}'; then
+                connected=1
                 sleep 15
+                break
+            fi
+            if [ "$state" = COMPLETED ] && [ "$dhcp_attempted" -eq 0 ]; then
+                dhcp_attempted=1
+                # Allow the existing DSM manager a grace period. Never start a
+                # competing DHCP client or change routes/DNS from this worker.
+                sleep 10
+                if ps 2>/dev/null | grep -E "[u]dhcpc .*\-i[ =]*${iface}([[:space:]]|$)|[d]hcpcd .*${iface}([[:space:]]|$)" >/dev/null; then
+                    dhcp_status=existing-client
+                else
+                    dhcp_status=no-client
+                    log "No DHCP client detected on $iface; leaving network configuration to DSM."
+                fi
+            fi
+            if ! kill -0 "$wpa_pid" 2>/dev/null; then
+                log 'Wireless authentication service exited unexpectedly.'
                 break
             fi
             sleep 5
             elapsed=$((elapsed + 5))
         done
         capture_and_save final
-        exit 0
+        if [ "$connected" -eq 1 ]; then
+            log "Wireless authentication and IPv4 address confirmed on $iface."
+            exit 0
+        fi
+        log "Wi-Fi authentication or IPv4 assignment timed out on $iface (state=${state:-unknown})."
+        exit 1
     done
     sleep 2
     count=$((count + 1))

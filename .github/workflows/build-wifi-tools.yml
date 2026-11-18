@@ -31,6 +31,7 @@ jobs:
           mkdir -p dist/wifi-tools
           tar -xzf wifi-tools/releases/wifi-tools.tgz -C dist/wifi-tools
           dist/wifi-tools/lib/ld-musl-x86_64.so.1 --library-path dist/wifi-tools/lib dist/wifi-tools/bin/wpa_supplicant -v
+          dist/wifi-tools/lib/ld-musl-x86_64.so.1 --library-path dist/wifi-tools/lib dist/wifi-tools/bin/wpa_cli -v
           printf '%s\n' 'test-password' | dist/wifi-tools/lib/ld-musl-x86_64.so.1 --library-path dist/wifi-tools/lib dist/wifi-tools/bin/wpa_passphrase test-network | grep -Eq '^[[:space:]]*psk=[[:xdigit:]]{64}$'
           sha256sum wifi-tools/releases/wifi-tools.tgz > dist/wifi-tools.tgz.sha256
           sha256sum wifi-tools/releases/wifi-tools-sources.tgz > dist/wifi-tools-sources.tgz.sha256
